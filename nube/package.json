@@ -1,11 +1,12 @@
 {
   "name": "ollaconecta-nube",
   "private": true,
-  "description": "Reglas de Firestore de la app (la de web/) y sus pruebas en el emulador.",
+  "description": "Reglas de Firestore de la app (la de web/), el script que manda los correos a UNACEM (apps-script/) y sus pruebas en el emulador.",
   "type": "module",
   "scripts": {
-    "pruebas": "firebase emulators:exec --only firestore --project demo-ollaconecta \"node pruebas-reglas.mjs && node pruebas-sincronizacion.mjs\"",
-    "publicar": "firebase deploy --only firestore"
+    "pruebas": "firebase emulators:exec --only firestore --project demo-ollaconecta \"node pruebas-reglas.mjs && node pruebas-sincronizacion.mjs && node pruebas-envio.mjs\"",
+    "publicar": "firebase deploy --only firestore",
+    "armar": "node apps-script/armar.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^6.0.0",

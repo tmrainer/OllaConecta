@@ -9,6 +9,7 @@
 import { buscar, crearElemento, montarCabecera, pintarAvisosAlmacenamiento } from './ui.js';
 import { hayCuentas, quien, pertenencia, explicarError, ROLES_OLLA } from './cuenta.js';
 import { listarOllas, crearOlla, miembrosDe, invitacionesDe, invitar, cancelarInvitacion, quitarMiembro } from './ollas.js';
+import { correoUnacem, guardarCorreoUnacem } from './envio.js';
 
 montarCabecera('coordinacion', 'Ollas y personas');
 pintarAvisosAlmacenamiento(buscar('#avisos-sistema'));
@@ -137,7 +138,39 @@ async function vistaCoordinacion(yo) {
     crearElemento('div', { clase: 'acciones', style: 'margin-top:12px' }, [crear]),
     estado
   );
-  raiz.append(bloque, fichas);
+  raiz.append(bloque, fichas, await bloqueEnvioUnacem());
+}
+
+// --------------------------------------------------- el correo de UNACEM
+
+/** A qué correo manda el script (ajustes/envio). Para probar, el propio. */
+async function bloqueEnvioUnacem() {
+  const bloque = crearElemento('section', { clase: 'bloque', 'aria-labelledby': 'titulo-envio' }, [
+    crearElemento('h2', { id: 'titulo-envio', texto: 'Envío a UNACEM' }),
+    parrafo('A este correo llegan, de todas las ollas, la asistencia de cada día (la que pidan desde la app o, si nadie la pide, sola a las 9 de la noche) ' +
+      'y el padrón el 15 y a fin de mes. Para probar, pon el tuyo. Lleva nombres y DNI: solo la dirección acordada con UNACEM.', 'pista')
+  ]);
+  const estado = estadoDe();
+  const correo = crearElemento('input', { type: 'email', id: 'correo-unacem', autocomplete: 'off', placeholder: 'nombre@unacem.com.pe' });
+  try { correo.value = await correoUnacem(); } catch (e) { conError(estado, e); }
+  const guardar = crearElemento('button', { type: 'button', clase: 'boton', texto: 'Guardar el correo' });
+  guardar.addEventListener('click', async () => {
+    const c = correo.value.trim().toLowerCase();
+    if (c && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)) { conError(estado, new Error('Escribe un correo completo, como nombre@unacem.com.pe.')); correo.focus(); return; }
+    guardar.disabled = true;
+    try {
+      await guardarCorreoUnacem(c);
+      estado.classList.remove('es-error');
+      estado.textContent = c ? `Listo: los envíos van a ${c}.` : 'Sin correo: no se envía nada hasta que pongas uno.';
+    } catch (e) { conError(estado, e); }
+    guardar.disabled = false;
+  });
+  bloque.append(
+    crearElemento('div', { clase: 'campo' }, [crearElemento('label', { for: correo.id, texto: 'Correo de destino' }), correo]),
+    crearElemento('div', { clase: 'acciones', style: 'margin-top:12px' }, [guardar]),
+    estado
+  );
+  return bloque;
 }
 
 // ------------------------------------------------------------------ arranque

@@ -30,7 +30,7 @@ const ARCHIVOS = [
   './js/ui-importar.js', './js/ui.js', './js/ui-personas.js', './js/ui-reportes.js',
   './js/validaciones.js', './js/xlsx.js',
   './coordinacion.html', './js/firebase-config.js', './js/cuenta.js', './js/ollas.js', './js/ui-cuenta.js', './js/pagina-coordinacion.js',
-  './js/sincronizacion.js', './vendor/firebase/firebase-app.js', './vendor/firebase/firebase-auth.js', './vendor/firebase/firebase-firestore.js'
+  './js/sincronizacion.js', './js/envio.js', './js/ui-envio.js', './vendor/firebase/firebase-app.js', './vendor/firebase/firebase-auth.js', './vendor/firebase/firebase-firestore.js'
 ];
 
 let ultimaRevision = 0;

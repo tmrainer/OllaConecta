@@ -4,6 +4,7 @@
 import { hoyIso, aCentimos, formatearSoles, nuevaAtencion, fechaLarga, debounce } from './modelo.js';
 import { resumenEconomicoRaciones } from './calculos.js';
 import { botonesExportar, selloAhora, nombreDelCentro } from './ui-reportes.js';
+import { bloqueEnvio } from './ui-envio.js';
 import { validarAtenciones, validarPreciosMenu } from './validaciones.js';
 import {
   estado, cargar, alGuardar, guardarPronto, guardarYa, preciosActuales, hoySigueAlPrecio, periodoPorDefecto, vigilarPestanas
@@ -119,6 +120,11 @@ botonesExportar(buscar('#exportar-asistencia'), {
     bytes: (await import('./excel-reportes.js')).excelDeAsistencia(estado.padron, datosAsistencia()),
     nombre: `Asistencia ${periodo.inicio} a ${periodo.fin}`, titulo: 'Asistencia'
   })
+});
+// A UNACEM va la asistencia de HOY (el periodo de arriba es para exportar).
+bloqueEnvio(buscar('#envio-asistencia'), {
+  tipo: 'asistencia', periodo: () => ({ inicio: hoyIso(), fin: hoyIso() }),
+  pista: 'Manda la asistencia de hoy en Excel al correo de UNACEM, desde la nube de la olla. Si nadie la envía, sale sola a las 9 de la noche con lo que haya llegado.'
 });
 
 const CAMPOS_PRECIO = [['precioNormal', 'precioMenuNormalCent'], ['precioAyuda', 'precioMenuAyudaSocialCent']];

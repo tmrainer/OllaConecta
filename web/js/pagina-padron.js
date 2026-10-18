@@ -14,6 +14,7 @@ import {
 } from './ui-personas.js';
 import { montarImportacion } from './ui-importar.js';
 import { montarExportarPadron } from './ui-reportes.js';
+import { bloqueEnvio } from './ui-envio.js';
 import {
   buscar, montarCabecera,
   pintarAvisosAlmacenamiento, aplicarHallazgos, irACampo, avisarAlSalirDelCampo,
@@ -74,6 +75,11 @@ fRef.addEventListener('input', () => { ctx.fechaRef = fRef.value || hoyIso(); re
 
 montarFiltrosPersonas(buscar('#lista-afiliados'), ctx);
 montarExportarPadron(ctx);
+// A UNACEM va el padrón activo a hoy, con los días asistidos de las fechas de arriba.
+bloqueEnvio(buscar('#envio-padron'), {
+  tipo: 'padron', periodo: () => ({ inicio: ctx.inicio, fin: ctx.fin }),
+  pista: 'Manda el padrón en Excel al correo de UNACEM, desde la nube de la olla, con los días asistidos entre esas fechas. Sale solo el 15 y el último día de cada mes.'
+});
 
 montarAltaPersona(ctx);
 

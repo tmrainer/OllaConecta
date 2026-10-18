@@ -13,7 +13,7 @@ del Triunfo.
 | `web/`          | La app: páginas, estilos, `js/`, letra, íconos y el *service worker*. Es lo que se publica en GitHub Pages. |
 | `mobile/`       | La misma app empaquetada como APK de Android (Capacitor). No copia código: lo toma de `web/` al armar. |
 | `herramientas/` | Prueba de humo y material para probar la app con dirigentes. |
-| `nube/`         | Firebase: reglas de seguridad de Firestore (cuentas, ollas, padrón y asistencia) y sus pruebas en el emulador. Sin servidor propio. |
+| `nube/`         | Firebase: reglas de seguridad de Firestore (cuentas, ollas, padrón, asistencia y envíos), el script de Apps Script que manda los correos a UNACEM (`apps-script/`) y sus pruebas en el emulador. Sin servidor propio. |
 | `.github/`      | Pruebas automáticas y publicación en GitHub Pages. |
 
 ---
@@ -105,6 +105,13 @@ lo que marca cada teléfono llega a los demás cuando hay señal, cada marca con
 quién y cuándo, y el teléfono sigue funcionando sin señal. El B-1 y las entregas se quedan en el teléfono. Mientras
 `web/js/firebase-config.js` esté vacío, nada de esto se muestra ni se conecta.
 
+**Envío a UNACEM.** Con olla, Asistencia y Padrón tienen «Enviar a UNACEM»:
+la app deja la solicitud en la nube (sin señal, espera) y un script de Google
+Apps Script (`nube/apps-script/`) manda en unos minutos el correo con el mismo
+Excel que exporta la app, al correo que puso quien coordina. Si nadie envía la
+asistencia del día, sale sola a las 9 de la noche; el padrón, el 15 y a fin de
+mes. La app muestra si salió y a qué hora.
+
 ---
 
 ## Pruebas
@@ -131,9 +138,9 @@ quién y cuándo, y el teléfono sigue funcionando sin señal. El B-1 y las entr
   (`.github/workflows/pruebas.yml`; en `main`, `pages.yml` antes de publicar).
 
 - **La nube**: `cd nube && npm run pruebas` levanta el emulador de Firestore y
-  comprueba quién puede leer y escribir qué, y que dos teléfonos de la misma
-  olla se junten sin perder nada.
-  Necesita Java 21.
+  comprueba quién puede leer y escribir qué, que dos teléfonos de la misma
+  olla se junten sin perder nada, y que el script de envío mande cada correo
+  una sola vez, con su Excel. Necesita Java 21 y curl.
 
 - **Prueba con dirigentes**: `herramientas/padron-de-ejemplo.xlsx` (datos ficticios)
   para probar la carga del padrón.

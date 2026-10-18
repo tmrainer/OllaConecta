@@ -151,6 +151,33 @@ await frena('pero no sin firmar', setDoc(doc(ana, 'ollas/flores/ajustes/precios'
 await frena('ni lo borra', deleteDoc(doc(ana, 'ollas/flores/ajustes/precios')));
 await deja('quien coordina escribe en cualquier olla', setDoc(doc(coordina, 'ollas/pinos/dias/2026-10-01'), { id: 'd9', fecha: '2026-10-01', marcas: {}, ...firma('coordina') }));
 
+console.log('El envío a UNACEM (solicitudes y correo de destino)');
+const solicitud = (uid, extra = {}) => ({ tipo: 'asistencia', fecha: '2026-10-01', inicio: '2026-10-01', fin: '2026-10-01', modo: 'manual', estado: 'pendiente', pedidoPor: uid, pedidoEn: serverTimestamp(), ...extra });
+await deja('una integrante pide enviar la asistencia de un día', addDoc(collection(beto, 'ollas/flores/envios'), solicitud('beto')));
+await deja('o el padrón de una quincena', addDoc(collection(ana, 'ollas/flores/envios'), solicitud('ana', { tipo: 'padron', inicio: '2026-10-01', fin: '2026-10-15' })));
+await frena('pero no en la olla de al lado', addDoc(collection(beto, 'ollas/pinos/envios'), solicitud('beto')));
+await frena('ni quien no está en la olla', addDoc(collection(carla, 'ollas/flores/envios'), solicitud('carla')));
+await frena('ni firmando por otra persona', addDoc(collection(beto, 'ollas/flores/envios'), solicitud('ana')));
+await frena('ni con una hora inventada', addDoc(collection(beto, 'ollas/flores/envios'), solicitud('beto', { pedidoEn: new Date() })));
+await frena('ni ya «enviado»', addDoc(collection(beto, 'ollas/flores/envios'), solicitud('beto', { estado: 'enviado' })));
+await frena('ni haciéndose pasar por el envío automático', addDoc(collection(beto, 'ollas/flores/envios'), solicitud('beto', { modo: 'automatico' })));
+await frena('ni de un tipo inventado', addDoc(collection(beto, 'ollas/flores/envios'), solicitud('beto', { tipo: 'b1' })));
+await frena('ni con fechas que no son fechas', addDoc(collection(beto, 'ollas/flores/envios'), solicitud('beto', { inicio: 'ayer' })));
+await frena('ni con el periodo al revés', addDoc(collection(beto, 'ollas/flores/envios'), solicitud('beto', { inicio: '2026-10-05', fin: '2026-10-01' })));
+await frena('ni con campos de más (lo demás lo anota el script)', addDoc(collection(beto, 'ollas/flores/envios'), solicitud('beto', { para: 'otro@gmail.com' })));
+const envioDeBeto = (await getDocs(query(collection(beto, 'ollas/flores/envios'), where('pedidoPor', '==', 'beto')))).docs[0].ref;
+await deja('una integrante ve los envíos de su olla', getDocs(collection(ana, 'ollas/flores/envios')));
+await frena('pero no los de al lado', getDocs(collection(beto, 'ollas/pinos/envios')));
+await frena('nadie marca un envío como enviado desde la app', updateDoc(envioDeBeto, { estado: 'enviado' }));
+await frena('ni lo borra', deleteDoc(envioDeBeto));
+await deja('quien coordina pone el correo de UNACEM', setDoc(doc(coordina, 'ajustes/envio'), { correo: 'prueba@gmail.com', ...firma('coordina') }));
+await frena('pero no sin firmar', setDoc(doc(coordina, 'ajustes/envio'), { correo: 'prueba@gmail.com' }));
+await frena('ni con otros campos', setDoc(doc(coordina, 'ajustes/envio'), { correo: 'prueba@gmail.com', hora: 21, ...firma('coordina') }));
+await frena('una presidenta no lo cambia', setDoc(doc(ana, 'ajustes/envio'), { correo: 'ana@gmail.com', ...firma('ana') }));
+await deja('pero sí lo lee (para avisar si falta)', getDoc(doc(ana, 'ajustes/envio')));
+await frena('sin entrar, no', getDoc(doc(nadie, 'ajustes/envio')));
+await frena('nadie lo borra', deleteDoc(doc(coordina, 'ajustes/envio')));
+
 await entorno.cleanup();
 console.log(fallos.length ? `\n✗ ${fallos.length} fallan, ${pasan} pasan` : `\n✓ ${pasan} de ${pasan} pasan`);
 process.exit(fallos.length ? 1 : 0);

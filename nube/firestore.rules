@@ -15,6 +15,14 @@
 //   ollas/{olla}/dias/{fecha}           los campos del día y marcas: { afiliadoId: { tipoMenu, por, en } }
 //   ollas/{olla}/ajustes/precios        precioMenuNormalCent, precioMenuAyudaSocialCent
 //
+// Etapa 3 (el envío a UNACEM, en envio.js y apps-script/):
+//   ajustes/envio                       correo al que se manda (lo pone quien coordina)
+//   ollas/{olla}/envios/{id}            una solicitud de envío: tipo, fecha, inicio, fin,
+//                                       modo, estado, pedidoPor, pedidoEn. La app solo
+//                                       la crea «pendiente»; el resto lo escribe el
+//                                       script (con la cuenta dueña del proyecto, que
+//                                       no pasa por estas reglas): enviadoEn, para…
+//
 // Principios:
 //   - Una olla la ven solo sus integrantes y quien coordina.
 //   - Nadie se agrega solo: hace falta una invitación para SU correo, y entra
@@ -66,6 +74,19 @@ service cloud.firestore {
     function firmado() {
       return request.resource.data.actualizadoPor == request.auth.uid
         && request.resource.data.actualizadoEn == request.time;
+    }
+    function esFecha(v) {
+      return v is string && v.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}');
+    }
+
+    // A qué correo se envía (etapa 3). Lo cambia quien coordina; lo leen
+    // todas las cuentas, para avisar en el botón si todavía no hay.
+    match /ajustes/{ajuste} {
+      allow read: if entro();
+      allow create, update: if esCoordinador() && ajuste == 'envio' && firmado()
+        && request.resource.data.keys().hasOnly(['correo', 'actualizadoPor', 'actualizadoEn'])
+        && request.resource.data.correo is string;
+      allow delete: if false;
     }
 
     // Quién coordina: solo se escribe desde la consola de Firebase. Cada
@@ -138,6 +159,22 @@ service cloud.firestore {
         allow read: if trabajaEn(olla);
         allow create, update: if trabajaEn(olla) && firmado();
         allow delete: if false;
+      }
+
+      // Pedir un envío a UNACEM (etapa 3): solo se crea, pendiente y firmado.
+      // Lo que pase después (enviado, fallo) lo anota el script, no la app.
+      match /envios/{id} {
+        allow read: if trabajaEn(olla);
+        allow create: if trabajaEn(olla)
+          && request.resource.data.keys().hasOnly(['tipo', 'fecha', 'inicio', 'fin', 'modo', 'estado', 'pedidoPor', 'pedidoEn'])
+          && request.resource.data.tipo in ['asistencia', 'padron']
+          && esFecha(request.resource.data.fecha) && esFecha(request.resource.data.inicio) && esFecha(request.resource.data.fin)
+          && request.resource.data.inicio <= request.resource.data.fin
+          && request.resource.data.modo == 'manual'
+          && request.resource.data.estado == 'pendiente'
+          && request.resource.data.pedidoPor == request.auth.uid
+          && request.resource.data.pedidoEn == request.time;
+        allow update, delete: if false;
       }
     }
 
