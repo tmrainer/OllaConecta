@@ -4,7 +4,7 @@
   "description": "Reglas de Firestore de la app (la de web/) y sus pruebas en el emulador.",
   "type": "module",
   "scripts": {
-    "pruebas": "firebase emulators:exec --only firestore --project demo-ollaconecta \"node pruebas-reglas.mjs\"",
+    "pruebas": "firebase emulators:exec --only firestore --project demo-ollaconecta \"node pruebas-reglas.mjs && node pruebas-sincronizacion.mjs\"",
     "publicar": "firebase deploy --only firestore"
   },
   "devDependencies": {

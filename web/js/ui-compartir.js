@@ -11,7 +11,7 @@
 
 import { crearElemento, avisoAbajo, vibrar } from './ui.js';
 import {
-  CLAVES, leer, guardar, cuantos, aDdMmAa, fechaLarga, formatearSoles, nombreCompleto,
+  CLAVES, leer, guardar, pedirJuntar, cuantos, aDdMmAa, fechaLarga, formatearSoles, nombreCompleto,
   padronVacio, calendarioVacio, configVacia, migrarPadron, VERSION_PADRON
 } from './modelo.js';
 import { asistenciasDelDia, etiquetaGrupoEtario } from './calculos.js';
@@ -239,6 +239,7 @@ function compararYConfirmar(paquete, alGuardar) {
     if (!r) { avisoAbajo('No elegiste nada para guardar: todo quedó como estaba.'); return; }
     const antes = r.claves.map((k) => [k, textoCrudo(k)]);
     const ok = r.claves.every((k) => guardar(k, r.valores[k]));
+    if (ok && r.claves.includes(CLAVES.padron)) pedirJuntar();   // lo recibido también va a la nube de la olla
     if (!ok) {
       for (const [k, t] of antes) devolverCrudo(k, t);
       avisoAbajo('No se pudo guardar: el almacenamiento está lleno o bloqueado. No cambió nada.');

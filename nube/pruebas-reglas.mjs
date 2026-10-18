@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
 import {
   doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, collection, collectionGroup, query, where,
-  writeBatch, serverTimestamp, setLogLevel
+  writeBatch, serverTimestamp, deleteField, setLogLevel
 } from 'firebase/firestore';
 
 // Cada intento frenado lo registra la librería como error: aquí es lo esperado.
@@ -41,6 +41,9 @@ await entorno.withSecurityRulesDisabled(async (ctx) => {
   await setDoc(doc(db, 'ollas/flores/miembros/beto'), miembro('beto', 'beto@gmail.com', 'apoyo'));
   await setDoc(doc(db, 'ollas/pinos/miembros/elsa'), miembro('elsa', 'elsa@gmail.com', 'presidenta'));
   await setDoc(doc(db, 'ollas/flores/invitaciones/dora@gmail.com'), { correo: 'dora@gmail.com', rol: 'tesorera', invitadoPor: 'ana', invitadoEn: serverTimestamp() });
+  await setDoc(doc(db, 'ollas/flores/personas/p1'), { id: 'p1', nombres: 'Rosa', actualizadoPor: 'ana', actualizadoEn: serverTimestamp() });
+  await setDoc(doc(db, 'ollas/flores/dias/2026-10-01'), { id: 'd1', fecha: '2026-10-01', nota: '', marcas: { p1: { tipoMenu: 'normal', por: 'ana', en: serverTimestamp() } }, actualizadoPor: 'ana', actualizadoEn: serverTimestamp() });
+  await setDoc(doc(db, 'ollas/pinos/personas/p9'), { id: 'p9', nombres: 'Elsa', actualizadoPor: 'elsa', actualizadoEn: serverTimestamp() });
 });
 
 let pasan = 0; const fallos = [];
@@ -118,6 +121,35 @@ await deja('la presidenta quita a su gente', deleteDoc(doc(ana, 'ollas/flores/mi
 await frena('pero no a la de al lado', deleteDoc(doc(ana, 'ollas/pinos/miembros/elsa')));
 await deja('quien coordina quita a cualquiera', deleteDoc(doc(coordina, 'ollas/pinos/miembros/elsa')));
 await frena('nadie se hace coordinador desde la app', setDoc(doc(ana, 'coordinadores/ana'), { desde: serverTimestamp() }));
+
+console.log('Los datos de la olla (padrón, asistencia, precios)');
+const firma = (uid) => ({ actualizadoPor: uid, actualizadoEn: serverTimestamp() });
+await deja('una integrante lee el padrón de su olla', getDocs(collection(beto, 'ollas/flores/personas')));
+await deja('y los días', getDocs(collection(beto, 'ollas/flores/dias')));
+await frena('pero no el padrón de al lado', getDocs(collection(beto, 'ollas/pinos/personas')));
+await frena('quien no está en ninguna olla no lee nada', getDoc(doc(carla, 'ollas/flores/personas/p1')));
+await deja('quien coordina lee cualquier olla', getDoc(doc(coordina, 'ollas/pinos/personas/p9')));
+await deja('el apoyo inscribe a una persona', setDoc(doc(beto, 'ollas/flores/personas/p2'), { id: 'p2', nombres: 'Luz', ...firma('beto') }));
+await frena('pero no sin firmar', setDoc(doc(beto, 'ollas/flores/personas/p3'), { id: 'p3', nombres: 'Luz' }));
+await frena('ni firmando por otra persona', setDoc(doc(beto, 'ollas/flores/personas/p3'), { id: 'p3', nombres: 'Luz', ...firma('ana') }));
+await frena('ni con una hora inventada', setDoc(doc(beto, 'ollas/flores/personas/p3'), { id: 'p3', nombres: 'Luz', actualizadoPor: 'beto', actualizadoEn: new Date() }));
+await frena('ni con un id que no es el del documento', setDoc(doc(beto, 'ollas/flores/personas/p3'), { id: 'p4', nombres: 'Luz', ...firma('beto') }));
+await frena('ni en la olla de al lado', setDoc(doc(beto, 'ollas/pinos/personas/p3'), { id: 'p3', nombres: 'Luz', ...firma('beto') }));
+await frena('quien no está en la olla no inscribe', setDoc(doc(carla, 'ollas/flores/personas/p3'), { id: 'p3', nombres: 'Luz', ...firma('carla') }));
+await deja('una integrante corrige a una persona', setDoc(doc(ana, 'ollas/flores/personas/p1'), { id: 'p1', nombres: 'Rosa M.', ...firma('ana') }));
+await deja('y da de baja (borra) a una', deleteDoc(doc(ana, 'ollas/flores/personas/p2')));
+await deja('una integrante marca a alguien en un día que ya existe (solo su marca)',
+  setDoc(doc(beto, 'ollas/flores/dias/2026-10-01'), { marcas: { p2: { tipoMenu: 'normal', por: 'beto', en: serverTimestamp() } }, ...firma('beto') }, { merge: true }));
+await deja('y desmarca', setDoc(doc(beto, 'ollas/flores/dias/2026-10-01'), { marcas: { p2: deleteField() }, ...firma('beto') }, { merge: true }));
+await deja('abre un día nuevo', setDoc(doc(beto, 'ollas/flores/dias/2026-10-02'), { id: 'd2', fecha: '2026-10-02', marcas: {}, ...firma('beto') }));
+await frena('pero no con una fecha que no cuadra con el documento', setDoc(doc(beto, 'ollas/flores/dias/2026-10-03'), { id: 'd3', fecha: '2026-10-04', ...firma('beto') }));
+await frena('ni con un documento que no es una fecha', setDoc(doc(beto, 'ollas/flores/dias/hoy'), { id: 'd3', fecha: 'hoy', ...firma('beto') }));
+await frena('ni sin firmar', setDoc(doc(beto, 'ollas/flores/dias/2026-10-01'), { nota: 'x' }, { merge: true }));
+await deja('borra un día', deleteDoc(doc(beto, 'ollas/flores/dias/2026-10-02')));
+await deja('fija el precio del menú', setDoc(doc(ana, 'ollas/flores/ajustes/precios'), { precioMenuNormalCent: 300, precioMenuAyudaSocialCent: 100, ...firma('ana') }, { merge: true }));
+await frena('pero no sin firmar', setDoc(doc(ana, 'ollas/flores/ajustes/precios'), { precioMenuNormalCent: 350 }, { merge: true }));
+await frena('ni lo borra', deleteDoc(doc(ana, 'ollas/flores/ajustes/precios')));
+await deja('quien coordina escribe en cualquier olla', setDoc(doc(coordina, 'ollas/pinos/dias/2026-10-01'), { id: 'd9', fecha: '2026-10-01', marcas: {}, ...firma('coordina') }));
 
 await entorno.cleanup();
 console.log(fallos.length ? `\n✗ ${fallos.length} fallan, ${pasan} pasan` : `\n✓ ${pasan} de ${pasan} pasan`);

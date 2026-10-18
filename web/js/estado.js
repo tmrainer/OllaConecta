@@ -3,8 +3,9 @@
 
 import {
   CLAVES, leer, guardar, debounce, hoyIso,
-  padronVacio, migrarPadron, configVacia, calendarioVacio, VERSION_PADRON
+  padronVacio, migrarPadron, configVacia, calendarioVacio, VERSION_PADRON, ollaVinculada
 } from './modelo.js';
+import { hayCuentas } from './firebase-config.js';
 
 /**
  * Objeto mutable y único. Se accede como `estado.padron`, nunca se desestructura,
@@ -17,6 +18,13 @@ export const estado = {
   calendario: null
 };
 
+// La nube de la olla (sincronizacion.js), si este teléfono está unido a una.
+// Se carga aparte y después: las páginas no la esperan para dibujarse.
+let nube = null;
+// Lo que había en el teléfono al abrir la página, tal como lo vio la nube
+// por última vez: contra esto se compara lo que haya que subir.
+let fotoInicial = null;
+
 export function cargar() {
   let p = leer(CLAVES.padron, padronVacio());
   if (p.version !== VERSION_PADRON) p = migrarPadron(p);
@@ -26,6 +34,7 @@ export function cargar() {
   estado.config = Object.assign(configVacia(), leer(CLAVES.config, {}));
   estado.calendario = leer(CLAVES.calendario, calendarioVacio());
   hoySigueAlPrecio();
+  if (!fotoInicial && hayCuentas() && ollaVinculada()) fotoInicial = JSON.stringify({ padron: estado.padron, precios: preciosActuales() });
   return estado;
 }
 
@@ -53,9 +62,13 @@ function escribir() {
   pendiente = false;
   const padronOk = guardar(CLAVES.padron, estado.padron);
   const configOk = guardar(CLAVES.config, estado.config);
+  if (nube) nube.empujar();
   if (!padronOk || !configOk) avisarGuardado(false);
   return padronOk && configOk;
 }
+
+/** Escribe lo pendiente de guardarPronto() ahora mismo, si lo hay. */
+export function guardarPendiente() { if (pendiente) escribir(); }
 
 const guardarDiferido = debounce(() => {
   if (pendiente && !escribir()) return;   // si no estaba pendiente, ya lo escribió guardarYa()
@@ -113,10 +126,9 @@ export function descartarPendiente() { pendiente = false; }
  * @param {() => void} alRecargar  repinta la página con los datos recargados
  */
 export function vigilarPestanas(alRecargar) {
-  const escribirPendiente = () => { if (pendiente) escribir(); };
-  addEventListener('pagehide', escribirPendiente);
+  addEventListener('pagehide', guardarPendiente);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') escribirPendiente();
+    if (document.visibilityState === 'hidden') guardarPendiente();
   });
 
   const claves = [CLAVES.padron, CLAVES.config, CLAVES.calendario];
@@ -125,8 +137,18 @@ export function vigilarPestanas(alRecargar) {
     if (e.key !== null && !claves.includes(e.key)) return;
     pendiente = false;
     cargar();
+    // Lo que escribió la otra pestaña ya lo subió ella (o le llegó de la nube).
+    if (nube) nube.rebasar();
     alRecargar();
   });
+
+  // Unido a una olla: lo de aquí va a la nube y lo de la nube llega aquí.
+  if (fotoInicial) {
+    import('./sincronizacion.js')
+      .then((s) => s.vigilarNube(fotoInicial, alRecargar))
+      .then((n) => { nube = n; if (nube) nube.empujar(); })
+      .catch((e) => console.warn('La nube de la olla no arrancó:', e));
+  }
 }
 
 /** Precio vigente del menú, que se copia a cada día nuevo. */

@@ -7,7 +7,8 @@ export const CLAVES = {
   insumos: 'b1.insumos.v1',       // reservada: catálogo de insumos (fase 6); hoy nada la usa
   calendario: 'b1.calendario.v1',
   config: 'b1.config.v1',
-  respaldo: 'b1.respaldo.v1'     // { ultimoEn: 'AAAA-MM-DD' }: cuándo se exportó el último respaldo
+  respaldo: 'b1.respaldo.v1',    // { ultimoEn: 'AAAA-MM-DD' }: cuándo se exportó el último respaldo
+  olla: 'b1.olla.v1'             // { id, nombre, rol, juntar }: la olla de la nube a la que está unido este teléfono
 };
 
 export const VERSION_ESQUEMA = 1;
@@ -545,6 +546,34 @@ export function guardar(clave, valor) {
   }
 }
 
+// ------------------------------------------------------ la olla de la nube
+
+/**
+ * A qué olla de la nube está unido este teléfono (ver sincronizacion.js).
+ * `juntar` dice que lo que hay en este teléfono todavía no se juntó con lo de
+ * la nube: se pone al unirse y cada vez que algo se escribe aquí sin pasar por
+ * la nube (recuperar una copia, recibir por QR).
+ * @returns {{id: string, nombre: string, rol: string, juntar: boolean} | null}
+ */
+export function ollaVinculada() {
+  const o = leer(CLAVES.olla, null);
+  return o && typeof o.id === 'string' ? o : null;
+}
+
+export function vincularOlla(olla) {
+  return guardar(CLAVES.olla, olla);
+}
+
+export function desvincularOlla() {
+  try { localStorage.removeItem(CLAVES.olla); } catch (e) { /* bloqueado: ya lo avisa leer() */ }
+}
+
+/** Lo que hay en este teléfono se juntará con la nube la próxima vez que haya señal. */
+export function pedirJuntar() {
+  const o = ollaVinculada();
+  if (o && !o.juntar) vincularOlla({ ...o, juntar: true });
+}
+
 export function borrarTodo() {
   let ok = true;
   for (const clave of Object.values(CLAVES)) {
@@ -621,7 +650,10 @@ export function restaurarRespaldo(datos) {
   const { error, partes } = revisarRespaldo(datos);
   if (error) return false;
   let ok = true;
-  if (partes.includes('padron')) ok = guardar(CLAVES.padron, migrarPadron(datos.padron)) && ok;
+  if (partes.includes('padron')) {
+    ok = guardar(CLAVES.padron, migrarPadron(datos.padron)) && ok;
+    pedirJuntar();
+  }
   if (partes.includes('rendiciones')) ok = guardar(CLAVES.rendiciones, datos.rendiciones) && ok;
   if (partes.includes('calendario')) ok = guardar(CLAVES.calendario, datos.calendario) && ok;
   if (partes.includes('config')) ok = guardar(CLAVES.config, datos.config) && ok;

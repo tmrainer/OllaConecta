@@ -2,8 +2,8 @@
 //
 // Primera parte del sistema central: Firebase Auth
 // dice quién es la persona y Firestore guarda las ollas, sus integrantes y
-// las invitaciones. Los datos de la olla (padrón, asistencia, B-1) siguen
-// en este teléfono: subirlos es la etapa siguiente.
+// las invitaciones. El padrón y la asistencia de la olla van y vienen de la
+// nube en sincronizacion.js (§h); el B-1 y las entregas siguen en el teléfono.
 //
 // Firebase se carga solo cuando hay un proyecto configurado
 // (firebase-config.js) y recién cuando una página lo pide: las demás páginas
@@ -22,6 +22,7 @@
 
 import { CONFIG_FIREBASE, hayCuentas } from './firebase-config.js';
 import { esAppNativa } from './avisos-nativos.js';
+import { desvincularOlla } from './modelo.js';
 
 export { hayCuentas };
 
@@ -47,7 +48,8 @@ export async function firebase() {
       const app = App.initializeApp(CONFIG_FIREBASE);
       // Copia local de lo leído: sin señal, se trabaja con lo último visto.
       const db = Fs.initializeFirestore(app, {
-        localCache: Fs.persistentLocalCache({ tabManager: Fs.persistentMultipleTabManager() })
+        localCache: Fs.persistentLocalCache({ tabManager: Fs.persistentMultipleTabManager() }),
+        ignoreUndefinedProperties: true   // un campo sin valor en el padrón no debe frenar la subida
       });
       const auth = Auth.getAuth(app);
       await auth.authStateReady();
@@ -94,6 +96,7 @@ export async function salir() {
   const P = complementoNativo();
   if (P) { try { await P.signOut(); } catch (e) { /* la sesión de la librería es la que importa */ } }
   await f.Auth.signOut(f.auth);
+  desvincularOlla();   // sin cuenta no hay con qué subir; los datos del teléfono se quedan
 }
 
 /**

@@ -10,8 +10,22 @@ import {
   hayCuentas, quien, entrar, salir, pertenencia, aceptarInvitacion, explicarError, ROLES_OLLA
 } from './cuenta.js';
 import { leerPerfil, guardarPerfil } from './perfil.js';
+import { ollaVinculada, vincularOlla, desvincularOlla } from './modelo.js';
 
 const nombreRol = (rol) => (ROLES_OLLA.find(([r]) => r === rol) || [rol, rol])[1];
+
+/**
+ * Deja anotado en el teléfono a qué olla pertenece esta cuenta, para que
+ * Asistencia y Padrón sincronicen con ella (sincronizacion.js). Al unirse por
+ * primera vez (o cambiar de olla), lo que ya hay en el teléfono se junta con
+ * lo de la nube: `juntar`.
+ */
+function anotarOlla(olla) {
+  const antes = ollaVinculada();
+  if (!olla) { if (antes) desvincularOlla(); return; }
+  if (antes && antes.id === olla.id) vincularOlla({ ...antes, nombre: olla.nombre, rol: olla.rol });
+  else vincularOlla({ id: olla.id, nombre: olla.nombre, rol: olla.rol, juntar: true });
+}
 
 function proponerPerfil(yo, olla) {
   const p = leerPerfil();
@@ -56,11 +70,14 @@ export function bloqueCuenta(contenedor) {
     try { p = await pertenencia(); } catch (e) { contenedor.append(crearElemento('p', { clase: 'estado-guardado es-error', texto: explicarError(e) })); }
     if (p) {
       proponerPerfil(yo, p.olla);
+      anotarOlla(p.olla);
       if (p.coordina) contenedor.append(crearElemento('p', { clase: 'dato-fuerte', texto: 'Coordinas el proyecto: ves todas las ollas.' }));
       if (p.olla) {
         contenedor.append(crearElemento('p', {}, [
           'Estás en la olla ', crearElemento('b', { texto: p.olla.nombre }), ` como ${nombreRol(p.olla.rol).toLowerCase()}.`
-        ]));
+        ]), crearElemento('p', { clase: 'pista', texto:
+          'El padrón y la asistencia de la olla se guardan también en la nube: lo que marca cada teléfono ' +
+          'llega a los demás cuando hay señal. Borrar todo o salir de la cuenta no los borra de la nube.' }));
       } else if (!p.coordina && !p.invitaciones.length) {
         contenedor.append(crearElemento('p', { clase: 'pista', texto:
           `Tu cuenta (${yo.correo}) todavía no está en ninguna olla. Pide a quien coordina que te invite con este correo.` }));

@@ -10,6 +10,11 @@
 //   ollas/{olla}/miembros/{uid}         uid, nombre, correo, rol, desde, agregadoPor
 //   ollas/{olla}/invitaciones/{correo}  correo, rol, invitadoPor, invitadoEn
 //
+// Etapa 2 (el padrón y la asistencia de la olla, en sincronizacion.js):
+//   ollas/{olla}/personas/{id}          el afiliado tal cual, más actualizadoPor, actualizadoEn
+//   ollas/{olla}/dias/{fecha}           los campos del día y marcas: { afiliadoId: { tipoMenu, por, en } }
+//   ollas/{olla}/ajustes/precios        precioMenuNormalCent, precioMenuAyudaSocialCent
+//
 // Principios:
 //   - Una olla la ven solo sus integrantes y quien coordina.
 //   - Nadie se agrega solo: hace falta una invitación para SU correo, y entra
@@ -17,6 +22,8 @@
 //   - Quien coordina crea ollas e invita o quita en cualquiera; una presidenta,
 //     en la suya.
 //   - Cada documento guarda quién lo creó, y tiene que ser quien escribe.
+//   - Los datos de la olla los escribe cualquiera de sus integrantes (y quien
+//     coordina), siempre firmando con su cuenta y la hora del servidor.
 
 rules_version = '2';
 service cloud.firestore {
@@ -51,6 +58,14 @@ service cloud.firestore {
     }
     function hayInvitacion(olla) {
       return exists(/databases/$(db)/documents/ollas/$(olla)/invitaciones/$(miCorreo()));
+    }
+    function trabajaEn(olla) {
+      return esMiembro(olla) || esCoordinador();
+    }
+    // Lo que se escribe dice quién y cuándo, y no se puede firmar por otra persona.
+    function firmado() {
+      return request.resource.data.actualizadoPor == request.auth.uid
+        && request.resource.data.actualizadoEn == request.time;
     }
 
     // Quién coordina: solo se escribe desde la consola de Firebase. Cada
@@ -105,6 +120,24 @@ service cloud.firestore {
         allow update: if false;
         // Quien invita la cancela; la persona invitada la borra al unirse (o si no quiere).
         allow delete: if puedeInvitar(olla) || (entro() && correo == miCorreo());
+      }
+
+      // Los datos de la olla (etapa 2). Quien la integra escribe; firma cada vez.
+      match /personas/{id} {
+        allow read: if trabajaEn(olla);
+        allow create, update: if trabajaEn(olla) && firmado() && request.resource.data.id == id;
+        allow delete: if trabajaEn(olla);
+      }
+      match /dias/{fecha} {
+        allow read: if trabajaEn(olla);
+        allow create, update: if trabajaEn(olla) && firmado()
+          && fecha.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}') && request.resource.data.fecha == fecha;
+        allow delete: if trabajaEn(olla);
+      }
+      match /ajustes/{ajuste} {
+        allow read: if trabajaEn(olla);
+        allow create, update: if trabajaEn(olla) && firmado();
+        allow delete: if false;
       }
     }
 

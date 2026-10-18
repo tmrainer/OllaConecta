@@ -13,7 +13,7 @@ del Triunfo.
 | `web/`          | La app: páginas, estilos, `js/`, letra, íconos y el *service worker*. Es lo que se publica en GitHub Pages. |
 | `mobile/`       | La misma app empaquetada como APK de Android (Capacitor). No copia código: lo toma de `web/` al armar. |
 | `herramientas/` | Prueba de humo y material para probar la app con dirigentes. |
-| `nube/`         | Firebase: reglas de seguridad de Firestore (cuentas, ollas y permisos) y sus pruebas en el emulador. Sin servidor propio. |
+| `nube/`         | Firebase: reglas de seguridad de Firestore (cuentas, ollas, padrón y asistencia) y sus pruebas en el emulador. Sin servidor propio. |
 | `.github/`      | Pruebas automáticas y publicación en GitHub Pages. |
 
 ---
@@ -99,8 +99,10 @@ de Android, Google no lo permite).
 
 Opcional: con una cuenta de Google, la app sabe quién es cada persona y de qué
 olla (Tus datos → Tu cuenta). Quien coordina crea las ollas e invita; una
-presidenta invita y quita a su gente (`coordinacion.html`). Los datos de la
-olla siguen en el teléfono: subirlos es la etapa siguiente. Mientras
+presidenta invita y quita a su gente (`coordinacion.html`). Quien está en una
+olla tiene el padrón, la asistencia y el precio del menú también en la nube:
+lo que marca cada teléfono llega a los demás cuando hay señal, cada marca con
+quién y cuándo, y el teléfono sigue funcionando sin señal. El B-1 y las entregas se quedan en el teléfono. Mientras
 `web/js/firebase-config.js` esté vacío, nada de esto se muestra ni se conecta.
 
 ---
@@ -128,8 +130,9 @@ olla siguen en el teléfono: subirlos es la etapa siguiente. Mientras
   GitHub la corre sola en cada push y en cada pull request
   (`.github/workflows/pruebas.yml`; en `main`, `pages.yml` antes de publicar).
 
-- **Reglas de la nube**: `cd nube && npm run pruebas` levanta el emulador de
-  Firestore y comprueba quién puede leer y escribir qué.
+- **La nube**: `cd nube && npm run pruebas` levanta el emulador de Firestore y
+  comprueba quién puede leer y escribir qué, y que dos teléfonos de la misma
+  olla se junten sin perder nada.
   Necesita Java 21.
 
 - **Prueba con dirigentes**: `herramientas/padron-de-ejemplo.xlsx` (datos ficticios)

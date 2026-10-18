@@ -4,7 +4,7 @@
 import {
   CLAVES, leer, guardar, borrarTodo, avisosAlmacenamiento, hoyIso,
   cifrarRespaldo, descifrarRespaldo, esRespaldoCifrado, revisarRespaldo, restaurarRespaldo,
-  usoAlmacenamiento
+  usoAlmacenamiento, ollaVinculada
 } from './modelo.js';
 import { esAppNativa, reprogramarAvisos, abrirEntregasAlTocarAviso } from './avisos-nativos.js';
 import { compartirArchivo } from './compartir-archivo.js';
@@ -770,9 +770,11 @@ export function lugaresDeLosDatos() {
       ...extra
     ])
   ]);
+  const olla = ollaVinculada();
   const lugares = [
     lugar('escudo', nativa ? 'En este teléfono, dentro de la app' : 'En este teléfono, dentro del navegador', [
-      'El padrón, la asistencia, el B-1 y las entregas no se mandan a internet. Funciona sin señal.',
+      olla ? 'Todo se guarda primero aquí: funciona sin señal.'
+        : 'El padrón, la asistencia, el B-1 y las entregas no se mandan a internet. Funciona sin señal.',
       nativa
         ? 'Si desinstalas la app o cambias de teléfono, pueden perderse.'
         : 'Si borras los datos del navegador o cambias de teléfono, se pierden.'
@@ -784,6 +786,13 @@ export function lugaresDeLosDatos() {
       })
     ])
   ];
+  if (olla) {
+    lugares.push(lugar('nube', `En la nube de la olla ${olla.nombre}`, [
+      'El padrón, la asistencia y el precio del menú se guardan también en la nube del proyecto, con la ' +
+        'cuenta de Google. Lo que marca cada teléfono de la olla llega a los demás cuando hay señal.',
+      'Cada cambio queda con quién lo hizo y cuándo. El B-1 y las entregas no suben.'
+    ]));
+  }
   if (nativa) {
     lugares.push(lugar('nube', 'En la copia de seguridad de Google, si está activada', [
       'Android puede guardar los datos de esta app en la copia de seguridad de la cuenta Google del ' +
