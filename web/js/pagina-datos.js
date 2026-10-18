@@ -9,6 +9,7 @@ import {
   buscar, crearElemento, montarCabecera, lugaresDeLosDatos, barraDatos, botonBorrarTodo, pintarAvisosAlmacenamiento
 } from './ui.js';
 import { enviarPorQr, elegirDiasYEnviar, recibirPorQr, puedeLeerQr, leerGuardado } from './ui-compartir.js';
+import { bloqueCuenta } from './ui-cuenta.js';
 
 montarCabecera('datos', 'Dónde están y cómo cuidarlos');
 pintarAvisosAlmacenamiento(buscar('#avisos-sistema'));
@@ -16,6 +17,7 @@ pintarAvisosAlmacenamiento(buscar('#avisos-sistema'));
 buscar('#lugares').append(lugaresDeLosDatos());
 buscar('#barra-datos').append(barraDatos({ borrar: false }));
 buscar('#borrar-todo').append(botonBorrarTodo());
+bloqueCuenta(buscar('#cuenta-estado'));
 
 // ---- pasar a otro teléfono ----
 // Se lee lo guardado en el momento de tocar: siempre lo último.
@@ -43,4 +45,4 @@ buscar('#ultima-copia').textContent = dias === null
 if (dias === null || dias >= 14) buscar('#ultima-copia').classList.add('pendiente');
 
 // Llegar con #copia (desde un aviso de copia) deja esa sección a la vista.
-if (['#copia', '#donde', '#pasar'].includes(location.hash)) buscar(location.hash).scrollIntoView({ block: 'start' });
+if (['#copia', '#donde', '#pasar', '#cuenta'].includes(location.hash)) buscar(location.hash).scrollIntoView({ block: 'start' });

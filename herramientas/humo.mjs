@@ -24,7 +24,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const RAIZ = path.resolve(process.argv[2] || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'web'));
-const PAGINAS = ['index', 'asistencia', 'padron', 'formato-b1', 'calendario', 'ajustes', 'datos', 'vista-previa', 'probar-dni', 'pruebas'];
+const PAGINAS = ['index', 'asistencia', 'padron', 'formato-b1', 'calendario', 'ajustes', 'datos', 'coordinacion', 'vista-previa', 'probar-dni', 'pruebas'];
 
 // ------------------------------------------------------------ padrón de prueba
 
@@ -359,6 +359,20 @@ async function correr(base, cdp) {
     await p.cerrar();
   }
 
+  // 1b2. La librería de Firebase (vendor/firebase/) carga desde el propio
+  // sitio, bajo la política de contenido y sin tocar internet: así la cuenta
+  // también abre sin señal. Solo se importa; no se inicializa nada.
+  {
+    const p = await pestana(cdp);
+    await p.ir(`${base}/datos.html`);
+    const r = await p.eval(`Promise.all([
+      import('./vendor/firebase/firebase-auth.js'), import('./vendor/firebase/firebase-firestore.js')
+    ]).then((m) => (typeof m[0].getAuth === 'function' && typeof m[1].initializeFirestore === 'function') ? 'ok' : 'sin funciones', (e) => 'error: ' + e.message)`);
+    comprobar('Firebase: la librería copiada en vendor/ carga desde el sitio', r === 'ok', r);
+    comprobar('Firebase: cargarla no da errores de consola', p.errores.length === 0, p.errores.join(' | '));
+    await p.cerrar();
+  }
+
   // 1c. Un error en la página no la deja en blanco: aparece el aviso.
   {
     const p = await pestana(cdp);
@@ -616,7 +630,7 @@ async function correr(base, cdp) {
       return p.eval(`[...document.querySelectorAll('main h2')].map((h) => h.textContent.trim()).join('|')`);
     };
     const ordenes = {
-      'datos.html': 'Copia de tus datos|Qué va en la copia|Pasar a otro teléfono|Traer un padrón de Excel|Dónde se guardan|Borrar todo',
+      'datos.html': 'Copia de tus datos|Qué va en la copia|Pasar a otro teléfono|Traer un padrón de Excel|Tu cuenta|Dónde se guardan|Borrar todo',
       'asistencia.html': 'Asistencia de hoy|Otros días|Precio del menú|Resumen y exportar',
       'padron.html': 'Inscribir a una persona|Personas afiliadas|Exportar el padrón|Cargar un padrón desde Excel',
       'calendario.html': 'Próximas entregas|Cada cuánto entregas',

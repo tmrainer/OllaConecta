@@ -1,0 +1,124 @@
+// pruebas-reglas.mjs — prueba firestore.rules contra el emulador de Firestore.
+//
+//   npm run pruebas      (levanta el emulador, corre esto y lo apaga)
+//
+// Cada caso dice lo que una cuenta intenta y si las reglas lo dejan. Las
+// cuentas son ficticias: «coordina» coordina el proyecto; «ana» es la
+// presidenta de la olla Las Flores; «beto», su apoyo; «carla» no está en
+// ninguna olla y «dora» tiene una invitación pendiente. La olla Los Pinos
+// existe para comprobar que nadie ve la de al lado.
+
+import fs from 'node:fs';
+import { initializeTestEnvironment, assertSucceeds, assertFails } from '@firebase/rules-unit-testing';
+import {
+  doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, collection, collectionGroup, query, where,
+  writeBatch, serverTimestamp, setLogLevel
+} from 'firebase/firestore';
+
+// Cada intento frenado lo registra la librería como error: aquí es lo esperado.
+setLogLevel('silent');
+
+const entorno = await initializeTestEnvironment({
+  projectId: 'demo-ollaconecta',
+  firestore: { rules: fs.readFileSync(new URL('./firestore.rules', import.meta.url), 'utf8'), host: '127.0.0.1', port: 8080 }
+});
+
+const cuenta = (uid, correo) => entorno.authenticatedContext(uid, { email: correo, email_verified: true }).firestore();
+const coordina = cuenta('coordina', 'coordina@gmail.com');
+const ana = cuenta('ana', 'ana@gmail.com');
+const beto = cuenta('beto', 'beto@gmail.com');
+const carla = cuenta('carla', 'carla@gmail.com');
+const dora = cuenta('dora', 'dora@gmail.com');
+const nadie = entorno.unauthenticatedContext().firestore();
+
+await entorno.withSecurityRulesDisabled(async (ctx) => {
+  const db = ctx.firestore();
+  await setDoc(doc(db, 'coordinadores/coordina'), { desde: serverTimestamp() });
+  await setDoc(doc(db, 'ollas/flores'), { nombre: 'Las Flores', distrito: 'VMT', creadaEn: serverTimestamp(), creadaPor: 'coordina' });
+  await setDoc(doc(db, 'ollas/pinos'), { nombre: 'Los Pinos', distrito: 'VMT', creadaEn: serverTimestamp(), creadaPor: 'coordina' });
+  const miembro = (uid, correo, rol) => ({ uid, nombre: uid, correo, rol, desde: serverTimestamp(), agregadoPor: 'coordina' });
+  await setDoc(doc(db, 'ollas/flores/miembros/ana'), miembro('ana', 'ana@gmail.com', 'presidenta'));
+  await setDoc(doc(db, 'ollas/flores/miembros/beto'), miembro('beto', 'beto@gmail.com', 'apoyo'));
+  await setDoc(doc(db, 'ollas/pinos/miembros/elsa'), miembro('elsa', 'elsa@gmail.com', 'presidenta'));
+  await setDoc(doc(db, 'ollas/flores/invitaciones/dora@gmail.com'), { correo: 'dora@gmail.com', rol: 'tesorera', invitadoPor: 'ana', invitadoEn: serverTimestamp() });
+});
+
+let pasan = 0; const fallos = [];
+async function caso(nombre, promesa) {
+  try { await promesa; pasan++; console.log(`  ✓ ${nombre}`); } catch (e) { fallos.push(nombre); console.log(`  ✗ ${nombre}\n    ${e.message.split('\n')[0]}`); }
+}
+const deja = (nombre, p) => caso(nombre, assertSucceeds(p));
+const frena = (nombre, p) => caso(nombre, assertFails(p));
+
+const nuevaInvitacion = (db, uid, correo, rol = 'apoyo') => ({ correo, rol, invitadoPor: uid, invitadoEn: serverTimestamp() });
+const unirse = (db, uid, correo, olla, rol, invitadoPor) => {
+  const lote = writeBatch(db);
+  lote.set(doc(db, `ollas/${olla}/miembros/${uid}`), { uid, nombre: uid, correo, rol, desde: serverTimestamp(), agregadoPor: invitadoPor });
+  lote.delete(doc(db, `ollas/${olla}/invitaciones/${correo}`));
+  return lote.commit();
+};
+
+console.log('Quién ve qué');
+await frena('sin entrar no se lee nada', getDoc(doc(nadie, 'ollas/flores')));
+await deja('una integrante lee su olla', getDoc(doc(ana, 'ollas/flores')));
+await deja('una integrante lee a su gente', getDocs(collection(beto, 'ollas/flores/miembros')));
+await frena('una integrante NO lee la olla de al lado', getDoc(doc(ana, 'ollas/pinos')));
+await frena('una integrante NO lee a la gente de al lado', getDocs(collection(ana, 'ollas/pinos/miembros')));
+await frena('quien no está en ninguna olla no lee ninguna', getDoc(doc(carla, 'ollas/flores')));
+await deja('quien coordina lee todas las ollas', getDocs(collection(coordina, 'ollas')));
+await frena('una integrante NO lista todas las ollas', getDocs(collection(ana, 'ollas')));
+await deja('cada cuenta puede preguntar si coordina', getDoc(doc(carla, 'coordinadores/carla')));
+await frena('pero no por otra cuenta', getDoc(doc(carla, 'coordinadores/coordina')));
+await deja('cada cuenta encuentra su olla (grupo miembros, solo lo propio)',
+  getDocs(query(collectionGroup(beto, 'miembros'), where('uid', '==', 'beto'))));
+await frena('y no la de otra persona', getDocs(query(collectionGroup(beto, 'miembros'), where('uid', '==', 'ana'))));
+await deja('cada cuenta encuentra sus invitaciones (grupo invitaciones)',
+  getDocs(query(collectionGroup(dora, 'invitaciones'), where('correo', '==', 'dora@gmail.com'))));
+await frena('y no las de otro correo', getDocs(query(collectionGroup(carla, 'invitaciones'), where('correo', '==', 'dora@gmail.com'))));
+
+console.log('Ollas');
+await deja('quien coordina crea una olla', addDoc(collection(coordina, 'ollas'), { nombre: 'Nueva', distrito: '', creadaEn: serverTimestamp(), creadaPor: 'coordina' }));
+await frena('una presidenta NO crea ollas', addDoc(collection(ana, 'ollas'), { nombre: 'Mía', distrito: '', creadaEn: serverTimestamp(), creadaPor: 'ana' }));
+await frena('ni quien coordina la firma con otro nombre', addDoc(collection(coordina, 'ollas'), { nombre: 'X', distrito: '', creadaEn: serverTimestamp(), creadaPor: 'ana' }));
+await frena('ni sin nombre', addDoc(collection(coordina, 'ollas'), { nombre: '', distrito: '', creadaEn: serverTimestamp(), creadaPor: 'coordina' }));
+await deja('quien coordina renombra una olla', updateDoc(doc(coordina, 'ollas/flores'), { nombre: 'Las Flores de VMT' }));
+await frena('nadie borra una olla', deleteDoc(doc(coordina, 'ollas/pinos')));
+
+console.log('Invitar');
+await deja('quien coordina invita a cualquier olla', setDoc(doc(coordina, 'ollas/pinos/invitaciones/fede@gmail.com'), nuevaInvitacion(coordina, 'coordina', 'fede@gmail.com')));
+await deja('la presidenta invita a su olla', setDoc(doc(ana, 'ollas/flores/invitaciones/gina@gmail.com'), nuevaInvitacion(ana, 'ana', 'gina@gmail.com')));
+await frena('la presidenta NO invita a la olla de al lado', setDoc(doc(ana, 'ollas/pinos/invitaciones/gina@gmail.com'), nuevaInvitacion(ana, 'ana', 'gina@gmail.com')));
+await frena('el apoyo NO invita', setDoc(doc(beto, 'ollas/flores/invitaciones/hugo@gmail.com'), nuevaInvitacion(beto, 'beto', 'hugo@gmail.com')));
+await frena('una invitación no se firma con otro nombre', setDoc(doc(ana, 'ollas/flores/invitaciones/hugo@gmail.com'), nuevaInvitacion(ana, 'coordina', 'hugo@gmail.com')));
+await frena('ni con un rol inventado', setDoc(doc(ana, 'ollas/flores/invitaciones/hugo@gmail.com'), nuevaInvitacion(ana, 'ana', 'hugo@gmail.com', 'jefa')));
+await frena('ni con un correo mal escrito', setDoc(doc(ana, 'ollas/flores/invitaciones/hugo'), nuevaInvitacion(ana, 'ana', 'hugo')));
+await frena('ni con mayúsculas en el correo', setDoc(doc(ana, 'ollas/flores/invitaciones/Hugo@gmail.com'), nuevaInvitacion(ana, 'ana', 'Hugo@gmail.com')));
+await deja('la presidenta cancela una invitación suya', deleteDoc(doc(ana, 'ollas/flores/invitaciones/gina@gmail.com')));
+await deja('la persona invitada ve su invitación', getDoc(doc(dora, 'ollas/flores/invitaciones/dora@gmail.com')));
+await frena('otra persona no la ve', getDoc(doc(carla, 'ollas/flores/invitaciones/dora@gmail.com')));
+
+console.log('Unirse');
+await frena('sin invitación nadie se agrega', unirse(carla, 'carla', 'carla@gmail.com', 'flores', 'apoyo', 'ana'));
+await frena('con invitación, pero con otro rol, tampoco', unirse(dora, 'dora', 'dora@gmail.com', 'flores', 'presidenta', 'ana'));
+await frena('ni diciendo que la invitó otra persona', unirse(dora, 'dora', 'dora@gmail.com', 'flores', 'tesorera', 'coordina'));
+await frena('ni agregando a otra cuenta', setDoc(doc(dora, 'ollas/flores/miembros/carla'), { uid: 'carla', nombre: 'Carla', correo: 'carla@gmail.com', rol: 'apoyo', desde: serverTimestamp(), agregadoPor: 'ana' }));
+await deja('con invitación y el rol que le dieron, se une y la invitación se borra', unirse(dora, 'dora', 'dora@gmail.com', 'flores', 'tesorera', 'ana'));
+await deja('y ya lee su olla', getDoc(doc(dora, 'ollas/flores')));
+
+console.log('Roles y quitar');
+await frena('nadie se sube el rol a sí misma', updateDoc(doc(beto, 'ollas/flores/miembros/beto'), { rol: 'presidenta' }));
+await frena('la presidenta NO cambia roles', updateDoc(doc(ana, 'ollas/flores/miembros/beto'), { rol: 'tesorera' }));
+await deja('quien coordina sí', updateDoc(doc(coordina, 'ollas/flores/miembros/beto'), { rol: 'tesorera' }));
+await frena('pero no a un rol inventado', updateDoc(doc(coordina, 'ollas/flores/miembros/beto'), { rol: 'dueño' }));
+await deja('cada persona corrige su propio nombre', updateDoc(doc(beto, 'ollas/flores/miembros/beto'), { nombre: 'Beto Q.' }));
+await frena('pero no su correo', updateDoc(doc(beto, 'ollas/flores/miembros/beto'), { correo: 'otro@gmail.com' }));
+await frena('el apoyo NO quita a nadie', deleteDoc(doc(beto, 'ollas/flores/miembros/dora')));
+await frena('la presidenta NO se quita a sí misma', deleteDoc(doc(ana, 'ollas/flores/miembros/ana')));
+await deja('la presidenta quita a su gente', deleteDoc(doc(ana, 'ollas/flores/miembros/dora')));
+await frena('pero no a la de al lado', deleteDoc(doc(ana, 'ollas/pinos/miembros/elsa')));
+await deja('quien coordina quita a cualquiera', deleteDoc(doc(coordina, 'ollas/pinos/miembros/elsa')));
+await frena('nadie se hace coordinador desde la app', setDoc(doc(ana, 'coordinadores/ana'), { desde: serverTimestamp() }));
+
+await entorno.cleanup();
+console.log(fallos.length ? `\n✗ ${fallos.length} fallan, ${pasan} pasan` : `\n✓ ${pasan} de ${pasan} pasan`);
+process.exit(fallos.length ? 1 : 0);

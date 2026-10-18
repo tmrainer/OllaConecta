@@ -3,6 +3,9 @@
 !*.json
 !*.png
 
+# Proyecto de Firebase del APK: se baja de la consola, no se publica
+android/app/google-services.json
+
 # Librerías y copias que se regeneran (npm install, npm run sync)
 node_modules/
 www/

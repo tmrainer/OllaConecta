@@ -13,6 +13,7 @@ del Triunfo.
 | `web/`          | La app: páginas, estilos, `js/`, letra, íconos y el *service worker*. Es lo que se publica en GitHub Pages. |
 | `mobile/`       | La misma app empaquetada como APK de Android (Capacitor). No copia código: lo toma de `web/` al armar. |
 | `herramientas/` | Prueba de humo y material para probar la app con dirigentes. |
+| `nube/`         | Firebase: reglas de seguridad de Firestore (cuentas, ollas y permisos) y sus pruebas en el emulador. Sin servidor propio. |
 | `.github/`      | Pruebas automáticas y publicación en GitHub Pages. |
 
 ---
@@ -91,7 +92,16 @@ la copia mientras programas: DevTools → Application → Service workers →
 
 En `mobile/` está la misma app empaquetada como APK con Capacitor. Suma
 **avisos de entrega con la app cerrada**, que en el navegador no se pueden dar
-sin un servidor.
+sin un servidor, y el inicio de sesión con Google nativo (dentro del visor web
+de Android, Google no lo permite).
+
+## Cuentas y ollas (Firebase)
+
+Opcional: con una cuenta de Google, la app sabe quién es cada persona y de qué
+olla (Tus datos → Tu cuenta). Quien coordina crea las ollas e invita; una
+presidenta invita y quita a su gente (`coordinacion.html`). Los datos de la
+olla siguen en el teléfono: subirlos es la etapa siguiente. Mientras
+`web/js/firebase-config.js` esté vacío, nada de esto se muestra ni se conecta.
 
 ---
 
@@ -117,6 +127,10 @@ sin un servidor.
 
   GitHub la corre sola en cada push y en cada pull request
   (`.github/workflows/pruebas.yml`; en `main`, `pages.yml` antes de publicar).
+
+- **Reglas de la nube**: `cd nube && npm run pruebas` levanta el emulador de
+  Firestore y comprueba quién puede leer y escribir qué.
+  Necesita Java 21.
 
 - **Prueba con dirigentes**: `herramientas/padron-de-ejemplo.xlsx` (datos ficticios)
   para probar la carga del padrón.

@@ -1,0 +1,120 @@
+// firestore.rules — quién puede leer y escribir qué en la nube.
+//
+// Estas reglas las cumple Firestore en los servidores de Google: aunque
+// alguien modifique la app, no se las salta. Se prueban con el emulador
+// (pruebas-reglas.mjs) y se publican con `npx firebase deploy --only firestore`.
+//
+// Etapa 1 (cuentas, ollas y permisos):
+//   coordinadores/{uid}                 quién coordina el proyecto; se crea a mano en la consola
+//   ollas/{olla}                        nombre, distrito, creadaEn, creadaPor
+//   ollas/{olla}/miembros/{uid}         uid, nombre, correo, rol, desde, agregadoPor
+//   ollas/{olla}/invitaciones/{correo}  correo, rol, invitadoPor, invitadoEn
+//
+// Principios:
+//   - Una olla la ven solo sus integrantes y quien coordina.
+//   - Nadie se agrega solo: hace falta una invitación para SU correo, y entra
+//     con el rol que le dieron. Nadie se cambia el rol a sí mismo.
+//   - Quien coordina crea ollas e invita o quita en cualquiera; una presidenta,
+//     en la suya.
+//   - Cada documento guarda quién lo creó, y tiene que ser quien escribe.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function entro() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function miCorreo() {
+      return request.auth.token.email.lower();
+    }
+    function esCoordinador() {
+      return entro() && exists(/databases/$(db)/documents/coordinadores/$(request.auth.uid));
+    }
+    function esMiembro(olla) {
+      return entro() && exists(/databases/$(db)/documents/ollas/$(olla)/miembros/$(request.auth.uid));
+    }
+    function miRol(olla) {
+      return get(/databases/$(db)/documents/ollas/$(olla)/miembros/$(request.auth.uid)).data.rol;
+    }
+    function esPresidenta(olla) {
+      return esMiembro(olla) && miRol(olla) == 'presidenta';
+    }
+    function puedeInvitar(olla) {
+      return esCoordinador() || esPresidenta(olla);
+    }
+    function rolValido(rol) {
+      return rol in ['presidenta', 'tesorera', 'apoyo'];
+    }
+    function invitacion(olla) {
+      return get(/databases/$(db)/documents/ollas/$(olla)/invitaciones/$(miCorreo()));
+    }
+    function hayInvitacion(olla) {
+      return exists(/databases/$(db)/documents/ollas/$(olla)/invitaciones/$(miCorreo()));
+    }
+
+    // Quién coordina: solo se escribe desde la consola de Firebase. Cada
+    // cuenta puede preguntar por la suya; quien coordina ve la lista.
+    match /coordinadores/{uid} {
+      allow get: if entro() && (request.auth.uid == uid || esCoordinador());
+      allow list: if esCoordinador();
+      allow write: if false;
+    }
+
+    match /ollas/{olla} {
+      allow read: if esMiembro(olla) || esCoordinador();
+      allow create: if esCoordinador()
+        && request.resource.data.keys().hasOnly(['nombre', 'distrito', 'creadaEn', 'creadaPor'])
+        && request.resource.data.nombre is string && request.resource.data.nombre.size() > 0
+        && request.resource.data.creadaPor == request.auth.uid
+        && request.resource.data.creadaEn == request.time;
+      allow update: if esCoordinador()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre', 'distrito']);
+      allow delete: if false;
+
+      match /miembros/{uid} {
+        allow read: if esMiembro(olla) || esCoordinador();
+        // Se agrega una sola persona: la invitada, con el rol de su invitación.
+        allow create: if entro() && request.auth.uid == uid
+          && hayInvitacion(olla)
+          && request.resource.data.keys().hasOnly(['uid', 'nombre', 'correo', 'rol', 'desde', 'agregadoPor'])
+          && request.resource.data.uid == uid
+          && request.resource.data.correo == miCorreo()
+          && request.resource.data.rol == invitacion(olla).data.rol
+          && request.resource.data.agregadoPor == invitacion(olla).data.invitadoPor
+          && request.resource.data.desde == request.time;
+        // El rol lo cambia solo quien coordina; el nombre, también la persona.
+        allow update: if (esCoordinador()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rol', 'nombre'])
+            && rolValido(request.resource.data.rol))
+          || (entro() && request.auth.uid == uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nombre']));
+        // Quien coordina quita a cualquiera; la presidenta, a su gente, no a sí misma.
+        allow delete: if esCoordinador() || (esPresidenta(olla) && request.auth.uid != uid);
+      }
+
+      match /invitaciones/{correo} {
+        allow read: if puedeInvitar(olla) || (entro() && correo == miCorreo());
+        allow create: if puedeInvitar(olla)
+          && correo == correo.lower() && correo.matches('[^@\\s]+@[^@\\s]+\\.[^@\\s]+')
+          && request.resource.data.keys().hasOnly(['correo', 'rol', 'invitadoPor', 'invitadoEn'])
+          && request.resource.data.correo == correo
+          && rolValido(request.resource.data.rol)
+          && request.resource.data.invitadoPor == request.auth.uid
+          && request.resource.data.invitadoEn == request.time;
+        allow update: if false;
+        // Quien invita la cancela; la persona invitada la borra al unirse (o si no quiere).
+        allow delete: if puedeInvitar(olla) || (entro() && correo == miCorreo());
+      }
+    }
+
+    // Para que cada cuenta encuentre su olla y sus invitaciones sin saber
+    // en qué olla buscar (consulta por grupo de colecciones). Solo lo propio.
+    match /{camino=**}/miembros/{uid} {
+      allow read: if entro() && resource.data.uid == request.auth.uid;
+    }
+    match /{camino=**}/invitaciones/{correo} {
+      allow read: if entro() && resource.data.correo == miCorreo();
+    }
+  }
+}

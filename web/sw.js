@@ -28,7 +28,9 @@ const ARCHIVOS = [
   './js/pagina-b1.js', './js/pagina-calendario.js', './js/pagina-padron.js',
   './js/sugerencias.js', './js/ui-asistencia.js',
   './js/ui-importar.js', './js/ui.js', './js/ui-personas.js', './js/ui-reportes.js',
-  './js/validaciones.js', './js/xlsx.js'
+  './js/validaciones.js', './js/xlsx.js',
+  './coordinacion.html', './js/firebase-config.js', './js/cuenta.js', './js/ollas.js', './js/ui-cuenta.js', './js/pagina-coordinacion.js',
+  './vendor/firebase/firebase-app.js', './vendor/firebase/firebase-auth.js', './vendor/firebase/firebase-firestore.js'
 ];
 
 let ultimaRevision = 0;

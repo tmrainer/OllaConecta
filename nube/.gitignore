@@ -1,0 +1,6 @@
+# Librerías y lo que deja el emulador
+node_modules/
+*.log
+
+# Alias del proyecto de cada persona (`firebase use --add`)
+.firebaserc

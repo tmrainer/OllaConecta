@@ -980,6 +980,10 @@ button.enlace-ajustes { width: 100%; border: 0; font: inherit; text-align: start
 .lugar-titulo { font-weight: 700; }
 .lista-datos { margin: 0; padding-inline-start: 1.2em; }
 .lista-datos li + li { margin-top: var(--e2); }
+.personas { list-style: none; padding: 0; }
+.persona-fila { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); }
+.persona-fila > div { min-width: 0; }
+.persona-fila .pista { margin: 0; }
 .vista-previa {
   margin: var(--e3) 0 0; padding: var(--e3) var(--e4); border-radius: var(--r-s);
   background: var(--superficie-2); color: var(--tinta);

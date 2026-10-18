@@ -2,9 +2,11 @@
 <html lang="es-PE">
 <head>
 <meta charset="utf-8">
-<!-- La regla (nada sale del dispositivo) la impone el navegador:
-     solo se cargan archivos de este mismo sitio y no hay scripts en línea. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<!-- Esta página habla con Firebase (la cuenta y las ollas): la política deja
+     conectarse solo a Google y abrir solo su ventana de inicio de sesión. Los
+     scripts siguen siendo únicamente los del sitio (la librería va en vendor/)
+     y el de la ventana de Google; ninguno en línea. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://apis.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://*.googleapis.com wss://*.googleapis.com; frame-src https://*.firebaseapp.com https://accounts.google.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Dónde se guardan tus datos, cómo guardar una copia y cómo borrarlos.">
 <meta name="robots" content="noindex, nofollow">
@@ -75,6 +77,13 @@
     <h2 id="titulo-excel">Traer un padrón de Excel</h2>
     <p class="pista">Si ya tienen la lista de personas en Excel, se carga en el Padrón. Nada se agrega hasta que la revises.</p>
     <div class="acciones"><a class="boton secundario" href="./padron.html#excel">Ir a cargar el padrón</a></div>
+  </section>
+
+  <section class="bloque" id="cuenta" aria-labelledby="titulo-cuenta">
+    <h2 id="titulo-cuenta">Tu cuenta</h2>
+    <p class="pista">Con tu cuenta de Google, la app sabe quién eres y de qué olla. Solo la primera vez hace falta
+      internet. Por entrar, nada de tus datos sale del teléfono.</p>
+    <div id="cuenta-estado"></div>
   </section>
 
   <section class="bloque" id="donde" aria-labelledby="titulo-donde">
