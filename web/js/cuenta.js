@@ -159,9 +159,15 @@ export async function aceptarInvitacion(inv) {
 /** Texto para la persona cuando algo de la nube falla. */
 export function explicarError(e) {
   const codigo = (e && e.code) || '';
+  const mensaje = (e && e.message) || String(e);
   if (codigo === 'auth/popup-closed-by-user' || codigo === 'auth/cancelled-popup-request') return 'No se eligió ninguna cuenta.';
   if (codigo === 'auth/network-request-failed' || codigo === 'unavailable') return 'Sin internet. Para entrar la primera vez hace falta señal.';
   if (codigo === 'auth/popup-blocked') return 'El navegador bloqueó la ventana de Google. Permítela y vuelve a intentar.';
   if (codigo === 'permission-denied') return 'Tu cuenta no tiene permiso para esto.';
-  return (e && e.message) || String(e);
+  // El complemento nativo del APK (la pantalla de Google del teléfono)
+  // devuelve sus errores sin código y en inglés. Se traducen los dos que la
+  // persona provoca: cerrar la pantalla sin elegir cuenta, y no tener señal.
+  if (!codigo && /cancel/i.test(mensaje)) return 'No se eligió ninguna cuenta.';
+  if (!codigo && typeof navigator !== 'undefined' && navigator.onLine === false) return 'Sin internet. Para entrar la primera vez hace falta señal.';
+  return mensaje;
 }
