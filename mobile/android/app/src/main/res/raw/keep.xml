@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- shrinkResources quita lo que ningún código ni recurso nombra. El ícono
+     del aviso lo busca LocalNotifications por su nombre, que está en
+     capacitor.config.json (un asset, no código): hay que decirle que se queda. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_aviso" />

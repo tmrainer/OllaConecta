@@ -6,7 +6,7 @@
     "web": "node copiar-web.mjs",
     "sync": "npm run web && cap sync android",
     "apk": "npm run sync && cd android && ./gradlew assembleDebug",
-    "apk:publicar": "npm run sync && cd android && ./gradlew clean assembleDebug"
+    "apk:publicar": "npm run sync && cd android && ./gradlew clean assembleRelease"
   },
   "dependencies": {
     "@capacitor-community/text-to-speech": "^8.0.2",

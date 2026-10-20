@@ -19,3 +19,16 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Trazas de error legibles (número de línea) en el APK optimizado.
+-keepattributes SourceFile,LineNumberTable
+
+# Los complementos propios (LectorTextoPlugin, CompartirArchivoPlugin) los
+# conserva la regla de Capacitor (toda clase que extiende Plugin); esto es
+# por si esa regla cambia en una versión futura.
+-keep public class io.github.tmrainer.asistencia.** extends com.getcapacitor.Plugin { *; }
+
+# @capacitor-firebase/authentication trae código para entrar con Facebook,
+# Apple, etc., sin incluir esas librerías; la app solo usa Google. R8 se
+# frena al no encontrarlas: se le dice que no importan.
+-dontwarn com.facebook.**

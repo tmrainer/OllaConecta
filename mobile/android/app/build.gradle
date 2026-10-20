@@ -34,9 +34,28 @@ android {
     }
     buildTypes {
         release {
-            if (archivoFirma.exists()) signingConfig signingConfigs.release
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Sin firma.properties se firma con la clave de depuración: el APK
+            // instala igual (y actualiza a uno de prueba anterior), pero ya
+            // sale optimizado. La clave final sigue siendo la de firma.properties.
+            signingConfig archivoFirma.exists() ? signingConfigs.release : signingConfigs.debug
+            // R8: quita el código y los recursos que no se usan y compacta el
+            // resto. El APK de prueba traía 11 MB de .dex en 11 archivos; en
+            // un teléfono de gama baja eso es más tiempo de instalación y de
+            // arranque (ART verifica y carga todo) y más memoria.
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    // La app está solo en español: fuera las traducciones de appcompat, de
+    // los servicios de Google y de Firebase (decenas de idiomas en resources.arsc).
+    androidResources {
+        localeFilters += ['es']
+    }
+    packaging {
+        resources {
+            // Metadatos de Kotlin y de corrutinas que solo sirven para compilar.
+            excludes += ['kotlin/**', 'DebugProbesKt.bin', 'META-INF/*.version', 'META-INF/*.kotlin_module']
         }
     }
 }

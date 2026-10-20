@@ -51,11 +51,24 @@ async function guardarCopia(pares) {
   // Recién con la copia nueva completa se borran las viejas.
   const claves = await caches.keys();
   await Promise.all(claves.filter((k) => k.startsWith(PREFIJO) && k !== nombre).map((k) => caches.delete(k)));
+  copiaAbierta = Promise.resolve(cache);
 }
 
+// La copia abierta se recuerda: cada página pide unos 15 archivos y buscar
+// la copia (caches.keys + caches.open) en cada uno se notaba en un teléfono
+// lento. guardarCopia() la reemplaza al armar una copia nueva.
+let copiaAbierta = null;
+
 async function copiaActual() {
-  const claves = (await caches.keys()).filter((k) => k.startsWith(PREFIJO)).sort();
-  return claves.length ? caches.open(claves[claves.length - 1]) : null;
+  if (!copiaAbierta) {
+    copiaAbierta = (async () => {
+      const claves = (await caches.keys()).filter((k) => k.startsWith(PREFIJO)).sort();
+      return claves.length ? caches.open(claves[claves.length - 1]) : null;
+    })();
+  }
+  const cache = await copiaAbierta;
+  if (!cache) copiaAbierta = null;      // sin copia todavía: se vuelve a preguntar la próxima vez
+  return cache;
 }
 
 self.addEventListener('install', (e) => {
