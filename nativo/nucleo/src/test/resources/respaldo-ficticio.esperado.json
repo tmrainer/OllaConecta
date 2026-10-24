@@ -1,0 +1,3066 @@
+{
+  "generadoEn": "2026-10-20",
+  "hoy": "2026-10-20",
+  "revision": {
+    "error": null,
+    "partes": [
+      "padron",
+      "rendiciones",
+      "calendario",
+      "config"
+    ],
+    "resumen": "40 personas en el padrón y 69 días de asistencia, 2 Formatos B-1, el calendario de entregas, los precios del menú y datos del centro"
+  },
+  "padron": {
+    "personas": 40,
+    "dias": 69,
+    "periodos": [
+      {
+        "inicio": "2026-08-01",
+        "fin": "2026-10-19",
+        "resumen": {
+          "racionesTotales": 1909,
+          "racionesNormales": 1482,
+          "racionesAyudaSocial": 427,
+          "recaudacionCent": 461900,
+          "racionesConPrecio": 1796,
+          "diasSinPrecio": 4,
+          "diasDeLegado": 3,
+          "precioPromedioRacionCent": 257
+        },
+        "racionesPeriodo": 1909,
+        "diasAtendidos": 68,
+        "promedioRaciones": 28.073529411764707,
+        "asistenciaPorAfiliado": [
+          {
+            "afiliadoId": "p-0034",
+            "dias": 54,
+            "normal": 54,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0020",
+            "dias": 54,
+            "normal": 53,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0001",
+            "dias": 50,
+            "normal": 45,
+            "ayudaSocial": 5
+          },
+          {
+            "afiliadoId": "p-0028",
+            "dias": 50,
+            "normal": 47,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0022",
+            "dias": 49,
+            "normal": 0,
+            "ayudaSocial": 49
+          },
+          {
+            "afiliadoId": "p-0027",
+            "dias": 49,
+            "normal": 49,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0009",
+            "dias": 48,
+            "normal": 45,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0032",
+            "dias": 48,
+            "normal": 47,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0040",
+            "dias": 48,
+            "normal": 45,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0017",
+            "dias": 48,
+            "normal": 47,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0002",
+            "dias": 47,
+            "normal": 0,
+            "ayudaSocial": 47
+          },
+          {
+            "afiliadoId": "p-0006",
+            "dias": 47,
+            "normal": 47,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0024",
+            "dias": 47,
+            "normal": 44,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0036",
+            "dias": 47,
+            "normal": 43,
+            "ayudaSocial": 4
+          },
+          {
+            "afiliadoId": "p-0016",
+            "dias": 47,
+            "normal": 44,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0013",
+            "dias": 46,
+            "normal": 43,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0018",
+            "dias": 46,
+            "normal": 44,
+            "ayudaSocial": 2
+          },
+          {
+            "afiliadoId": "p-0026",
+            "dias": 46,
+            "normal": 42,
+            "ayudaSocial": 4
+          },
+          {
+            "afiliadoId": "p-0030",
+            "dias": 46,
+            "normal": 43,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0003",
+            "dias": 45,
+            "normal": 44,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0005",
+            "dias": 45,
+            "normal": 42,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0015",
+            "dias": 45,
+            "normal": 44,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0029",
+            "dias": 45,
+            "normal": 42,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0004",
+            "dias": 45,
+            "normal": 0,
+            "ayudaSocial": 45
+          },
+          {
+            "afiliadoId": "p-0014",
+            "dias": 44,
+            "normal": 42,
+            "ayudaSocial": 2
+          },
+          {
+            "afiliadoId": "p-0023",
+            "dias": 44,
+            "normal": 41,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0031",
+            "dias": 44,
+            "normal": 41,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0037",
+            "dias": 44,
+            "normal": 43,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0025",
+            "dias": 42,
+            "normal": 0,
+            "ayudaSocial": 42
+          },
+          {
+            "afiliadoId": "p-0038",
+            "dias": 42,
+            "normal": 0,
+            "ayudaSocial": 42
+          },
+          {
+            "afiliadoId": "p-0008",
+            "dias": 42,
+            "normal": 41,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0019",
+            "dias": 42,
+            "normal": 41,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0039",
+            "dias": 41,
+            "normal": 0,
+            "ayudaSocial": 41
+          },
+          {
+            "afiliadoId": "p-0021",
+            "dias": 40,
+            "normal": 0,
+            "ayudaSocial": 40
+          },
+          {
+            "afiliadoId": "p-0033",
+            "dias": 40,
+            "normal": 37,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0035",
+            "dias": 40,
+            "normal": 0,
+            "ayudaSocial": 40
+          },
+          {
+            "afiliadoId": "p-0007",
+            "dias": 40,
+            "normal": 38,
+            "ayudaSocial": 2
+          },
+          {
+            "afiliadoId": "p-0010",
+            "dias": 26,
+            "normal": 25,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0012",
+            "dias": 21,
+            "normal": 20,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-ya-no-esta",
+            "dias": 1,
+            "normal": 1,
+            "ayudaSocial": 0
+          }
+        ],
+        "sinAsistencia": [],
+        "filasPadron": [
+          {
+            "n": 1,
+            "afiliadoId": "p-0035",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 2,
+            "afiliadoId": "p-0006",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 3,
+            "afiliadoId": "p-0014",
+            "tipoDocumento": "DNI",
+            "grupoEtario": null,
+            "grupoEtarioEtiqueta": "",
+            "edad": -1,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 4,
+            "afiliadoId": "p-0031",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 5,
+            "afiliadoId": "p-0013",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 59,
+            "tipoAfiliadoEtiqueta": ""
+          },
+          {
+            "n": 6,
+            "afiliadoId": "p-0007",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 3,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 7,
+            "afiliadoId": "p-0008",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 8,
+            "afiliadoId": "p-0036",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 9,
+            "afiliadoId": "p-0039",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 10,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 10,
+            "afiliadoId": "p-0020",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 18,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 11,
+            "afiliadoId": "p-0023",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 12,
+            "afiliadoId": "p-0009",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 11,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 13,
+            "afiliadoId": "p-0032",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 3,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 14,
+            "afiliadoId": "p-0029",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 15,
+            "afiliadoId": "p-0019",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 11,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 16,
+            "afiliadoId": "p-0030",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 17,
+            "afiliadoId": "p-0034",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 59,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 18,
+            "afiliadoId": "p-0017",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 3,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 19,
+            "afiliadoId": "p-0022",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adolescente",
+            "grupoEtarioEtiqueta": "Adolescente",
+            "edad": 17,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 20,
+            "afiliadoId": "p-0024",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 34,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 21,
+            "afiliadoId": "p-0001",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adolescente",
+            "grupoEtarioEtiqueta": "Adolescente",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 22,
+            "afiliadoId": "p-0002",
+            "tipoDocumento": "CE",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 59,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 23,
+            "afiliadoId": "p-0005",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 59,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 24,
+            "afiliadoId": "p-0025",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 25,
+            "afiliadoId": "p-0021",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adolescente",
+            "grupoEtarioEtiqueta": "Adolescente",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 26,
+            "afiliadoId": "p-0015",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adolescente",
+            "grupoEtarioEtiqueta": "Adolescente",
+            "edad": 17,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 27,
+            "afiliadoId": "p-0012",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 28,
+            "afiliadoId": "p-0038",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 29,
+            "afiliadoId": "p-0028",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 11,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 30,
+            "afiliadoId": "p-0026",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 31,
+            "afiliadoId": "p-0027",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 32,
+            "afiliadoId": "p-0037",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 60,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 33,
+            "afiliadoId": "p-0016",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 59,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 34,
+            "afiliadoId": "p-0033",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 35,
+            "afiliadoId": "p-0040",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 36,
+            "afiliadoId": "p-0004",
+            "tipoDocumento": "DNI",
+            "grupoEtario": null,
+            "grupoEtarioEtiqueta": "",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 37,
+            "afiliadoId": "p-0018",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 38,
+            "afiliadoId": "p-0003",
+            "tipoDocumento": "CE",
+            "grupoEtario": "adolescente",
+            "grupoEtarioEtiqueta": "Adolescente",
+            "edad": 17,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          }
+        ],
+        "resumenEtario": {
+          "nino": 8,
+          "adolescente": 5,
+          "adulto": 15,
+          "adulto_mayor": 8,
+          "sin_dato": 2
+        },
+        "activos": 38
+      },
+      {
+        "inicio": "2026-10-01",
+        "fin": "2026-10-20",
+        "resumen": {
+          "racionesTotales": 441,
+          "racionesNormales": 338,
+          "racionesAyudaSocial": 103,
+          "recaudacionCent": 104900,
+          "racionesConPrecio": 415,
+          "diasSinPrecio": 1,
+          "diasDeLegado": 0,
+          "precioPromedioRacionCent": 253
+        },
+        "racionesPeriodo": 441,
+        "diasAtendidos": 16,
+        "promedioRaciones": 27.5625,
+        "asistenciaPorAfiliado": [
+          {
+            "afiliadoId": "p-0013",
+            "dias": 15,
+            "normal": 15,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0034",
+            "dias": 15,
+            "normal": 15,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0022",
+            "dias": 14,
+            "normal": 0,
+            "ayudaSocial": 14
+          },
+          {
+            "afiliadoId": "p-0026",
+            "dias": 14,
+            "normal": 14,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0028",
+            "dias": 14,
+            "normal": 13,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0003",
+            "dias": 13,
+            "normal": 13,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0006",
+            "dias": 13,
+            "normal": 13,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0008",
+            "dias": 13,
+            "normal": 13,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0017",
+            "dias": 13,
+            "normal": 13,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0023",
+            "dias": 13,
+            "normal": 12,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0032",
+            "dias": 13,
+            "normal": 13,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0040",
+            "dias": 13,
+            "normal": 11,
+            "ayudaSocial": 2
+          },
+          {
+            "afiliadoId": "p-0002",
+            "dias": 13,
+            "normal": 0,
+            "ayudaSocial": 13
+          },
+          {
+            "afiliadoId": "p-0009",
+            "dias": 12,
+            "normal": 10,
+            "ayudaSocial": 2
+          },
+          {
+            "afiliadoId": "p-0014",
+            "dias": 12,
+            "normal": 11,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0016",
+            "dias": 12,
+            "normal": 10,
+            "ayudaSocial": 2
+          },
+          {
+            "afiliadoId": "p-0027",
+            "dias": 12,
+            "normal": 12,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0029",
+            "dias": 12,
+            "normal": 9,
+            "ayudaSocial": 3
+          },
+          {
+            "afiliadoId": "p-0030",
+            "dias": 12,
+            "normal": 12,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0037",
+            "dias": 12,
+            "normal": 12,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0020",
+            "dias": 12,
+            "normal": 12,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0004",
+            "dias": 11,
+            "normal": 0,
+            "ayudaSocial": 11
+          },
+          {
+            "afiliadoId": "p-0025",
+            "dias": 11,
+            "normal": 0,
+            "ayudaSocial": 11
+          },
+          {
+            "afiliadoId": "p-0001",
+            "dias": 11,
+            "normal": 10,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0015",
+            "dias": 11,
+            "normal": 11,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0007",
+            "dias": 10,
+            "normal": 9,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0019",
+            "dias": 10,
+            "normal": 10,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0038",
+            "dias": 10,
+            "normal": 0,
+            "ayudaSocial": 10
+          },
+          {
+            "afiliadoId": "p-0012",
+            "dias": 10,
+            "normal": 10,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0024",
+            "dias": 10,
+            "normal": 9,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0031",
+            "dias": 10,
+            "normal": 9,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0018",
+            "dias": 10,
+            "normal": 10,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0021",
+            "dias": 9,
+            "normal": 0,
+            "ayudaSocial": 9
+          },
+          {
+            "afiliadoId": "p-0033",
+            "dias": 9,
+            "normal": 8,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0039",
+            "dias": 9,
+            "normal": 0,
+            "ayudaSocial": 9
+          },
+          {
+            "afiliadoId": "p-0005",
+            "dias": 9,
+            "normal": 8,
+            "ayudaSocial": 1
+          },
+          {
+            "afiliadoId": "p-0036",
+            "dias": 8,
+            "normal": 8,
+            "ayudaSocial": 0
+          },
+          {
+            "afiliadoId": "p-0035",
+            "dias": 8,
+            "normal": 0,
+            "ayudaSocial": 8
+          }
+        ],
+        "sinAsistencia": [],
+        "filasPadron": [
+          {
+            "n": 1,
+            "afiliadoId": "p-0035",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 2,
+            "afiliadoId": "p-0006",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 3,
+            "afiliadoId": "p-0014",
+            "tipoDocumento": "DNI",
+            "grupoEtario": null,
+            "grupoEtarioEtiqueta": "",
+            "edad": -1,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 4,
+            "afiliadoId": "p-0031",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 5,
+            "afiliadoId": "p-0013",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 59,
+            "tipoAfiliadoEtiqueta": ""
+          },
+          {
+            "n": 6,
+            "afiliadoId": "p-0007",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 3,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 7,
+            "afiliadoId": "p-0008",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 8,
+            "afiliadoId": "p-0036",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 9,
+            "afiliadoId": "p-0039",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 10,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 10,
+            "afiliadoId": "p-0020",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 18,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 11,
+            "afiliadoId": "p-0023",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 12,
+            "afiliadoId": "p-0009",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 11,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 13,
+            "afiliadoId": "p-0032",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 3,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 14,
+            "afiliadoId": "p-0029",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 15,
+            "afiliadoId": "p-0019",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 11,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 16,
+            "afiliadoId": "p-0030",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 17,
+            "afiliadoId": "p-0034",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 59,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 18,
+            "afiliadoId": "p-0017",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 3,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 19,
+            "afiliadoId": "p-0022",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adolescente",
+            "grupoEtarioEtiqueta": "Adolescente",
+            "edad": 17,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 20,
+            "afiliadoId": "p-0024",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 34,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 21,
+            "afiliadoId": "p-0001",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adolescente",
+            "grupoEtarioEtiqueta": "Adolescente",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 22,
+            "afiliadoId": "p-0002",
+            "tipoDocumento": "CE",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 59,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 23,
+            "afiliadoId": "p-0005",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 59,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 24,
+            "afiliadoId": "p-0025",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 25,
+            "afiliadoId": "p-0021",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adolescente",
+            "grupoEtarioEtiqueta": "Adolescente",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 26,
+            "afiliadoId": "p-0015",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adolescente",
+            "grupoEtarioEtiqueta": "Adolescente",
+            "edad": 17,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 27,
+            "afiliadoId": "p-0012",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 28,
+            "afiliadoId": "p-0038",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 29,
+            "afiliadoId": "p-0028",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": 11,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 30,
+            "afiliadoId": "p-0026",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "nino",
+            "grupoEtarioEtiqueta": "Niño/a",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 31,
+            "afiliadoId": "p-0027",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 32,
+            "afiliadoId": "p-0037",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 60,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 33,
+            "afiliadoId": "p-0016",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 60,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 34,
+            "afiliadoId": "p-0033",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 35,
+            "afiliadoId": "p-0040",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto_mayor",
+            "grupoEtarioEtiqueta": "Adulto/a mayor",
+            "edad": 78,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 36,
+            "afiliadoId": "p-0004",
+            "tipoDocumento": "DNI",
+            "grupoEtario": null,
+            "grupoEtarioEtiqueta": "",
+            "edad": null,
+            "tipoAfiliadoEtiqueta": "Ayuda social"
+          },
+          {
+            "n": 37,
+            "afiliadoId": "p-0018",
+            "tipoDocumento": "DNI",
+            "grupoEtario": "adulto",
+            "grupoEtarioEtiqueta": "Adulto/a",
+            "edad": 35,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          },
+          {
+            "n": 38,
+            "afiliadoId": "p-0003",
+            "tipoDocumento": "CE",
+            "grupoEtario": "adolescente",
+            "grupoEtarioEtiqueta": "Adolescente",
+            "edad": 17,
+            "tipoAfiliadoEtiqueta": "Habitual"
+          }
+        ],
+        "resumenEtario": {
+          "nino": 8,
+          "adolescente": 5,
+          "adulto": 14,
+          "adulto_mayor": 9,
+          "sin_dato": 2
+        },
+        "activos": 38
+      }
+    ],
+    "hoy": {
+      "filasPadron": [
+        {
+          "n": 1,
+          "afiliadoId": "p-0035",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 35,
+          "tipoAfiliadoEtiqueta": "Ayuda social"
+        },
+        {
+          "n": 2,
+          "afiliadoId": "p-0006",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": null,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 3,
+          "afiliadoId": "p-0014",
+          "tipoDocumento": "DNI",
+          "grupoEtario": null,
+          "grupoEtarioEtiqueta": "",
+          "edad": -1,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 4,
+          "afiliadoId": "p-0031",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto_mayor",
+          "grupoEtarioEtiqueta": "Adulto/a mayor",
+          "edad": null,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 5,
+          "afiliadoId": "p-0013",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 59,
+          "tipoAfiliadoEtiqueta": ""
+        },
+        {
+          "n": 6,
+          "afiliadoId": "p-0007",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "nino",
+          "grupoEtarioEtiqueta": "Niño/a",
+          "edad": 3,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 7,
+          "afiliadoId": "p-0008",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto_mayor",
+          "grupoEtarioEtiqueta": "Adulto/a mayor",
+          "edad": 78,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 8,
+          "afiliadoId": "p-0036",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": null,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 9,
+          "afiliadoId": "p-0039",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "nino",
+          "grupoEtarioEtiqueta": "Niño/a",
+          "edad": 10,
+          "tipoAfiliadoEtiqueta": "Ayuda social"
+        },
+        {
+          "n": 10,
+          "afiliadoId": "p-0020",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 18,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 11,
+          "afiliadoId": "p-0023",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto_mayor",
+          "grupoEtarioEtiqueta": "Adulto/a mayor",
+          "edad": 78,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 12,
+          "afiliadoId": "p-0009",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "nino",
+          "grupoEtarioEtiqueta": "Niño/a",
+          "edad": 11,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 13,
+          "afiliadoId": "p-0032",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "nino",
+          "grupoEtarioEtiqueta": "Niño/a",
+          "edad": 3,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 14,
+          "afiliadoId": "p-0029",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 35,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 15,
+          "afiliadoId": "p-0019",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "nino",
+          "grupoEtarioEtiqueta": "Niño/a",
+          "edad": 11,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 16,
+          "afiliadoId": "p-0030",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 35,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 17,
+          "afiliadoId": "p-0034",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 59,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 18,
+          "afiliadoId": "p-0017",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "nino",
+          "grupoEtarioEtiqueta": "Niño/a",
+          "edad": 3,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 19,
+          "afiliadoId": "p-0022",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adolescente",
+          "grupoEtarioEtiqueta": "Adolescente",
+          "edad": 17,
+          "tipoAfiliadoEtiqueta": "Ayuda social"
+        },
+        {
+          "n": 20,
+          "afiliadoId": "p-0024",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 34,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 21,
+          "afiliadoId": "p-0001",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adolescente",
+          "grupoEtarioEtiqueta": "Adolescente",
+          "edad": null,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 22,
+          "afiliadoId": "p-0002",
+          "tipoDocumento": "CE",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 59,
+          "tipoAfiliadoEtiqueta": "Ayuda social"
+        },
+        {
+          "n": 23,
+          "afiliadoId": "p-0005",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 59,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 24,
+          "afiliadoId": "p-0025",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 35,
+          "tipoAfiliadoEtiqueta": "Ayuda social"
+        },
+        {
+          "n": 25,
+          "afiliadoId": "p-0021",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adolescente",
+          "grupoEtarioEtiqueta": "Adolescente",
+          "edad": null,
+          "tipoAfiliadoEtiqueta": "Ayuda social"
+        },
+        {
+          "n": 26,
+          "afiliadoId": "p-0015",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adolescente",
+          "grupoEtarioEtiqueta": "Adolescente",
+          "edad": 17,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 27,
+          "afiliadoId": "p-0012",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto_mayor",
+          "grupoEtarioEtiqueta": "Adulto/a mayor",
+          "edad": 78,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 28,
+          "afiliadoId": "p-0038",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto_mayor",
+          "grupoEtarioEtiqueta": "Adulto/a mayor",
+          "edad": 78,
+          "tipoAfiliadoEtiqueta": "Ayuda social"
+        },
+        {
+          "n": 29,
+          "afiliadoId": "p-0028",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "nino",
+          "grupoEtarioEtiqueta": "Niño/a",
+          "edad": 11,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 30,
+          "afiliadoId": "p-0026",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "nino",
+          "grupoEtarioEtiqueta": "Niño/a",
+          "edad": null,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 31,
+          "afiliadoId": "p-0027",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto_mayor",
+          "grupoEtarioEtiqueta": "Adulto/a mayor",
+          "edad": 78,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 32,
+          "afiliadoId": "p-0037",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto_mayor",
+          "grupoEtarioEtiqueta": "Adulto/a mayor",
+          "edad": 60,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 33,
+          "afiliadoId": "p-0016",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto_mayor",
+          "grupoEtarioEtiqueta": "Adulto/a mayor",
+          "edad": 60,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 34,
+          "afiliadoId": "p-0033",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 35,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 35,
+          "afiliadoId": "p-0040",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto_mayor",
+          "grupoEtarioEtiqueta": "Adulto/a mayor",
+          "edad": 78,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 36,
+          "afiliadoId": "p-0004",
+          "tipoDocumento": "DNI",
+          "grupoEtario": null,
+          "grupoEtarioEtiqueta": "",
+          "edad": null,
+          "tipoAfiliadoEtiqueta": "Ayuda social"
+        },
+        {
+          "n": 37,
+          "afiliadoId": "p-0018",
+          "tipoDocumento": "DNI",
+          "grupoEtario": "adulto",
+          "grupoEtarioEtiqueta": "Adulto/a",
+          "edad": 35,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        },
+        {
+          "n": 38,
+          "afiliadoId": "p-0003",
+          "tipoDocumento": "CE",
+          "grupoEtario": "adolescente",
+          "grupoEtarioEtiqueta": "Adolescente",
+          "edad": 17,
+          "tipoAfiliadoEtiqueta": "Habitual"
+        }
+      ],
+      "resumenEtario": {
+        "nino": 8,
+        "adolescente": 5,
+        "adulto": 14,
+        "adulto_mayor": 9,
+        "sin_dato": 2
+      },
+      "activos": 38
+    },
+    "porDia": [
+      {
+        "id": "d-0041",
+        "fecha": "2026-08-01",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 9,
+          "total": 30,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7200
+      },
+      {
+        "id": "d-0042",
+        "fecha": "2026-08-03",
+        "desglose": {
+          "normal": 19,
+          "ayudaSocial": 8,
+          "total": 27,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6500
+      },
+      {
+        "id": "d-0043",
+        "fecha": "2026-08-04",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 6,
+          "total": 27,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6900
+      },
+      {
+        "id": "d-0044",
+        "fecha": "2026-08-05",
+        "desglose": {
+          "normal": 90,
+          "ayudaSocial": 3,
+          "total": 93,
+          "origen": "legado",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 27300
+      },
+      {
+        "id": "d-0045",
+        "fecha": "2026-08-06",
+        "desglose": {
+          "normal": 19,
+          "ayudaSocial": 6,
+          "total": 25,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6300
+      },
+      {
+        "id": "d-0046",
+        "fecha": "2026-08-07",
+        "desglose": {
+          "normal": 26,
+          "ayudaSocial": 6,
+          "total": 32,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": null
+      },
+      {
+        "id": "d-0047",
+        "fecha": "2026-08-08",
+        "desglose": {
+          "normal": 23,
+          "ayudaSocial": 5,
+          "total": 28,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7400
+      },
+      {
+        "id": "d-0048",
+        "fecha": "2026-08-10",
+        "desglose": {
+          "normal": 22,
+          "ayudaSocial": 8,
+          "total": 30,
+          "origen": "asistencia",
+          "sinInscribir": 1
+        },
+        "recaudacionCent": 7400
+      },
+      {
+        "id": "d-0049",
+        "fecha": "2026-08-11",
+        "desglose": {
+          "normal": 16,
+          "ayudaSocial": 5,
+          "total": 21,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 5300
+      },
+      {
+        "id": "d-0050",
+        "fecha": "2026-08-12",
+        "desglose": {
+          "normal": 19,
+          "ayudaSocial": 8,
+          "total": 27,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6500
+      },
+      {
+        "id": "d-0051",
+        "fecha": "2026-08-13",
+        "desglose": {
+          "normal": 17,
+          "ayudaSocial": 6,
+          "total": 23,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 5700
+      },
+      {
+        "id": "d-0052",
+        "fecha": "2026-08-14",
+        "desglose": {
+          "normal": 20,
+          "ayudaSocial": 6,
+          "total": 26,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6600
+      },
+      {
+        "id": "d-0053",
+        "fecha": "2026-08-15",
+        "desglose": {
+          "normal": 25,
+          "ayudaSocial": 5,
+          "total": 30,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 9500
+      },
+      {
+        "id": "d-0054",
+        "fecha": "2026-08-17",
+        "desglose": {
+          "normal": 17,
+          "ayudaSocial": 7,
+          "total": 24,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 5800
+      },
+      {
+        "id": "d-0055",
+        "fecha": "2026-08-18",
+        "desglose": {
+          "normal": 17,
+          "ayudaSocial": 5,
+          "total": 22,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 5600
+      },
+      {
+        "id": "d-0056",
+        "fecha": "2026-08-19",
+        "desglose": {
+          "normal": 23,
+          "ayudaSocial": 6,
+          "total": 29,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7500
+      },
+      {
+        "id": "d-0057",
+        "fecha": "2026-08-20",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 6,
+          "total": 27,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6900
+      },
+      {
+        "id": "d-0058",
+        "fecha": "2026-08-21",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 9,
+          "total": 30,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7200
+      },
+      {
+        "id": "d-0059",
+        "fecha": "2026-08-22",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 6,
+          "total": 27,
+          "origen": "asistencia",
+          "sinInscribir": 2
+        },
+        "recaudacionCent": 6900
+      },
+      {
+        "id": "d-0060",
+        "fecha": "2026-08-24",
+        "desglose": {
+          "normal": 19,
+          "ayudaSocial": 4,
+          "total": 23,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6100
+      },
+      {
+        "id": "d-0061",
+        "fecha": "2026-08-25",
+        "desglose": {
+          "normal": 19,
+          "ayudaSocial": 9,
+          "total": 28,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6600
+      },
+      {
+        "id": "d-0062",
+        "fecha": "2026-08-26",
+        "desglose": {
+          "normal": 17,
+          "ayudaSocial": 9,
+          "total": 26,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6000
+      },
+      {
+        "id": "d-0063",
+        "fecha": "2026-08-27",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 7,
+          "total": 28,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": null
+      },
+      {
+        "id": "d-0064",
+        "fecha": "2026-08-28",
+        "desglose": {
+          "normal": 17,
+          "ayudaSocial": 8,
+          "total": 25,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 5900
+      },
+      {
+        "id": "d-0065",
+        "fecha": "2026-08-29",
+        "desglose": {
+          "normal": 24,
+          "ayudaSocial": 5,
+          "total": 29,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7700
+      },
+      {
+        "id": "d-0066",
+        "fecha": "2026-08-31",
+        "desglose": {
+          "normal": 22,
+          "ayudaSocial": 5,
+          "total": 27,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7100
+      },
+      {
+        "id": "d-0067",
+        "fecha": "2026-09-01",
+        "desglose": {
+          "normal": 27,
+          "ayudaSocial": 4,
+          "total": 31,
+          "origen": "legado",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 8500
+      },
+      {
+        "id": "d-0068",
+        "fecha": "2026-09-02",
+        "desglose": {
+          "normal": 17,
+          "ayudaSocial": 5,
+          "total": 22,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 5600
+      },
+      {
+        "id": "d-0069",
+        "fecha": "2026-09-03",
+        "desglose": {
+          "normal": 19,
+          "ayudaSocial": 5,
+          "total": 24,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6200
+      },
+      {
+        "id": "d-0070",
+        "fecha": "2026-09-04",
+        "desglose": {
+          "normal": 18,
+          "ayudaSocial": 6,
+          "total": 24,
+          "origen": "asistencia",
+          "sinInscribir": 2
+        },
+        "recaudacionCent": 6000
+      },
+      {
+        "id": "d-0071",
+        "fecha": "2026-09-05",
+        "desglose": {
+          "normal": 25,
+          "ayudaSocial": 6,
+          "total": 31,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 8100
+      },
+      {
+        "id": "d-0072",
+        "fecha": "2026-09-07",
+        "desglose": {
+          "normal": 25,
+          "ayudaSocial": 3,
+          "total": 28,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7800
+      },
+      {
+        "id": "d-0073",
+        "fecha": "2026-09-08",
+        "desglose": {
+          "normal": 20,
+          "ayudaSocial": 8,
+          "total": 28,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6800
+      },
+      {
+        "id": "d-0074",
+        "fecha": "2026-09-09",
+        "desglose": {
+          "normal": 22,
+          "ayudaSocial": 7,
+          "total": 29,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7300
+      },
+      {
+        "id": "d-0075",
+        "fecha": "2026-09-10",
+        "desglose": {
+          "normal": 19,
+          "ayudaSocial": 5,
+          "total": 24,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6200
+      },
+      {
+        "id": "d-0076",
+        "fecha": "2026-09-11",
+        "desglose": {
+          "normal": 20,
+          "ayudaSocial": 7,
+          "total": 27,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6700
+      },
+      {
+        "id": "d-0077",
+        "fecha": "2026-09-12",
+        "desglose": {
+          "normal": 26,
+          "ayudaSocial": 3,
+          "total": 29,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 8100
+      },
+      {
+        "id": "d-0078",
+        "fecha": "2026-09-14",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 6,
+          "total": 27,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6900
+      },
+      {
+        "id": "d-0079",
+        "fecha": "2026-09-15",
+        "desglose": {
+          "normal": 17,
+          "ayudaSocial": 7,
+          "total": 24,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 5800
+      },
+      {
+        "id": "d-0080",
+        "fecha": "2026-09-16",
+        "desglose": {
+          "normal": 19,
+          "ayudaSocial": 8,
+          "total": 27,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": null
+      },
+      {
+        "id": "d-0081",
+        "fecha": "2026-09-17",
+        "desglose": {
+          "normal": 25,
+          "ayudaSocial": 7,
+          "total": 32,
+          "origen": "asistencia",
+          "sinInscribir": 3
+        },
+        "recaudacionCent": 8200
+      },
+      {
+        "id": "d-0082",
+        "fecha": "2026-09-18",
+        "desglose": {
+          "normal": 18,
+          "ayudaSocial": 7,
+          "total": 25,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6100
+      },
+      {
+        "id": "d-0083",
+        "fecha": "2026-09-19",
+        "desglose": {
+          "normal": 16,
+          "ayudaSocial": 7,
+          "total": 23,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 5500
+      },
+      {
+        "id": "d-0084",
+        "fecha": "2026-09-21",
+        "desglose": {
+          "normal": 20,
+          "ayudaSocial": 6,
+          "total": 26,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 8400
+      },
+      {
+        "id": "d-0085",
+        "fecha": "2026-09-22",
+        "desglose": {
+          "normal": 18,
+          "ayudaSocial": 6,
+          "total": 24,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6000
+      },
+      {
+        "id": "d-0086",
+        "fecha": "2026-09-23",
+        "desglose": {
+          "normal": 24,
+          "ayudaSocial": 7,
+          "total": 31,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7900
+      },
+      {
+        "id": "d-0087",
+        "fecha": "2026-09-24",
+        "desglose": {
+          "normal": 18,
+          "ayudaSocial": 7,
+          "total": 25,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6100
+      },
+      {
+        "id": "d-0088",
+        "fecha": "2026-09-25",
+        "desglose": {
+          "normal": 24,
+          "ayudaSocial": 7,
+          "total": 31,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7900
+      },
+      {
+        "id": "d-0089",
+        "fecha": "2026-09-26",
+        "desglose": {
+          "normal": 20,
+          "ayudaSocial": 5,
+          "total": 25,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6500
+      },
+      {
+        "id": "d-0090",
+        "fecha": "2026-09-28",
+        "desglose": {
+          "normal": 30,
+          "ayudaSocial": 7,
+          "total": 37,
+          "origen": "legado",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 9700
+      },
+      {
+        "id": "d-0091",
+        "fecha": "2026-09-29",
+        "desglose": {
+          "normal": 19,
+          "ayudaSocial": 8,
+          "total": 27,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6500
+      },
+      {
+        "id": "d-0092",
+        "fecha": "2026-09-30",
+        "desglose": {
+          "normal": 20,
+          "ayudaSocial": 3,
+          "total": 23,
+          "origen": "asistencia",
+          "sinInscribir": 2
+        },
+        "recaudacionCent": 6300
+      },
+      {
+        "id": "d-0093",
+        "fecha": "2026-10-01",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 5,
+          "total": 26,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6800
+      },
+      {
+        "id": "d-0094",
+        "fecha": "2026-10-02",
+        "desglose": {
+          "normal": 22,
+          "ayudaSocial": 7,
+          "total": 29,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7300
+      },
+      {
+        "id": "d-0095",
+        "fecha": "2026-10-03",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 6,
+          "total": 27,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6900
+      },
+      {
+        "id": "d-0096",
+        "fecha": "2026-10-05",
+        "desglose": {
+          "normal": 20,
+          "ayudaSocial": 5,
+          "total": 25,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6500
+      },
+      {
+        "id": "d-0097",
+        "fecha": "2026-10-06",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 5,
+          "total": 26,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": null
+      },
+      {
+        "id": "d-0098",
+        "fecha": "2026-10-07",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 4,
+          "total": 25,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6700
+      },
+      {
+        "id": "d-0099",
+        "fecha": "2026-10-08",
+        "desglose": {
+          "normal": 22,
+          "ayudaSocial": 9,
+          "total": 31,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7500
+      },
+      {
+        "id": "d-0100",
+        "fecha": "2026-10-09",
+        "desglose": {
+          "normal": 19,
+          "ayudaSocial": 5,
+          "total": 24,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6200
+      },
+      {
+        "id": "d-0101",
+        "fecha": "2026-10-10",
+        "desglose": {
+          "normal": 18,
+          "ayudaSocial": 5,
+          "total": 23,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 5900
+      },
+      {
+        "id": "d-0102",
+        "fecha": "2026-10-12",
+        "desglose": {
+          "normal": 23,
+          "ayudaSocial": 9,
+          "total": 32,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7800
+      },
+      {
+        "id": "d-0103",
+        "fecha": "2026-10-13",
+        "desglose": {
+          "normal": 24,
+          "ayudaSocial": 7,
+          "total": 31,
+          "origen": "asistencia",
+          "sinInscribir": 3
+        },
+        "recaudacionCent": 7900
+      },
+      {
+        "id": "d-0104",
+        "fecha": "2026-10-14",
+        "desglose": {
+          "normal": 20,
+          "ayudaSocial": 3,
+          "total": 23,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6300
+      },
+      {
+        "id": "d-0105",
+        "fecha": "2026-10-15",
+        "desglose": {
+          "normal": 24,
+          "ayudaSocial": 6,
+          "total": 30,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7800
+      },
+      {
+        "id": "d-0106",
+        "fecha": "2026-10-16",
+        "desglose": {
+          "normal": 22,
+          "ayudaSocial": 8,
+          "total": 30,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7400
+      },
+      {
+        "id": "d-0107",
+        "fecha": "2026-10-17",
+        "desglose": {
+          "normal": 21,
+          "ayudaSocial": 9,
+          "total": 30,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 7200
+      },
+      {
+        "id": "d-0108",
+        "fecha": "2026-10-19",
+        "desglose": {
+          "normal": 19,
+          "ayudaSocial": 10,
+          "total": 29,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 6700
+      },
+      {
+        "id": "d-0109",
+        "fecha": "2026-08-27",
+        "desglose": {
+          "normal": 0,
+          "ayudaSocial": 0,
+          "total": 0,
+          "origen": "asistencia",
+          "sinInscribir": 0
+        },
+        "recaudacionCent": 0
+      }
+    ],
+    "hallazgosAfiliados": [
+      {
+        "severidad": "error",
+        "campo": "afiliado.p-0003",
+        "mensaje": "El carné de extranjería debe tener entre 8 y 12 caracteres.",
+        "falta": false
+      },
+      {
+        "severidad": "error",
+        "campo": "afiliado.p-0004",
+        "mensaje": "Falta el grupo de edad. Elígelo, o anota la fecha de nacimiento y sale solo.",
+        "falta": true
+      },
+      {
+        "severidad": "error",
+        "campo": "afiliado.p-0005",
+        "mensaje": "El documento 00000006 ya está registrado en Ávila de la Cruz Inés.",
+        "falta": false
+      },
+      {
+        "severidad": "error",
+        "campo": "afiliado.p-0006",
+        "mensaje": "El documento 00000006 ya está registrado en Núñez de la Cruz Ñusta.",
+        "falta": false
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "afiliado.p-0007",
+        "mensaje": "Ya hay otra persona registrada con el mismo nombre completo.",
+        "falta": false
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "afiliado.p-0008",
+        "mensaje": "Ya hay otra persona registrada con el mismo nombre completo.",
+        "falta": false
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "afiliado.p-0009",
+        "mensaje": "Estos datos vinieron de un escaneo y nadie los ha confirmado todavía.",
+        "falta": false
+      },
+      {
+        "severidad": "error",
+        "campo": "afiliado.p-0013",
+        "mensaje": "Falta indicar si es habitual o de ayuda social: de ahí sale su menú.",
+        "falta": true
+      },
+      {
+        "severidad": "error",
+        "campo": "afiliado.p-0014",
+        "mensaje": "La fecha de nacimiento está en el futuro.",
+        "falta": false
+      },
+      {
+        "severidad": "error",
+        "campo": "afiliado.p-0014",
+        "mensaje": "Falta el grupo de edad. Elígelo, o anota la fecha de nacimiento y sale solo.",
+        "falta": true
+      }
+    ],
+    "hallazgosAtenciones": [
+      {
+        "severidad": "advertencia",
+        "campo": "atencion.d-0044",
+        "mensaje": "Este día viene de la versión anterior: 93 raciones anotadas a mano, sin asistencia marcada. Siguen contando. Si quieres, marca la asistencia y pasarán a contarse de ahí.",
+        "falta": false
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "atencion.d-0044",
+        "mensaje": "Ese día cuenta 93 raciones y el padrón tenía 38 personas activas.",
+        "falta": false
+      },
+      {
+        "severidad": "error",
+        "campo": "atencion.d-0046",
+        "mensaje": "Falta el precio del menú normal de ese día. Puedes fijarlo más abajo, en «Precio del menú».",
+        "falta": true
+      },
+      {
+        "severidad": "error",
+        "campo": "atencion.d-0046",
+        "mensaje": "Falta el precio del menú de ayuda social de ese día. Puedes fijarlo más abajo, en «Precio del menú».",
+        "falta": true
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "atencion.d-0053",
+        "mensaje": "El menú de ayuda social cuesta más que el normal. Puede ser correcto; solo revísalo.",
+        "falta": false
+      },
+      {
+        "severidad": "error",
+        "campo": "atencion.d-0061",
+        "mensaje": "Hay una persona marcada dos veces en la asistencia de ese día.",
+        "falta": false
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "atencion.d-0062",
+        "mensaje": "La asistencia incluye a alguien que ya no está en el padrón.",
+        "falta": false
+      },
+      {
+        "severidad": "error",
+        "campo": "atencion.d-0063",
+        "mensaje": "Falta el precio del menú normal de ese día. Puedes fijarlo más abajo, en «Precio del menú».",
+        "falta": true
+      },
+      {
+        "severidad": "error",
+        "campo": "atencion.d-0063",
+        "mensaje": "Falta el precio del menú de ayuda social de ese día. Puedes fijarlo más abajo, en «Precio del menú».",
+        "falta": true
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "atencion.d-0063",
+        "mensaje": "Ya hay otro registro de atención con esta misma fecha.",
+        "falta": false
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "atencion.d-0066",
+        "mensaje": "Pérez Chávez Úrsula figura en la asistencia pero no estaba activa ese día.",
+        "falta": false
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "atencion.d-0067",
+        "mensaje": "Este día viene de la versión anterior: 31 raciones anotadas a mano, sin asistencia marcada. Siguen contando. Si quieres, marca la asistencia y pasarán a contarse de ahí.",
+        "falta": false
+      },
+      {
+        "severidad": "error",
+        "campo": "atencion.d-0080",
+        "mensaje": "Falta el precio del menú normal de ese día. Puedes fijarlo más abajo, en «Precio del menú».",
+        "falta": true
+      },
+      {
+        "severidad": "error",
+        "campo": "atencion.d-0080",
+        "mensaje": "Falta el precio del menú de ayuda social de ese día. Puedes fijarlo más abajo, en «Precio del menú».",
+        "falta": true
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "atencion.d-0084",
+        "mensaje": "El menú de ayuda social cuesta más que el normal. Puede ser correcto; solo revísalo.",
+        "falta": false
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "atencion.d-0090",
+        "mensaje": "Este día viene de la versión anterior: 37 raciones anotadas a mano, sin asistencia marcada. Siguen contando. Si quieres, marca la asistencia y pasarán a contarse de ahí.",
+        "falta": false
+      },
+      {
+        "severidad": "error",
+        "campo": "atencion.d-0097",
+        "mensaje": "Falta el precio del menú normal de ese día. Puedes fijarlo más abajo, en «Precio del menú».",
+        "falta": true
+      },
+      {
+        "severidad": "error",
+        "campo": "atencion.d-0097",
+        "mensaje": "Falta el precio del menú de ayuda social de ese día. Puedes fijarlo más abajo, en «Precio del menú».",
+        "falta": true
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "atencion.d-0109",
+        "mensaje": "Este día no tiene a nadie marcado en la asistencia, así que cuenta cero raciones.",
+        "falta": false
+      },
+      {
+        "severidad": "advertencia",
+        "campo": "atencion.d-0109",
+        "mensaje": "Ya hay otro registro de atención con esta misma fecha.",
+        "falta": false
+      }
+    ],
+    "conteo": {
+      "errores": 16,
+      "advertencias": 14
+    }
+  },
+  "rendiciones": [
+    {
+      "id": "r-0110",
+      "totales": {
+        "total": 115033,
+        "conSubsidio": 115033,
+        "aporte": 0
+      },
+      "gastoPorOrigen": {
+        "subsidio": 71367,
+        "ayuda_social": 6631,
+        "aporte_propio": 37035
+      },
+      "costoPorRacionCent": 163,
+      "descuadres": [
+        null,
+        null,
+        {
+          "esperado": 7910,
+          "declarado": 7960,
+          "diferencia": 50
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "hallazgos": [
+        {
+          "severidad": "advertencia",
+          "campo": "egreso.e-0113",
+          "mensaje": "Compra 3: cantidad × precio unitario da S/ 79.10, pero el monto total dice S/ 79.60. Revisa cuál de los tres números es el correcto; la app no cambia ninguno.",
+          "falta": false
+        },
+        {
+          "severidad": "advertencia",
+          "campo": "egreso.e-0115",
+          "mensaje": "Compra 5: la boleta 0001-100 ya figura en la compra 1.",
+          "falta": false
+        },
+        {
+          "severidad": "advertencia",
+          "campo": "egreso.e-0116",
+          "mensaje": "Compra 6: los RUC peruanos suelen empezar en 10, 15, 17 o 20. Verifica el número.",
+          "falta": false
+        },
+        {
+          "severidad": "error",
+          "campo": "egreso.e-0117",
+          "mensaje": "Compra 7: la fecha es anterior a la asignación del subsidio.",
+          "falta": false
+        },
+        {
+          "severidad": "advertencia",
+          "campo": "egreso.e-0117",
+          "mensaje": "Compra 7: la fecha cae fuera del periodo que se rinde.",
+          "falta": false
+        },
+        {
+          "severidad": "error",
+          "campo": "egreso.e-0118",
+          "mensaje": "Compra 8: falta el RUC del proveedor.",
+          "falta": true
+        },
+        {
+          "severidad": "advertencia",
+          "campo": "totales",
+          "mensaje": "Queda S/ 349.67 del subsidio sin rendir. El formato no tiene un renglón para ese saldo: consulta en la Municipalidad qué corresponde hacer.",
+          "falta": false
+        },
+        {
+          "severidad": "advertencia",
+          "campo": "egresos",
+          "mensaje": "Hay 19 compras y la hoja del formato tiene 17 filas. Harán falta dos hojas.",
+          "falta": false
+        }
+      ],
+      "conteo": {
+        "errores": 2,
+        "advertencias": 6
+      }
+    },
+    {
+      "id": "r-0130",
+      "totales": {
+        "total": 20000,
+        "conSubsidio": 20000,
+        "aporte": 0
+      },
+      "gastoPorOrigen": {
+        "subsidio": 5000,
+        "ayuda_social": 15000,
+        "aporte_propio": 0
+      },
+      "costoPorRacionCent": 58,
+      "descuadres": [
+        null,
+        null,
+        null
+      ],
+      "hallazgos": [
+        {
+          "severidad": "advertencia",
+          "campo": "totales",
+          "mensaje": "Queda S/ 600.00 del subsidio sin rendir. El formato no tiene un renglón para ese saldo: consulta en la Municipalidad qué corresponde hacer.",
+          "falta": false
+        },
+        {
+          "severidad": "advertencia",
+          "campo": "nombreTesorera",
+          "mensaje": "Falta la tesorera. El formato lleva dos firmas: presidenta y tesorera.",
+          "falta": true
+        }
+      ],
+      "conteo": {
+        "errores": 0,
+        "advertencias": 2
+      }
+    }
+  ],
+  "sugerenciasRuc": {
+    "Mercado Central": {
+      "valor": "10000000007",
+      "procedencia": "de tu compra del 18-09-26"
+    },
+    "Avícola San Pedro": {
+      "valor": "10000000000",
+      "procedencia": "de tu compra del 20-09-26"
+    },
+    "Bodega Luz": {
+      "valor": "10000000008",
+      "procedencia": "de tu compra del 19-09-26"
+    }
+  },
+  "descripcionesUsadas": [
+    {
+      "valor": "Verduras",
+      "procedencia": "usada 4 vez/veces antes"
+    },
+    {
+      "valor": "Aceite",
+      "procedencia": "usada 4 vez/veces antes"
+    },
+    {
+      "valor": "Saco de papa",
+      "procedencia": "usada 4 vez/veces antes"
+    },
+    {
+      "valor": "Arroz",
+      "procedencia": "usada 3 vez/veces antes"
+    },
+    {
+      "valor": "Pollo",
+      "procedencia": "usada 3 vez/veces antes"
+    },
+    {
+      "valor": "Gas",
+      "procedencia": "usada 2 vez/veces antes"
+    },
+    {
+      "valor": "Carne",
+      "procedencia": "usada 1 vez/veces antes"
+    }
+  ],
+  "calendario": {
+    "alerta": {
+      "configurado": true,
+      "fechaLimite": "2026-10-15",
+      "diasRestantes": -5,
+      "nivel": "vencida",
+      "estado": "pendiente",
+      "mensaje": "La entrega del 15-10-26 venció hace 5 días y sigue sin marcarse como entregada."
+    },
+    "agenda": [
+      {
+        "fechaLimite": "2026-10-15",
+        "diasRestantes": -5,
+        "nivel": "vencida",
+        "estado": "pendiente"
+      },
+      {
+        "fechaLimite": "2026-11-15",
+        "diasRestantes": 26,
+        "nivel": "lejana",
+        "estado": "pendiente"
+      },
+      {
+        "fechaLimite": "2026-12-15",
+        "diasRestantes": 56,
+        "nivel": "lejana",
+        "estado": "pendiente"
+      },
+      {
+        "fechaLimite": "2027-01-15",
+        "diasRestantes": 87,
+        "nivel": "lejana",
+        "estado": "pendiente"
+      },
+      {
+        "fechaLimite": "2027-02-15",
+        "diasRestantes": 118,
+        "nivel": "lejana",
+        "estado": "pendiente"
+      },
+      {
+        "fechaLimite": "2027-03-15",
+        "diasRestantes": 146,
+        "nivel": "lejana",
+        "estado": "pendiente"
+      },
+      {
+        "fechaLimite": "2027-04-15",
+        "diasRestantes": 177,
+        "nivel": "lejana",
+        "estado": "pendiente"
+      }
+    ],
+    "avisos": [
+      {
+        "id": 261115007,
+        "fecha": "2026-11-08",
+        "fechaEntrega": "2026-11-15",
+        "dias": 7,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 7 días para la entrega del 15-11-26."
+      },
+      {
+        "id": 261115003,
+        "fecha": "2026-11-12",
+        "fechaEntrega": "2026-11-15",
+        "dias": 3,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 3 días para la entrega del 15-11-26."
+      },
+      {
+        "id": 261115001,
+        "fecha": "2026-11-14",
+        "fechaEntrega": "2026-11-15",
+        "dias": 1,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Falta 1 día para la entrega del 15-11-26."
+      },
+      {
+        "id": 261115000,
+        "fecha": "2026-11-15",
+        "fechaEntrega": "2026-11-15",
+        "dias": 0,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Hoy vence la entrega del 15-11-26."
+      },
+      {
+        "id": 261215007,
+        "fecha": "2026-12-08",
+        "fechaEntrega": "2026-12-15",
+        "dias": 7,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 7 días para la entrega del 15-12-26."
+      },
+      {
+        "id": 261215003,
+        "fecha": "2026-12-12",
+        "fechaEntrega": "2026-12-15",
+        "dias": 3,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 3 días para la entrega del 15-12-26."
+      },
+      {
+        "id": 261215001,
+        "fecha": "2026-12-14",
+        "fechaEntrega": "2026-12-15",
+        "dias": 1,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Falta 1 día para la entrega del 15-12-26."
+      },
+      {
+        "id": 261215000,
+        "fecha": "2026-12-15",
+        "fechaEntrega": "2026-12-15",
+        "dias": 0,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Hoy vence la entrega del 15-12-26."
+      },
+      {
+        "id": 270115007,
+        "fecha": "2027-01-08",
+        "fechaEntrega": "2027-01-15",
+        "dias": 7,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 7 días para la entrega del 15-01-27."
+      },
+      {
+        "id": 270115003,
+        "fecha": "2027-01-12",
+        "fechaEntrega": "2027-01-15",
+        "dias": 3,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 3 días para la entrega del 15-01-27."
+      },
+      {
+        "id": 270115001,
+        "fecha": "2027-01-14",
+        "fechaEntrega": "2027-01-15",
+        "dias": 1,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Falta 1 día para la entrega del 15-01-27."
+      },
+      {
+        "id": 270115000,
+        "fecha": "2027-01-15",
+        "fechaEntrega": "2027-01-15",
+        "dias": 0,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Hoy vence la entrega del 15-01-27."
+      },
+      {
+        "id": 270215007,
+        "fecha": "2027-02-08",
+        "fechaEntrega": "2027-02-15",
+        "dias": 7,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 7 días para la entrega del 15-02-27."
+      },
+      {
+        "id": 270215003,
+        "fecha": "2027-02-12",
+        "fechaEntrega": "2027-02-15",
+        "dias": 3,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 3 días para la entrega del 15-02-27."
+      },
+      {
+        "id": 270215001,
+        "fecha": "2027-02-14",
+        "fechaEntrega": "2027-02-15",
+        "dias": 1,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Falta 1 día para la entrega del 15-02-27."
+      },
+      {
+        "id": 270215000,
+        "fecha": "2027-02-15",
+        "fechaEntrega": "2027-02-15",
+        "dias": 0,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Hoy vence la entrega del 15-02-27."
+      },
+      {
+        "id": 270315007,
+        "fecha": "2027-03-08",
+        "fechaEntrega": "2027-03-15",
+        "dias": 7,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 7 días para la entrega del 15-03-27."
+      },
+      {
+        "id": 270315003,
+        "fecha": "2027-03-12",
+        "fechaEntrega": "2027-03-15",
+        "dias": 3,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 3 días para la entrega del 15-03-27."
+      },
+      {
+        "id": 270315001,
+        "fecha": "2027-03-14",
+        "fechaEntrega": "2027-03-15",
+        "dias": 1,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Falta 1 día para la entrega del 15-03-27."
+      },
+      {
+        "id": 270315000,
+        "fecha": "2027-03-15",
+        "fechaEntrega": "2027-03-15",
+        "dias": 0,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Hoy vence la entrega del 15-03-27."
+      },
+      {
+        "id": 270415007,
+        "fecha": "2027-04-08",
+        "fechaEntrega": "2027-04-15",
+        "dias": 7,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 7 días para la entrega del 15-04-27."
+      },
+      {
+        "id": 270415003,
+        "fecha": "2027-04-12",
+        "fechaEntrega": "2027-04-15",
+        "dias": 3,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Faltan 3 días para la entrega del 15-04-27."
+      },
+      {
+        "id": 270415001,
+        "fecha": "2027-04-14",
+        "fechaEntrega": "2027-04-15",
+        "dias": 1,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Falta 1 día para la entrega del 15-04-27."
+      },
+      {
+        "id": 270415000,
+        "fecha": "2027-04-15",
+        "fechaEntrega": "2027-04-15",
+        "dias": 0,
+        "titulo": "Entrega del Formato B-1",
+        "texto": "Hoy vence la entrega del 15-04-27."
+      }
+    ],
+    "hallazgos": []
+  },
+  "config": {
+    "hallazgosPrecios": [],
+    "sugerencias": {
+      "tipoCentro": {
+        "valor": "olla_comun",
+        "procedencia": "de tu rendición del 01-10-26"
+      },
+      "nombreCentro": {
+        "valor": "Olla ficticia Los Ñandúes",
+        "procedencia": "de tu rendición del 01-10-26"
+      },
+      "codigoPca": {
+        "valor": "0000000001",
+        "procedencia": "de tu rendición del 01-10-26"
+      },
+      "nombrePresidenta": {
+        "valor": "Rosa Prueba Ficticia",
+        "procedencia": "de tu rendición del 01-10-26"
+      },
+      "dniPresidenta": {
+        "valor": "00000001",
+        "procedencia": "de tu rendición del 01-10-26"
+      },
+      "celular": {
+        "valor": "900000001",
+        "procedencia": "de tu rendición del 01-10-26"
+      },
+      "nombreTesorera": {
+        "valor": "Luz Prueba Ficticia",
+        "procedencia": "de tu rendición del 01-10-26"
+      },
+      "dniTesorera": {
+        "valor": "00000002",
+        "procedencia": "de tu rendición del 01-10-26"
+      }
+    }
+  }
+}

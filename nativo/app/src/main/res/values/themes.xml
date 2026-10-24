@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sin barra de acciones: la cabecera la dibuja Compose. El fondo de la
+         ventana es el de la app, para que no se vea un cuadro negro entre la
+         pantalla de inicio y la primera pantalla. -->
+    <style name="Theme.OllaConecta" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/fondo_app</item>
+        <item name="android:statusBarColor">#1b2e1e</item>
+        <item name="android:navigationBarColor">@color/fondo_app</item>
+    </style>
+    <!-- Pantalla de inicio (core-splashscreen): fondo verde de la marca, la
+         figura del ícono en un círculo blanco y, abajo, el logo de UTEC. -->
+    <style name="Theme.OllaConecta.Inicio" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#1b2e1e</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="windowSplashScreenIconBackgroundColor">#FFFFFF</item>
+        <item name="postSplashScreenTheme">@style/Theme.OllaConecta</item>
+    </style>
+</resources>

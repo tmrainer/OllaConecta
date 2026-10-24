@@ -7,6 +7,12 @@
 # Respaldos exportados por la app: contienen datos personales.
 *.json
 !web/js/*.json
+# Respaldo FICTICIO de las pruebas del núcleo Kotlin (datos inventados). Un
+# respaldo real nunca va en esa carpeta.
+!nativo/nucleo/src/test/resources/*.json
 
 # Firebase (nube/): sus .json sí van; google-services.json del APK sigue fuera.
 !nube/*.json
+
+# graphify
+graphify-out/
