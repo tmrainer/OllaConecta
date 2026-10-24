@@ -6,6 +6,10 @@
 // Cargar un padrón desde Excel y exportarlo llegan en una fase siguiente.
 package io.github.tmrainer.asistencia.ui.pantallas
 
+import io.github.tmrainer.asistencia.nucleo.dni.EstadoCampo
+import io.github.tmrainer.asistencia.nucleo.dni.CampoCruzado
+import io.github.tmrainer.asistencia.ui.camara.LecturaDni
+import io.github.tmrainer.asistencia.ui.camara.CamaraDni
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -360,10 +364,16 @@ fun PantallaInscribir(ctx: Contexto) {
     var mensajeOk by remember { mutableStateOf(false) }
     var confirmarNombre by remember { mutableStateOf<Afiliado?>(null) }
     var saliendo by remember { mutableStateOf(false) }
+    // Leído del DNI y todavía sin inscribir: el sexo, quién revisó y qué revisar.
+    var escaneo by remember { mutableStateOf<String?>(null) }
+    var verifica by remember { mutableStateOf("") }
+    var notaDni by remember { mutableStateOf<List<String>>(emptyList()) }
+    var avisoDni by remember { mutableStateOf("") }
+    var dudas by remember { mutableStateOf<List<Triple<String, List<String>, (String) -> Unit>>>(emptyList()) }
     val desplazamiento = rememberScrollState()
     val alcance = rememberCoroutineScope()
     val tieneFecha = esIso(nacimiento)
-    val hayDatos = listOf(paterno, materno, nombres, doc, nacimiento, tipo).any { it.isNotBlank() } || grupo != null
+    val hayDatos = listOf(paterno, materno, nombres, doc, nacimiento, tipo).any { it.isNotBlank() } || grupo != null || escaneo != null
 
     fun salir() { if (hayDatos) saliendo = true else ctx.volver() }
     BackHandler(enabled = hayDatos) { saliendo = true }
@@ -374,12 +384,44 @@ fun PantallaInscribir(ctx: Contexto) {
         apellidoPaterno = paterno.trim(), apellidoMaterno = materno.trim(), nombres = nombres.trim(),
         tipoDocumento = tipoDoc, numeroDocumento = doc.trim(), fechaNacimiento = nacimiento,
         grupoEtarioManual = if (tieneFecha) null else grupo, tipoAfiliado = tipo
-    )
+    ).let { a -> escaneo?.let { sexo -> a.copy(origenDato = "escaneo_dni", sexo = sexo, verificadoPor = verifica.trim()) } ?: a }
+
+    /**
+     * Llena el formulario con lo leído del DNI (llenarConDni de ui-personas.js).
+     * No inscribe: una letra dudosa queda vacía con sus opciones, y se dice qué revisar.
+     */
+    fun llenarConDni(l: LecturaDni) {
+        val m = l.mrz.campos
+        notaDni = emptyList(); dudas = emptyList(); avisoDni = ""
+        if (m.pais != "PER") { avisoDni = "No parece un DNI peruano. Escribe los datos a mano."; return }
+        tipoDoc = "dni"; doc = m.numeroDocumento; nacimiento = m.fechaNacimiento
+        val revisar = ArrayList<String>()
+        val ds = ArrayList<Triple<String, List<String>, (String) -> Unit>>()
+        fun nombre(etiqueta: String, cruce: CampoCruzado?, deMrz: String, poner: (String) -> Unit) {
+            when {
+                cruce == null -> { poner(deMrz); if (deMrz.isNotEmpty()) revisar.add("$etiqueta: viene sin tildes ni ñ.") }
+                cruce.estado == EstadoCampo.DUDOSO -> { poner(""); ds.add(Triple(etiqueta, cruce.opciones, poner)) }
+                else -> {
+                    poner(cruce.valor)
+                    if (cruce.estado == EstadoCampo.SIN_CONFIRMAR && cruce.valor.isNotEmpty()) revisar.add("$etiqueta: compáralo con el DNI.")
+                }
+            }
+        }
+        nombre("Apellido paterno", l.anverso?.apellidoPaterno, m.apellidos.joinToString(" ")) { paterno = it }
+        nombre("Apellido materno", l.anverso?.apellidoMaterno, "") { materno = it }
+        nombre("Nombres", l.anverso?.nombres, m.nombres) { nombres = it }
+        if (materno.isEmpty()) revisar.add("Apellido materno: escríbelo (no se leyó).")
+        escaneo = m.sexo
+        // Quien usa el teléfono es quien revisa: su nombre del perfil, editable.
+        if (verifica.isBlank()) verifica = ctx.preferencias.perfil.value.nombre
+        notaDni = revisar; dudas = ds
+    }
 
     fun inscribirDeVerdad(a: Afiliado) {
         estado.cambiarPadron { it.copy(afiliados = it.afiliados + a) }
         avisar("${nombreCompleto(a)} quedó inscrita. Puedes inscribir a otra persona.", ok = true)
         paterno = ""; materno = ""; nombres = ""; doc = ""; nacimiento = ""; grupo = null; tipo = ""
+        escaneo = null; notaDni = emptyList(); dudas = emptyList(); avisoDni = ""
         alcance.launch { desplazamiento.animateScrollTo(0) }
     }
 
@@ -392,6 +434,7 @@ fun PantallaInscribir(ctx: Contexto) {
         if (a.numeroDocumento.isEmpty()) faltan.add("número de documento")
         if (grupoEtario(a, hoyIso()) == null) faltan.add("grupo de edad")
         if (a.tipoAfiliado.isEmpty()) faltan.add("tipo")
+        if (escaneo != null && a.verificadoPor.isEmpty()) faltan.add("quién revisó los datos con el DNI")
         if (faltan.isNotEmpty()) { avisar("Falta: ${faltan.joinToString(", ")}."); return }
         // Lleno no es lo mismo que bien escrito: las mismas reglas que «Les faltan datos».
         val malEscritos = validarAfiliado(a, padron).filter { it.severidad == Severidad.ERROR }
@@ -413,6 +456,26 @@ fun PantallaInscribir(ctx: Contexto) {
             Modifier.weight(1f).fillMaxWidth().verticalScroll(desplazamiento).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, Medidas.e5)
         ) {
+            // ---- leer el DNI (en prueba) ----
+            Pista("En prueba: lee las tres líneas con «<» y los nombres del lado de la foto (en el DNI azul están en la misma cara). Revisa todo antes de inscribir.", Modifier.padding(bottom = Medidas.e2))
+            Boton("Leer el DNI con la cámara", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeer = ::llenarConDni) } }, icono = "camara")
+            if (avisoDni.isNotEmpty()) Text(avisoDni, style = tipos.chicoFuerte, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
+            if (escaneo != null) {
+                Text("Listo. Revisa los datos con el DNI en la mano.", style = tipos.textoFuerte, color = c.ok, modifier = Modifier.padding(top = Medidas.e3))
+                for ((etiqueta, opciones, poner) in dudas) {
+                    // No se elige sola: la persona toca la que coincide con el DNI.
+                    Text("$etiqueta: ¿cuál dice el DNI?", style = tipos.chicoFuerte, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
+                    Acciones {
+                        for (o in opciones) Boton(o, { poner(o); dudas = dudas.filter { it.first != etiqueta } }, diminuto = true)
+                    }
+                }
+                for (t in notaDni) Text("• $t", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 2.dp))
+                Spacer(Modifier.height(Medidas.e3))
+                Campo("Quién revisó los datos con el DNI", verifica, { verifica = it }, obligatorio = true, capitalizar = true)
+            }
+            Spacer(Modifier.height(Medidas.e4))
+            Separador()
+            Spacer(Modifier.height(Medidas.e4))
             Campo("Apellido paterno", paterno, { paterno = it }, obligatorio = true, capitalizar = true)
             Spacer(Modifier.height(Medidas.e3))
             Campo("Apellido materno", materno, { materno = it }, capitalizar = true)
@@ -450,6 +513,7 @@ fun PantallaInscribir(ctx: Contexto) {
             }
         }
     }
+
 
     if (saliendo) {
         AlertDialog(

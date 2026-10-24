@@ -8,6 +8,7 @@
 // abrir la pantalla: se crea cuando se marca a la primera persona.
 package io.github.tmrainer.asistencia.ui.pantallas
 
+import io.github.tmrainer.asistencia.ui.camara.CamaraDni
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -187,6 +188,27 @@ fun PantallaAsistencia(ctx: Contexto) {
         }
     }
 
+    // Pasar lista mostrando el DNI: la zona de texto del reverso (el número lleva
+    // dígito de control). Marca a quien está en el padrón; no inscribe ni guarda
+    // nada más del DNI.
+
+    /** Marca a la persona de ese DNI y devuelve qué pasó, para el visor. Lee el padrón de ahora, no el de cuando se abrió la cámara. */
+    fun marcarPorDni(dni: String): String {
+        val p = estado.padron.value
+        val persona = afiliadosActivos(p, hoy).firstOrNull { it.numeroDocumento.trim() == dni }
+        if (persona == null) {
+            val deBaja = p.afiliados.any { it.numeroDocumento.trim() == dni }
+            return if (deBaja) "Ese DNI está de baja en el padrón." else "Ese DNI no está en el padrón. Puedes inscribir a la persona en Padrón."
+        }
+        val nombre = nombreCompleto(persona)
+        val cfg = estado.config.value
+        val at = p.atenciones.firstOrNull { it.fecha == hoy }
+            ?: hoyNueva.copy(precioMenuNormalCent = cfg.precioMenuNormalCent, precioMenuAyudaSocialCent = cfg.precioMenuAyudaSocialCent)
+        if (at.asistencias.any { it.afiliadoId == persona.id }) return "Ya estaba en la lista de hoy: $nombre."
+        alternar(at, persona)
+        return "✓ Marcaste a $nombre"
+    }
+
     var diaAbierto by remember { mutableStateOf<String?>(null) }
     val periodoDefecto = remember { estado.periodoPorDefecto() }
     var inicio by remember { mutableStateOf(periodoDefecto.inicio) }
@@ -202,6 +224,9 @@ fun PantallaAsistencia(ctx: Contexto) {
             if (avisosAlmacen.isNotEmpty()) item { AvisoSistema(avisosAlmacen.joinToString(" "), Modifier.padding(bottom = Medidas.e4)) }
 
             item { Pista("Toca a quien vino. Las raciones se cuentan solas.", Modifier.padding(bottom = Medidas.e3)) }
+            if (activos.isNotEmpty()) item {
+                Boton("Pasar lista leyendo el DNI", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeerDni = ::marcarPorDni) } }, Modifier.padding(bottom = Medidas.e3), icono = "camara")
+            }
 
             if (activos.isEmpty()) {
                 item {

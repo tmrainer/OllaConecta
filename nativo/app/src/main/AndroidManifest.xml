@@ -9,6 +9,11 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Leer el DNI y los QR con la cámara de atrás. Sin cámara, la app funciona
+         igual: se escribe a mano. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+
     <!-- Leer en voz alta (Voz.kt): Android 11+ solo deja ver el motor de voz si se declara. -->
     <queries>
         <intent>
@@ -38,6 +43,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- El reconocimiento de texto (la MRZ del DNI) y de códigos (los QR) los
+             instalan los servicios de Google Play una sola vez; la app no se conecta a nada. -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="ocr,barcode" />
 
         <receiver android:name=".ReceptorAvisos" android:exported="false">
             <intent-filter>

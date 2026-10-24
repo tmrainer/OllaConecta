@@ -4,7 +4,9 @@
 // anota lo que se lee en voz alta (Lectura); el menú ⋮ o el botón 🔊 lo leen.
 package io.github.tmrainer.asistencia.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -103,6 +106,13 @@ class Contexto(
     val voz: Voz,
     val abrirBienvenida: () -> Unit
 ) {
+    /** Lo que se muestra sobre toda la app (la cámara): tapa también el menú de abajo. */
+    var capa by mutableStateOf<(@Composable () -> Unit)?>(null)
+        private set
+
+    fun abrirCapa(contenido: @Composable () -> Unit) { capa = contenido }
+    fun cerrarCapa() { capa = null }
+
     /** La Lectura de cada pantalla abierta, por su entrada en la navegación. */
     internal val lecturas = HashMap<String, Lectura>()
 
@@ -168,6 +178,13 @@ fun App(estado: Estado, preferencias: Preferencias, voz: Voz, avisoInicial: Stri
                 }
                 AvisoAbajo(avisos, Modifier.align(Alignment.BottomCenter).padding(bottom = 68.dp + Medidas.e3).windowInsetsPadding(WindowInsets.navigationBars))
                 if (bienvenida) Bienvenida(ctx) { bienvenida = false }
+                ctx.capa?.let { contenido ->
+                    // Los toques no pasan a la pantalla de abajo.
+                    Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { } }) {
+                        BackHandler { ctx.cerrarCapa() }
+                        contenido()
+                    }
+                }
             }
         }
     }
