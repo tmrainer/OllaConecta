@@ -47,6 +47,7 @@ import io.github.tmrainer.asistencia.nucleo.respaldo.leerRespaldo
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
+import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.Campo
@@ -143,6 +144,7 @@ fun PantallaDatos(ctx: Contexto) {
                 dias == 0 -> "Tu última copia es de hoy."
                 else -> "Tu última copia es de hace ${cuantos(dias, "día")}."
             }
+            ParaLeer(textoUltima)
             Text(textoUltima, style = if (dias == null || dias >= 14) tipos.textoFuerte else tipos.texto, color = if (dias == null || dias >= 14) c.aviso else c.tinta, modifier = Modifier.padding(bottom = Medidas.e3))
             Acciones {
                 Boton("Guardar una copia", { guardarCopia(null) })
@@ -172,6 +174,7 @@ fun PantallaDatos(ctx: Contexto) {
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Qué va en la copia")
+            ParaLeer("Sí va: el padrón, la asistencia, el formato B-1 y las entregas. No va: tu perfil (quién usa este teléfono), la letra y el modo.")
             Text("Sí va: el padrón, la asistencia, el formato B-1 y las entregas.", style = tipos.texto, color = c.tinta)
             Text("No va: tu perfil (quién usa este teléfono), la letra y el modo. Son de este teléfono: en otro, se ponen de nuevo en Ajustes.", style = tipos.texto, color = c.tinta, modifier = Modifier.padding(top = Medidas.e2))
 

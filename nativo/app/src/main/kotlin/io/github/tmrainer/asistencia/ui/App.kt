@@ -1,6 +1,7 @@
 // App.kt — la cáscara: tema, navegación, cabecera con el menú ⋮, el menú de
 // abajo (ícono y palabra, la sección actual con una píldora) y el aviso de
-// abajo con «Deshacer». Las pantallas van en ui/pantallas.
+// abajo con «Deshacer». Las pantallas van en ui/pantallas. Cada pantalla
+// anota lo que se lee en voz alta (Lectura); el menú ⋮ o el botón 🔊 lo leen.
 package io.github.tmrainer.asistencia.ui
 
 import androidx.compose.foundation.background
@@ -30,11 +31,13 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,17 +49,23 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.tmrainer.asistencia.Preferencias
+import io.github.tmrainer.asistencia.Voz
 import io.github.tmrainer.asistencia.nucleo.estado.Estado
 import io.github.tmrainer.asistencia.ui.componentes.AvisoAbajo
 import io.github.tmrainer.asistencia.ui.componentes.Avisador
 import io.github.tmrainer.asistencia.ui.componentes.Icono
+import io.github.tmrainer.asistencia.ui.componentes.Lectura
 import io.github.tmrainer.asistencia.ui.componentes.LocalAvisos
+import io.github.tmrainer.asistencia.ui.componentes.LocalLectura
+import io.github.tmrainer.asistencia.ui.componentes.TituloParaLeer
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaAjustes
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaAsistencia
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaB1
@@ -91,8 +100,23 @@ class Contexto(
     val preferencias: Preferencias,
     val nav: NavHostController,
     val avisos: Avisador,
+    val voz: Voz,
     val abrirBienvenida: () -> Unit
 ) {
+    /** La Lectura de cada pantalla abierta, por su entrada en la navegación. */
+    internal val lecturas = HashMap<String, Lectura>()
+
+    /** Dice un texto con la voz del teléfono; si no puede, lo avisa abajo. */
+    fun decir(texto: String) {
+        voz.decir(texto) { avisos.mostrar("Este teléfono no puede leer en voz alta.") }
+    }
+
+    /** Lee la pantalla de arriba: su título y lo que marcó con ParaLeer. */
+    fun leerPantalla() {
+        val lectura = nav.currentBackStackEntry?.id?.let { lecturas[it] } ?: return
+        decir(lectura.texto())
+    }
+
     fun ir(ruta: Ruta, argumento: String? = null) {
         val destino = if (argumento != null) "${ruta.ruta}?a=$argumento" else ruta.ruta
         nav.navigate(destino) {
@@ -103,33 +127,40 @@ class Contexto(
 }
 
 @Composable
-fun App(estado: Estado, preferencias: Preferencias, avisoInicial: String? = null) {
+fun App(estado: Estado, preferencias: Preferencias, voz: Voz, avisoInicial: String? = null, abrir: MutableStateFlow<String?>? = null) {
     val tema by preferencias.tema.collectAsStateWithLifecycle()
     val letra by preferencias.letra.collectAsStateWithLifecycle()
     TemaOlla(tema, letra) {
         val nav = rememberNavController()
         val avisos = remember { Avisador() }
         var bienvenida by remember { mutableStateOf(false) }
-        val ctx = remember(nav) { Contexto(estado, preferencias, nav, avisos) { bienvenida = true } }
+        val ctx = remember(nav) { Contexto(estado, preferencias, nav, avisos, voz) { bienvenida = true } }
         val entrada by nav.currentBackStackEntryAsState()
         val rutaActual = entrada?.destination?.route?.substringBefore("?") ?: Ruta.INICIO.ruta
         val c = colores
         LaunchedEffect(avisoInicial) { avisoInicial?.let { avisos.mostrar(it) } }
+        // Tocar un aviso del teléfono abre su pantalla (MainActivity deja la ruta en `abrir`).
+        if (abrir != null) LaunchedEffect(abrir) {
+            abrir.collect { destino ->
+                Ruta.values().firstOrNull { it.ruta == destino }?.let { ctx.ir(it) }
+                if (destino != null) abrir.value = null
+            }
+        }
 
         CompositionLocalProvider(LocalAvisos provides avisos) {
             Box(Modifier.fillMaxSize().background(c.fondo)) {
                 Column(Modifier.fillMaxSize()) {
                     Box(Modifier.weight(1f)) {
                         NavHost(nav, startDestination = Ruta.INICIO.ruta) {
-                            composable(Ruta.INICIO.ruta) { PantallaInicio(ctx) }
-                            composable(Ruta.ASISTENCIA.ruta) { PantallaAsistencia(ctx) }
-                            composable(Ruta.PADRON.ruta) { PantallaPadron(ctx) }
-                            composable(Ruta.INSCRIBIR.ruta) { PantallaInscribir(ctx) }
-                            composable("${Ruta.B1.ruta}?a={a}") { PantallaB1(ctx, it.arguments?.getString("a")) }
-                            composable(Ruta.B1.ruta) { PantallaB1(ctx, null) }
-                            composable(Ruta.ENTREGAS.ruta) { PantallaEntregas(ctx) }
-                            composable(Ruta.DATOS.ruta) { PantallaDatos(ctx) }
-                            composable(Ruta.AJUSTES.ruta) { PantallaAjustes(ctx) }
+                            pantalla(ctx, Ruta.INICIO.ruta) { PantallaInicio(ctx) }
+                            pantalla(ctx, Ruta.ASISTENCIA.ruta) { PantallaAsistencia(ctx) }
+                            pantalla(ctx, Ruta.PADRON.ruta) { PantallaPadron(ctx) }
+                            pantalla(ctx, Ruta.INSCRIBIR.ruta) { PantallaInscribir(ctx) }
+                            pantalla(ctx, "${Ruta.B1.ruta}?a={a}") { PantallaB1(ctx, it.arguments?.getString("a")) }
+                            pantalla(ctx, Ruta.B1.ruta) { PantallaB1(ctx, null) }
+                            pantalla(ctx, Ruta.ENTREGAS.ruta) { PantallaEntregas(ctx) }
+                            pantalla(ctx, Ruta.DATOS.ruta) { PantallaDatos(ctx) }
+                            pantalla(ctx, Ruta.AJUSTES.ruta) { PantallaAjustes(ctx) }
                         }
                     }
                     // Inscribir lleva su propio botón abajo: el menú no se pone en medio.
@@ -142,11 +173,24 @@ fun App(estado: Estado, preferencias: Preferencias, avisoInicial: String? = null
     }
 }
 
+/** Un destino de la navegación con su propia Lectura: lo que se lee es de esta pantalla y no de la que se va. */
+private fun NavGraphBuilder.pantalla(ctx: Contexto, ruta: String, contenido: @Composable (NavBackStackEntry) -> Unit) =
+    composable(ruta) { entrada ->
+        val lectura = remember { Lectura() }
+        DisposableEffect(entrada.id) {
+            ctx.lecturas[entrada.id] = lectura
+            onDispose { ctx.lecturas.remove(entrada.id) }
+        }
+        CompositionLocalProvider(LocalLectura provides lectura) { contenido(entrada) }
+    }
+
 /** Cabecera verde: flecha para volver (salvo en el Inicio), título, subtítulo y el menú ⋮. */
 @Composable
 fun Cabecera(ctx: Contexto, titulo: String, subtitulo: String? = null, conVolver: Boolean = true, alVolver: () -> Unit = { ctx.volver() }) {
     val c = colores
     var menu by remember { mutableStateOf(false) }
+    val conVoz by ctx.preferencias.vozBoton.collectAsStateWithLifecycle()
+    TituloParaLeer(titulo)
     Column(Modifier.fillMaxWidth().background(c.marca).windowInsetsPadding(WindowInsets.statusBars)) {
         Row(
             Modifier.widthIn(max = Medidas.anchoColumna).align(Alignment.CenterHorizontally).fillMaxWidth()
@@ -162,12 +206,19 @@ fun Cabecera(ctx: Contexto, titulo: String, subtitulo: String? = null, conVolver
                 Text(titulo, style = tipos.titulo, color = Color.White)
                 if (subtitulo != null) Text(subtitulo, style = tipos.chico, color = c.marcaSuave)
             }
+            // 🔊 si se pidió en Ajustes: leer la pantalla con un toque.
+            if (conVoz) {
+                Box(Modifier.size(48.dp).clip(CircleShape).clickable(role = Role.Button) { ctx.leerPantalla() }.semantics { contentDescription = "Leer esta pantalla en voz alta" }, contentAlignment = Alignment.Center) {
+                    Icono("voz", 26.dp, Color.White)
+                }
+            }
             Box {
                 Box(Modifier.size(48.dp).clip(CircleShape).background(if (menu) Color.White.copy(alpha = .14f) else Color.Transparent).clickable(role = Role.Button) { menu = true }.semantics { contentDescription = "Más opciones" }, contentAlignment = Alignment.Center) {
                     Icono("puntos", 26.dp, Color.White)
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = c.superficie, shape = RoundedCornerShape(Medidas.rM)) {
                     for ((icono, texto, accion) in listOf(
+                        Triple("voz", "Leer esta pantalla en voz alta") { ctx.leerPantalla() },
                         Triple("ayuda", "¿Cómo se usa?") { ctx.abrirBienvenida() },
                         Triple("escudo", "Tus datos") { ctx.ir(Ruta.DATOS) },
                         Triple("ajustes", "Ajustes") { ctx.ir(Ruta.AJUSTES) }

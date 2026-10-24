@@ -76,6 +76,7 @@ import io.github.tmrainer.asistencia.nucleo.validaciones.validarPreciosMenu
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
+import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.Avatar
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
@@ -341,9 +342,11 @@ private fun BarraHoy(at: Atencion, activos: Int) {
     val c = colores
     val d = desgloseDelDia(at)
     val inscritos = d.total - d.sinInscribir
+    val resumen = "$inscritos de $activos personas marcadas" + if (d.sinInscribir > 0) ", y ${cuantos(d.sinInscribir, "ración", "raciones")} sin inscribir." else "."
+    ParaLeer(resumen)
     Column(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(c.superficie).padding(Medidas.e3, 10.dp)
-            .semantics { contentDescription = "$inscritos de $activos personas marcadas" + if (d.sinInscribir > 0) ", y ${cuantos(d.sinInscribir, "ración", "raciones")} sin inscribir." else "." }
+            .semantics { contentDescription = resumen }
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("$inscritos de $activos", style = tipos.titulo.copy(fontSize = tipos.titulo.fontSize * 1.1f), color = c.titulo)

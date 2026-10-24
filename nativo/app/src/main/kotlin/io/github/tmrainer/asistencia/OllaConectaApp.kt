@@ -1,6 +1,8 @@
 // OllaConectaApp.kt — la Application de la app nativa. Crea el Estado sobre
 // la carpeta de datos del teléfono (filesDir) y lo carga al arrancar; las
-// pantallas lo observan desde aquí.
+// pantallas lo observan desde aquí. Cada vez que cambia el calendario (también
+// al arrancar, al recuperar una copia o al traer los datos del 1.7) vuelve a
+// programar los avisos del teléfono.
 package io.github.tmrainer.asistencia
 
 import android.app.Application
@@ -10,6 +12,8 @@ import io.github.tmrainer.asistencia.nucleo.estado.Estado
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import java.io.File
 
 class OllaConectaApp : Application() {
@@ -22,6 +26,14 @@ class OllaConectaApp : Application() {
     lateinit var preferencias: Preferencias
         private set
 
+    /** La voz del teléfono; se prende la primera vez que se usa. */
+    val voz by lazy { Voz(this) { preferencias.vozLenta.value } }
+
+    /** A qué pantalla ir al tocar un aviso del teléfono (MainActivity la pone, App la consume). */
+    val abrir = MutableStateFlow<String?>(null)
+
+    private val fondo = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
     override fun onCreate() {
         super.onCreate()
         // Los datos viven en filesDir/datos: una carpeta propia, separada de
@@ -31,7 +43,11 @@ class OllaConectaApp : Application() {
         // Consolida una migración o una reparación de lo leído (como guardarYa() al abrir una página).
         estado.guardarYa()
         preferencias = Preferencias(this)
+        fondo.launch { estado.calendario.collect { AvisosTelefono.reprogramar(this@OllaConectaApp, it) } }
     }
+
+    /** Tras dar el permiso de avisos: programarlos ya, sin esperar un cambio del calendario. */
+    fun reprogramarAvisos(): Int = AvisosTelefono.reprogramar(this, estado.calendario.value)
 
     /**
      * Al ocultarse la interfaz se escribe lo pendiente del guardado diferido:

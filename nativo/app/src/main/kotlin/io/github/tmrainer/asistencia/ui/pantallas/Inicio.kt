@@ -50,6 +50,7 @@ import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.Boton
+import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.Icono
 import io.github.tmrainer.asistencia.ui.componentes.TipoBoton
 import io.github.tmrainer.asistencia.ui.tema.Medidas
@@ -83,6 +84,7 @@ fun PantallaInicio(ctx: Contexto) {
             val d = desgloseDelDia(atHoy)
             val rec = if (atHoy != null) recaudacionDelDiaCent(atHoy) else 0L
             val alerta = alertaProximaEntrega(calendario, hoy)
+            ParaLeer("Hoy: ${cuantos(d.total, "ración", "raciones")}" + if (rec == null) ", falta el precio" else ", S/ ${formatearSoles(rec)} recaudado")
             Column(Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(Medidas.rL)).clip(RoundedCornerShape(Medidas.rL)).background(c.marca).padding(Medidas.e5, Medidas.e4)) {
                 Text("Hoy", style = tipos.pista, color = c.marcaSuave)
                 Row(Modifier.padding(top = Medidas.e1, bottom = Medidas.e3), horizontalArrangement = Arrangement.spacedBy(Medidas.e6)) {
@@ -151,13 +153,17 @@ fun PantallaInicio(ctx: Contexto) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icono("escudo", 22.dp, c.ok)
                     Spacer(Modifier.width(10.dp))
-                    Text(if (dias == 0) "Copia de tus datos guardada hoy" else "Copia de tus datos guardada hace ${cuantos(dias, "día")}", style = tipos.pista, color = c.tintaSuave)
+                    val nota = if (dias == 0) "Copia de tus datos guardada hoy" else "Copia de tus datos guardada hace ${cuantos(dias, "día")}"
+                    ParaLeer(nota)
+                    Text(nota, style = tipos.pista, color = c.tintaSuave)
                 }
             } else if (hayDatos) {
                 Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(c.avisoFondo).padding(Medidas.e4, Medidas.e3), verticalAlignment = Alignment.CenterVertically) {
                     Icono("escudo", 22.dp, c.aviso)
                     Spacer(Modifier.width(10.dp))
-                    Text(if (dias == null) "Todavía no guardaste una copia de tus datos" else "Tu última copia es de hace $dias días", style = tipos.pista, color = c.tinta, modifier = Modifier.weight(1f))
+                    val nota = if (dias == null) "Todavía no guardaste una copia de tus datos" else "Tu última copia es de hace $dias días"
+                    ParaLeer(nota)
+                    Text(nota, style = tipos.pista, color = c.tinta, modifier = Modifier.weight(1f))
                     Spacer(Modifier.width(Medidas.e2))
                     Boton("Guardar una copia", { ctx.ir(Ruta.DATOS) }, diminuto = true)
                 }
@@ -251,6 +257,7 @@ fun Bienvenida(ctx: Contexto, alCerrar: () -> Unit) {
                 Text(titulo, style = tipos.titulo.copy(fontSize = tipos.titulo.fontSize * 1.15f), color = c.titulo, textAlign = TextAlign.Center, modifier = Modifier.padding(top = Medidas.e4, bottom = Medidas.e2))
                 Text(texto, style = tipos.texto, color = c.tintaSuave, textAlign = TextAlign.Center)
                 Text("Paso ${paso + 1} de ${PASOS_BIENVENIDA.size}", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e3))
+                Boton("Escuchar", { ctx.decir("$titulo. $texto") }, Modifier.padding(top = Medidas.e3), diminuto = true, icono = "voz")
             }
         },
         confirmButton = {

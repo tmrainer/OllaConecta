@@ -67,6 +67,7 @@ import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
+import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
 import io.github.tmrainer.asistencia.ui.componentes.BloqueSuave
 import io.github.tmrainer.asistencia.ui.componentes.Boton
@@ -571,9 +572,11 @@ private fun PasoRevisar(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icono("ok", 20.dp, c.ok)
             Spacer(Modifier.width(Medidas.e2))
+            ParaLeer("El B-1 está completo. Revísalo con la tesorera y el fiscal antes de entregarlo.")
             Text("El B-1 está completo. Revísalo con la tesorera y el fiscal antes de entregarlo.", style = tipos.textoFuerte, color = c.ok)
         }
     } else {
+        ParaLeer((if (errores.size == 1) "Antes de entregarlo, falta esto: " else "Antes de entregarlo, faltan ${errores.size} cosas: ") + errores.joinToString(". ") { it.mensaje.removeSuffix(".") })
         Text(if (errores.size == 1) "Antes de entregarlo, falta esto:" else "Antes de entregarlo, faltan ${errores.size} cosas:", style = tipos.texto, color = c.tinta, modifier = Modifier.padding(bottom = Medidas.e2))
         Superficie {
             errores.forEachIndexed { i, h ->

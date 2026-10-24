@@ -474,6 +474,7 @@ fun Avatar(persona: Afiliado, grupo: String?, modifier: Modifier = Modifier) {
 @Composable
 fun EstadoVacio(icono: String, titulo: String, texto: String? = null, boton: Pair<String, () -> Unit>? = null, logrado: Boolean = false, modifier: Modifier = Modifier) {
     val c = colores
+    ParaLeer(listOfNotNull(titulo, texto).joinToString(". "))
     Column(
         modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(c.superficie2).padding(Medidas.e6, Medidas.e6, Medidas.e6, Medidas.e5),
         horizontalAlignment = Alignment.CenterHorizontally

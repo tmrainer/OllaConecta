@@ -1,6 +1,5 @@
 // Ajustes.kt — lo que es de este teléfono (pagina-ajustes.js): quién lo usa,
-// el modo claro u oscuro y el tamaño de la letra. No va en las copias.
-// La lectura en voz alta llega en una fase siguiente.
+// el modo claro u oscuro, el tamaño de la letra y la voz. No va en las copias.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import androidx.compose.foundation.Image
@@ -34,7 +33,9 @@ import io.github.tmrainer.asistencia.Tema
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
+import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.Campo
+import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.Leyenda
 import io.github.tmrainer.asistencia.ui.componentes.Opciones
 import io.github.tmrainer.asistencia.ui.componentes.Pista
@@ -51,6 +52,8 @@ fun PantallaAjustes(ctx: Contexto) {
     val perfil by prefs.perfil.collectAsStateWithLifecycle()
     val tema by prefs.tema.collectAsStateWithLifecycle()
     val letra by prefs.letra.collectAsStateWithLifecycle()
+    val vozBoton by prefs.vozBoton.collectAsStateWithLifecycle()
+    val vozLenta by prefs.vozLenta.collectAsStateWithLifecycle()
     val c = colores
 
     Column(Modifier.fillMaxWidth()) {
@@ -78,6 +81,7 @@ fun PantallaAjustes(ctx: Contexto) {
             Spacer(Modifier.height(Medidas.e3))
             Leyenda("Tamaño de la letra")
             Opciones(Letra.values().map { it to it.etiqueta }, { it == letra }, { prefs.cambiarLetra(it) })
+            ParaLeer("Así se verá: Rosa Quispe · 4 de 12 marcadas · S/ 12.00")
             Text(
                 buildAnnotatedString { append("Así se verá: "); withStyle(tipos.textoNegrita.toSpanStyle()) { append("Rosa Quispe") }; append(" · 4 de 12 marcadas · S/ 12.00") },
                 style = tipos.texto, color = c.tinta,
@@ -86,7 +90,14 @@ fun PantallaAjustes(ctx: Contexto) {
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Leer en voz alta")
-            Pista("La lectura en voz alta llega en una fase siguiente de la app nativa.")
+            Pista("La app puede leer la pantalla con la voz de este teléfono, sin internet. Está en el menú ⋮ de cada pantalla.", Modifier.padding(bottom = Medidas.e3))
+            Leyenda("Botón de la voz en cada pantalla")
+            Opciones(listOf(false to "No", true to "Sí, arriba a la derecha"), { it == vozBoton }, { prefs.cambiarVozBoton(it) })
+            Spacer(Modifier.height(Medidas.e3))
+            Leyenda("Velocidad de la voz")
+            Opciones(listOf(false to "Normal", true to "Lenta"), { it == vozLenta }, { prefs.cambiarVozLenta(it) })
+            Spacer(Modifier.height(Medidas.e3))
+            Boton("Probar la voz", { ctx.decir("Hola. Así suena la voz que lee la pantalla. Toca a quien vino y las raciones se cuentan solas.") }, icono = "voz")
 
             Spacer(Modifier.height(Medidas.e5))
             EnlaceMas("escudo", "¿Buscas la copia de tus datos?", "Está en Tus datos, con borrar todo") { ctx.ir(Ruta.DATOS) }
@@ -95,6 +106,7 @@ fun PantallaAjustes(ctx: Contexto) {
             TituloSeccion("Acerca de")
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Image(painterResource(if (c.esOscuro) R.drawable.utec_blanco else R.drawable.utec_color), contentDescription = "UTEC, Universidad de Ingeniería y Tecnología", Modifier.width(130.dp).padding(vertical = Medidas.e3))
+                ParaLeer("Proyecto de estudiantes de UTEC, hecho junto a las ollas comunes y comedores de Villa María del Triunfo.")
                 Text("Proyecto de estudiantes de UTEC, hecho junto a las ollas comunes y comedores de Villa María del Triunfo.", style = tipos.texto, color = c.tinta, textAlign = TextAlign.Center)
                 Text("Versión $VERSION_APP", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
             }

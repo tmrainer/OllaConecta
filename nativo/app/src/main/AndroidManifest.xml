@@ -4,6 +4,18 @@
     <!-- Un toque corto al marcar a alguien o deshacer. -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Avisos de entrega con la app cerrada (AvisosTelefono.kt): mostrarlos
+         (Android 13+ pide permiso) y volver a programarlos al encender el teléfono. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Leer en voz alta (Voz.kt): Android 11+ solo deja ver el motor de voz si se declara. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <!-- allowBackup: a propósito. Android puede sumar los datos de la app a la
          copia de seguridad de Google del teléfono. La app lo explica en «Tus datos». -->
     <application
@@ -26,5 +38,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver android:name=".ReceptorAvisos" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

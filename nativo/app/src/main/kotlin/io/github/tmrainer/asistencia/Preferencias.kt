@@ -1,6 +1,6 @@
 // Preferencias.kt — lo que es de este teléfono y no va en las copias (como
 // las claves «pi3.*» de preferencias.js y perfil.js): el modo, el tamaño de
-// letra, quién usa el teléfono, y si ya vio la bienvenida.
+// letra, la voz, quién usa el teléfono, y si ya vio la bienvenida.
 package io.github.tmrainer.asistencia
 
 import android.content.Context
@@ -37,15 +37,23 @@ class Preferencias(context: Context) {
     ))
     private val _perfilOmitido = MutableStateFlow(prefs.getBoolean("perfil.omitido", false))
     private val _bienvenidaVista = MutableStateFlow(prefs.getBoolean("bienvenidaVista", false))
+    private val _vozBoton = MutableStateFlow(prefs.getBoolean("voz.boton", false))
+    private val _vozLenta = MutableStateFlow(prefs.getBoolean("voz.lenta", false))
 
     val tema: StateFlow<Tema> = _tema.asStateFlow()
     val letra: StateFlow<Letra> = _letra.asStateFlow()
     val perfil: StateFlow<Perfil> = _perfil.asStateFlow()
     val perfilOmitido: StateFlow<Boolean> = _perfilOmitido.asStateFlow()
     val bienvenidaVista: StateFlow<Boolean> = _bienvenidaVista.asStateFlow()
+    /** El botón 🔊 en la cabecera de cada pantalla (pi3.voz.boton). */
+    val vozBoton: StateFlow<Boolean> = _vozBoton.asStateFlow()
+    /** Voz más lenta (pi3.voz.velocidad = 'lenta'). */
+    val vozLenta: StateFlow<Boolean> = _vozLenta.asStateFlow()
 
     fun cambiarTema(t: Tema) { _tema.value = t; prefs.edit().putString("tema", t.clave).apply() }
     fun cambiarLetra(l: Letra) { _letra.value = l; prefs.edit().putString("letra", l.clave).apply() }
+    fun cambiarVozBoton(si: Boolean) { _vozBoton.value = si; prefs.edit().putBoolean("voz.boton", si).apply() }
+    fun cambiarVozLenta(si: Boolean) { _vozLenta.value = si; prefs.edit().putBoolean("voz.lenta", si).apply() }
 
     fun guardarPerfil(p: Perfil) {
         _perfil.value = p
@@ -75,6 +83,8 @@ class Preferencias(context: Context) {
         // «Letra grande» de antes (pi3.letraGrande = '1') sigue valiendo, como en preferencias.js.
         val letra = crudos["pi3.letra"] ?: if (crudos["pi3.letraGrande"] == "1") "grande" else null
         Letra.values().firstOrNull { it.clave == letra }?.let(::cambiarLetra)
+        if (crudos["pi3.voz.boton"] == "1") cambiarVozBoton(true)
+        if (crudos["pi3.voz.velocidad"] == "lenta") cambiarVozLenta(true)
         val perfil = crudos["pi3.perfil"]?.let { try { JSON.parseToJsonElement(it) as? JsonObject } catch (e: SerializationException) { null } }
         if (perfil != null) {
             fun campo(k: String) = (perfil[k] as? JsonPrimitive)?.contentOrNull ?: ""

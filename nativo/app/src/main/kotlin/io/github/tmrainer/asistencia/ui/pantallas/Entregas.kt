@@ -1,8 +1,17 @@
 // Entregas.kt — fechas de entrega del B-1 y cuenta regresiva
 // (pagina-calendario.js). Lo primero que se ve: cuántos días faltan, grande,
-// como en un reloj. Los avisos con la app cerrada llegan en una fase siguiente.
+// como en un reloj. Con permiso, el teléfono avisa aunque la app esté
+// cerrada (AvisosTelefono.kt); sin él, se ofrece activarlos.
 package io.github.tmrainer.asistencia.ui.pantallas
 
+import android.Manifest
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,10 +45,14 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.tmrainer.asistencia.AvisosTelefono
+import io.github.tmrainer.asistencia.OllaConectaApp
 import io.github.tmrainer.asistencia.nucleo.alertas.Nivel
 import io.github.tmrainer.asistencia.nucleo.alertas.PERIODICIDADES
 import io.github.tmrainer.asistencia.nucleo.alertas.agendaEntregas
@@ -65,6 +78,7 @@ import io.github.tmrainer.asistencia.ui.componentes.FranjaEstado
 import io.github.tmrainer.asistencia.ui.componentes.Ficha
 import io.github.tmrainer.asistencia.ui.componentes.Leyenda
 import io.github.tmrainer.asistencia.ui.componentes.Opciones
+import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.PanelHallazgos
 import io.github.tmrainer.asistencia.ui.componentes.Pista
 import io.github.tmrainer.asistencia.ui.componentes.Separador
@@ -121,12 +135,14 @@ fun PantallaEntregas(ctx: Contexto) {
                             if (dias != 0) Text(if (dias < 0) (if (dias == -1) "día de atraso" else "días de atraso") else if (dias == 1) "día" else "días", style = tipos.pista, color = c.tintaSuave)
                         }
                     }
+                    val frase = when {
+                        dias < 0 -> "La entrega del ${aDdMmAa(fechaAlerta)} venció hace ${cuantos(-dias, "día")}."
+                        dias == 0 -> "Hoy vence la entrega del B-1 (${aDdMmAa(fechaAlerta)})."
+                        else -> "Faltan ${cuantos(dias, "día")} para entregar el B-1: ${fechaLarga(fechaAlerta).lowercase()}."
+                    }
+                    ParaLeer(frase)
                     Text(
-                        when {
-                            dias < 0 -> "La entrega del ${aDdMmAa(fechaAlerta)} venció hace ${cuantos(-dias, "día")}."
-                            dias == 0 -> "Hoy vence la entrega del B-1 (${aDdMmAa(fechaAlerta)})."
-                            else -> "Faltan ${cuantos(dias, "día")} para entregar el B-1: ${fechaLarga(fechaAlerta).lowercase()}."
-                        },
+                        frase,
                         style = tipos.textoFuerte, color = c.titulo, textAlign = TextAlign.Center, modifier = Modifier.padding(top = Medidas.e3)
                     )
                 }
@@ -195,7 +211,7 @@ fun PantallaEntregas(ctx: Contexto) {
                     }
                 }
             }
-            Text("El aviso se ve al abrir la aplicación. Los avisos con la aplicación cerrada llegan en una fase siguiente.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
+            AvisosDelTelefono(esIso(calendario.fechaLimiteBase))
 
             // ---- cada cuánto entregas ----
             Spacer(Modifier.height(Medidas.e5))
@@ -218,5 +234,52 @@ fun PantallaEntregas(ctx: Contexto) {
             if (msgAviso.isNotEmpty()) Text(msgAviso, style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = 4.dp))
             EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
         }
+    }
+}
+
+/**
+ * Si el teléfono puede avisar con la app cerrada. Sin permiso, un botón lo
+ * pide; si Android ya no deja pedirlo (lo negaron antes), abre los ajustes de
+ * avisos de la app. Se revisa de nuevo al volver a la pantalla.
+ */
+@Composable
+private fun AvisosDelTelefono(hayFechas: Boolean) {
+    val context = LocalContext.current
+    val app = context.applicationContext as OllaConectaApp
+    val c = colores
+    var permiso by remember { mutableStateOf(AvisosTelefono.hayPermiso(context)) }
+    var programados by remember { mutableStateOf(-1) }
+    LifecycleResumeEffect(Unit) {
+        permiso = AvisosTelefono.hayPermiso(context)
+        if (permiso) programados = app.reprogramarAvisos()
+        onPauseOrDispose { }
+    }
+    val abrirAjustes = {
+        context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
+    }
+    val pedir = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { dado ->
+        permiso = AvisosTelefono.hayPermiso(context)
+        // Permiso dado pero los avisos apagados en los ajustes del teléfono: se abren ahí.
+        if (permiso) programados = app.reprogramarAvisos() else if (dado) abrirAjustes()
+    }
+    val prefs = context.getSharedPreferences("avisos", Context.MODE_PRIVATE)
+    if (permiso) {
+        Text("El teléfono te avisa a las ${AvisosTelefono.HORA_DEL_AVISO} de la mañana, aunque la aplicación esté cerrada.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
+        if (hayFechas && programados == 0) Pista("No hay avisos pendientes.", Modifier.padding(top = 4.dp))
+    } else {
+        Text("Por ahora, el aviso se ve solo al abrir la aplicación.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
+        FranjaEstado(
+            "Activa los avisos para que el teléfono te recuerde la entrega aunque la aplicación esté cerrada.",
+            TonoPastilla.ADVERTENCIA, Modifier.padding(top = Medidas.e2),
+            boton = "Activar los avisos" to {
+                val actividad = context as? Activity
+                val negadoParaSiempre = prefs.getBoolean("permisoPedido", false) && actividad != null &&
+                    !actividad.shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
+                if (Build.VERSION.SDK_INT >= 33 && !negadoParaSiempre) {
+                    prefs.edit().putBoolean("permisoPedido", true).apply()
+                    pedir.launch(Manifest.permission.POST_NOTIFICATIONS)
+                } else abrirAjustes()
+            }
+        )
     }
 }
