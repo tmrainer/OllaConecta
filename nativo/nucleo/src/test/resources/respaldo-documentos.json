@@ -1,0 +1,238 @@
+{
+  "exportadoEn": "2026-10-20T18:40:00.000Z",
+  "aplicacion": "rendicion-b1",
+  "rendiciones": [
+    {
+      "version": 1,
+      "id": "r-largo",
+      "actualizadoEn": "2026-10-20T18:40:00.000Z",
+      "tipoCentro": "comedor",
+      "nombreCentro": "Comedor Popular Autogestionario «Virgen de la Candelaria» del A. H. Nueva Esperanza (zona alta)",
+      "codigoPca": "PCA\\0001 (b)",
+      "periodo": {
+        "tipo": "quincenal",
+        "inicio": "2026-10-01",
+        "fin": "2026-10-15",
+        "etiqueta": "Primera quincena de octubre — 2026"
+      },
+      "fechaRendicion": "2026-10-16",
+      "nombrePresidenta": "María Ñahui Quispe de la Cruz Huamán Yupanqui Ccopa Chávez Inca Vásquez Óre",
+      "dniPresidenta": "00000009",
+      "celular": "900 000 000 (solo WhatsApp) 🍲",
+      "montoSubsidioCent": 123456,
+      "fechaAsignacion": "2026-10-02",
+      "egresos": [
+        {
+          "id": "e-largo-0",
+          "fechaCompra": "2026-10-03",
+          "descripcion": "Aceite vegetal",
+          "insumoId": null,
+          "cantidad": 2.5,
+          "cantidadVarios": false,
+          "unidadMedida": "L",
+          "rucProveedor": "10000000000",
+          "proveedorNombre": "",
+          "boletaSerie": "B001-SERIE-LARGA",
+          "boletaCorrelativo": "000000",
+          "precioUnitarioCent": 1250,
+          "precioUnitarioVarios": false,
+          "montoTotalCent": 3125,
+          "origenFondo": "subsidio"
+        },
+        {
+          "id": "e-largo-1",
+          "fechaCompra": "2026-10-04",
+          "descripcion": "Arroz extra graneado en sacos",
+          "insumoId": null,
+          "cantidad": 0.30000000000000004,
+          "cantidadVarios": false,
+          "unidadMedida": "Kg",
+          "rucProveedor": "10000000001",
+          "proveedorNombre": "",
+          "boletaSerie": "B001-SERIE-LARGA",
+          "boletaCorrelativo": "000001",
+          "precioUnitarioCent": 330,
+          "precioUnitarioVarios": false,
+          "montoTotalCent": 99,
+          "origenFondo": "subsidio"
+        },
+        {
+          "id": "e-largo-2",
+          "fechaCompra": "2026-10-05",
+          "descripcion": "Verduras surtidas para la semana: zanahoria, cebolla, ajo y culantro",
+          "insumoId": null,
+          "cantidad": 1,
+          "cantidadVarios": false,
+          "unidadMedida": "varios",
+          "rucProveedor": "10000000002",
+          "proveedorNombre": "",
+          "boletaSerie": "",
+          "boletaCorrelativo": "000002",
+          "precioUnitarioCent": 2000,
+          "precioUnitarioVarios": false,
+          "montoTotalCent": 2000,
+          "origenFondo": "subsidio"
+        },
+        {
+          "id": "e-largo-3",
+          "fechaCompra": "2026-10-06",
+          "descripcion": "Pescado bonito fresco del terminal pesquero de Villa María del Triunfo (dos cajas grandes)",
+          "insumoId": null,
+          "cantidad": 3,
+          "cantidadVarios": false,
+          "unidadMedida": "caja",
+          "rucProveedor": "10000000003",
+          "proveedorNombre": "",
+          "boletaSerie": "B001-SERIE-LARGA",
+          "boletaCorrelativo": "000003",
+          "precioUnitarioCent": 4500,
+          "precioUnitarioVarios": false,
+          "montoTotalCent": 13500,
+          "origenFondo": "subsidio"
+        },
+        {
+          "id": "e-largo-4",
+          "fechaCompra": "2026-10-07",
+          "descripcion": "Ω símbolo € y \\ barra (paréntesis)",
+          "insumoId": null,
+          "cantidad": 1e-7,
+          "cantidadVarios": false,
+          "unidadMedida": "unidad de medida muy larga",
+          "rucProveedor": "10000000004",
+          "proveedorNombre": "",
+          "boletaSerie": "B001-SERIE-LARGA",
+          "boletaCorrelativo": "000004",
+          "precioUnitarioCent": 1,
+          "precioUnitarioVarios": false,
+          "montoTotalCent": 1,
+          "origenFondo": "subsidio"
+        }
+      ],
+      "nombrePresidentaFirma": "María Ñahui Quispe de la Cruz",
+      "dniPresidentaFirma": "00000009",
+      "nombreTesorera": "Úrsula Ávila Ochoa",
+      "dniTesorera": "00000010"
+    }
+  ],
+  "padron": {
+    "version": 3,
+    "afiliados": [
+      {
+        "id": "a-largo-0",
+        "apellidoPaterno": "Huamán",
+        "apellidoMaterno": "Yupanqui",
+        "nombres": "Ana María de los Ángeles Guadalupe Concepción",
+        "numeroDocumento": "01234567",
+        "tipoDocumento": "dni",
+        "fechaNacimiento": "1950-02-28",
+        "grupoEtarioManual": null,
+        "sexo": "",
+        "tipoAfiliado": "caso_social",
+        "activo": true,
+        "altaEn": "2026-01-01",
+        "bajaEn": "",
+        "motivoBaja": "",
+        "origenDato": "manual",
+        "verificadoPor": "",
+        "nota": ""
+      },
+      {
+        "id": "a-largo-1",
+        "apellidoPaterno": "de la Cruz",
+        "apellidoMaterno": "",
+        "nombres": "José",
+        "numeroDocumento": "000123456789",
+        "tipoDocumento": "ce",
+        "fechaNacimiento": "",
+        "grupoEtarioManual": "nino",
+        "sexo": "",
+        "tipoAfiliado": "habitual",
+        "activo": true,
+        "altaEn": "2026-01-01",
+        "bajaEn": "",
+        "motivoBaja": "",
+        "origenDato": "manual",
+        "verificadoPor": "",
+        "nota": ""
+      },
+      {
+        "id": "a-largo-2",
+        "apellidoPaterno": "Ñahui",
+        "apellidoMaterno": "Quispe",
+        "nombres": "Rosa (Rosita)",
+        "numeroDocumento": "00000003",
+        "tipoDocumento": "dni",
+        "fechaNacimiento": "2010-10-21",
+        "grupoEtarioManual": null,
+        "sexo": "",
+        "tipoAfiliado": "habitual",
+        "activo": true,
+        "altaEn": "2026-01-01",
+        "bajaEn": "",
+        "motivoBaja": "",
+        "origenDato": "manual",
+        "verificadoPor": "",
+        "nota": ""
+      },
+      {
+        "id": "a-largo-3",
+        "apellidoPaterno": "Ochoa",
+        "apellidoMaterno": "Ávila",
+        "nombres": "Luz",
+        "numeroDocumento": "",
+        "tipoDocumento": "dni",
+        "fechaNacimiento": "",
+        "grupoEtarioManual": null,
+        "sexo": "",
+        "tipoAfiliado": "",
+        "activo": true,
+        "altaEn": "2026-01-01",
+        "bajaEn": "",
+        "motivoBaja": "",
+        "origenDato": "manual",
+        "verificadoPor": "",
+        "nota": ""
+      }
+    ],
+    "atenciones": [
+      {
+        "id": "at-largo-1",
+        "fecha": "2026-10-05",
+        "precioMenuNormalCent": 250,
+        "precioMenuAyudaSocialCent": 0,
+        "precioTomadoDeConfig": true,
+        "legado": null,
+        "nota": "",
+        "sinInscribir": {
+          "normal": 2,
+          "ayudaSocial": 1
+        },
+        "asistencias": [
+          {
+            "afiliadoId": "a-largo-0",
+            "tipoMenu": "ayuda_social"
+          },
+          {
+            "afiliadoId": "a-largo-2",
+            "tipoMenu": "normal"
+          }
+        ]
+      },
+      {
+        "id": "at-largo-2",
+        "fecha": "2026-10-06",
+        "precioMenuNormalCent": null,
+        "precioMenuAyudaSocialCent": 0,
+        "precioTomadoDeConfig": false,
+        "legado": null,
+        "nota": "",
+        "asistencias": [
+          {
+            "afiliadoId": "a-largo-1",
+            "tipoMenu": "normal"
+          }
+        ]
+      }
+    ]
+  }
+}

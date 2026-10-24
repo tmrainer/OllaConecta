@@ -10,6 +10,8 @@
 # Respaldo FICTICIO de las pruebas del núcleo Kotlin (datos inventados). Un
 # respaldo real nunca va en esa carpeta.
 !nativo/nucleo/src/test/resources/*.json
+# PDF que arma la web con esos datos inventados (nativo/herramientas/oraculo-documentos.mjs).
+!nativo/nucleo/src/test/resources/documentos/*.pdf
 
 # Firebase (nube/): sus .json sí van; google-services.json del APK sigue fuera.
 !nube/*.json

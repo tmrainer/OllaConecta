@@ -1,0 +1,42 @@
+Padrón de personas
+Olla ficticia Los Ñandúes · Activas al 20-10-26 · días que vinieron del 01-10-26 al 20-10-26
+
+N°	Apellido paterno	Apellido materno	Nombres	Tipo de documento	Número de documento	Grupo de edad	Edad	Tipo	Días asistidos
+1	Álvarez	Ñahui	Juan	DNI	00000035	Adulto/a	35	Ayuda social	8
+2	Ávila	de la Cruz	Inés	DNI	00000006	Adulto/a		Habitual	13
+3	Ccopa	Núñez	Óscar	DNI	00000014		-1	Habitual	12
+4	Ccopa	Ñahui	Luz	DNI	00000031	Adulto/a mayor		Habitual	10
+5	Chávez	Ccopa	Luz	DNI	00000013	Adulto/a	59		15
+6	Chávez	Huamán	Óscar	DNI	00000007	Niño/a	3	Habitual	10
+7	Chávez	Huamán	Óscar	DNI	00000008	Adulto/a mayor	78	Habitual	13
+8	Chávez	Inca	María Élena	DNI	00000036	Adulto/a		Habitual	8
+9	de la Cruz	de la Cruz	Carmen	DNI	00000039	Niño/a	10	Ayuda social	9
+10	de la Cruz	Huamán	Rosa	DNI	00000020	Adulto/a	18	Habitual	12
+11	de la Cruz	Vásquez	José	DNI	00000023	Adulto/a mayor	78	Habitual	13
+12	Huamán	Vásquez	Rubén	DNI	00000009	Niño/a	11	Habitual	12
+13	Inca	Chávez	Ñusta	DNI	00000032	Niño/a	3	Habitual	13
+14	Inca	Vásquez	Elías	DNI	00000029	Adulto/a	35	Habitual	12
+15	Inca	Vásquez	Luz	DNI	00000019	Niño/a	11	Habitual	10
+16	Inca	Yupanqui	Inés	DNI	00000030	Adulto/a	35	Habitual	12
+17	Llanos		Ángel	DNI	00000034	Adulto/a	59	Habitual	15
+18	Mamani		Ángel	DNI	00000017	Niño/a	3	Habitual	13
+19	Mamani		Óscar	DNI	00000022	Adolescente	17	Ayuda social	14
+20	Mamani	Huamán	Inés	DNI	00000024	Adulto/a	34	Habitual	10
+21	Mamani	Vásquez	Elías	DNI	00000001	Adolescente		Habitual	11
+22	Núñez	Ccopa	Rosa	CE	CE00000002	Adulto/a	59	Ayuda social	13
+23	Núñez	de la Cruz	Ñusta	DNI	00000006	Adulto/a	59	Habitual	9
+24	Ñahui	Núñez	Rubén	DNI	00000025	Adulto/a	35	Ayuda social	11
+25	Ochoa	Llanos	Juan	DNI	00000021	Adolescente		Ayuda social	9
+26	Óre	Inca	Inés	DNI	00000015	Adolescente	17	Habitual	11
+27	Pérez	Chávez	Úrsula	DNI	00000012	Adulto/a mayor	78	Habitual	10
+28	Quispe	Ccopa	Carmen	DNI	00000038	Adulto/a mayor	78	Ayuda social	10
+29	Quispe	Chávez	Zoila	DNI	00000028	Niño/a	11	Habitual	14
+30	Quispe	Núñez	Úrsula	DNI	00000026	Niño/a		Habitual	14
+31	Vásquez	Álvarez	José	DNI	00000027	Adulto/a mayor	78	Habitual	12
+32	Vásquez	Álvarez	Juan	DNI	00000037	Adulto/a mayor	60	Habitual	12
+33	Vásquez	Ávila	Carmen	DNI	00000016	Adulto/a mayor	60	Habitual	12
+34	Vásquez	Ávila	Rosa	DNI	00000033	Adulto/a	35	Habitual	9
+35	Yupanqui	Huamán	Carmen	DNI	00000040	Adulto/a mayor	78	Habitual	13
+36	Yupanqui	Núñez	Zoila	DNI	00000004			Ayuda social	11
+37	Yupanqui	Vásquez	Inés	DNI	00000018	Adulto/a	35	Habitual	10
+38	Zapata	Ñahui	Rubén	CE	X1234	Adolescente	17	Habitual	13
