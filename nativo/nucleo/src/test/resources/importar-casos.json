@@ -1,0 +1,1985 @@
+{
+  "hoy": "2026-10-20",
+  "funciones": {
+    "detectarSeparador": [
+      {
+        "entrada": "a\tb",
+        "esperado": "\t"
+      },
+      {
+        "entrada": "a;b,c;d",
+        "esperado": ";"
+      },
+      {
+        "entrada": "a,b,c;d",
+        "esperado": ","
+      },
+      {
+        "entrada": "\"x;y\",z",
+        "esperado": ","
+      },
+      {
+        "entrada": "",
+        "esperado": "\t"
+      },
+      {
+        "entrada": "sin separador",
+        "esperado": "\t"
+      },
+      {
+        "entrada": "a;b\r\nc,d,e,f",
+        "esperado": ";"
+      },
+      {
+        "entrada": "\"a\tb\";c\td",
+        "esperado": "\t"
+      },
+      {
+        "entrada": "﻿Apellido;Nombres",
+        "esperado": ";"
+      }
+    ],
+    "parsearTabla": [
+      {
+        "entrada": {
+          "texto": "a;b\r\n\"c;d\";\"e \"\"f\"\"\"\r\n\r\n;;\r\ng;h"
+        },
+        "esperado": [
+          {
+            "celdas": [
+              "a",
+              "b"
+            ],
+            "linea": 1
+          },
+          {
+            "celdas": [
+              "c;d",
+              "e \"f\""
+            ],
+            "linea": 2
+          },
+          {
+            "celdas": [
+              "g",
+              "h"
+            ],
+            "linea": 5
+          }
+        ]
+      },
+      {
+        "entrada": {
+          "texto": "a,b\n\"multi\nlínea\",x\n\n\ny,z\n"
+        },
+        "esperado": [
+          {
+            "celdas": [
+              "a",
+              "b"
+            ],
+            "linea": 1
+          },
+          {
+            "celdas": [
+              "multi\nlínea",
+              "x"
+            ],
+            "linea": 2
+          },
+          {
+            "celdas": [
+              "y",
+              "z"
+            ],
+            "linea": 5
+          }
+        ]
+      },
+      {
+        "entrada": {
+          "texto": "a\tb\rc\td\r\re\tf"
+        },
+        "esperado": [
+          {
+            "celdas": [
+              "a",
+              "b"
+            ],
+            "linea": 1
+          },
+          {
+            "celdas": [
+              "c",
+              "d"
+            ],
+            "linea": 2
+          },
+          {
+            "celdas": [
+              "e",
+              "f"
+            ],
+            "linea": 4
+          }
+        ]
+      },
+      {
+        "entrada": {
+          "texto": "  a  \t b \n=\"007\"\t'=1+1"
+        },
+        "esperado": [
+          {
+            "celdas": [
+              "a",
+              "b"
+            ],
+            "linea": 1
+          },
+          {
+            "celdas": [
+              "=007",
+              "=1+1"
+            ],
+            "linea": 2
+          }
+        ]
+      },
+      {
+        "entrada": {
+          "texto": "a,b;c\nd,e;f",
+          "separador": ";"
+        },
+        "esperado": [
+          {
+            "celdas": [
+              "a,b",
+              "c"
+            ],
+            "linea": 1
+          },
+          {
+            "celdas": [
+              "d,e",
+              "f"
+            ],
+            "linea": 2
+          }
+        ]
+      },
+      {
+        "entrada": {
+          "texto": ""
+        },
+        "esperado": []
+      },
+      {
+        "entrada": {
+          "texto": "\"sin cerrar,a\nb"
+        },
+        "esperado": [
+          {
+            "celdas": [
+              "sin cerrar,a\nb"
+            ],
+            "linea": 1
+          }
+        ]
+      }
+    ],
+    "desarmarCelda": [
+      {
+        "entrada": "'=SUMA(1)",
+        "esperado": "=SUMA(1)"
+      },
+      {
+        "entrada": "=\"00012\"",
+        "esperado": "00012"
+      },
+      {
+        "entrada": "O'Brien",
+        "esperado": "O'Brien"
+      },
+      {
+        "entrada": "'+51",
+        "esperado": "+51"
+      },
+      {
+        "entrada": "'@x",
+        "esperado": "@x"
+      },
+      {
+        "entrada": "'-3",
+        "esperado": "-3"
+      },
+      {
+        "entrada": "=\"a\"\"b\"",
+        "esperado": "a\"b"
+      },
+      {
+        "entrada": "=\"",
+        "esperado": "=\""
+      },
+      {
+        "entrada": "'",
+        "esperado": "'"
+      },
+      {
+        "entrada": "=1+1",
+        "esperado": "=1+1"
+      },
+      {
+        "entrada": "",
+        "esperado": ""
+      }
+    ],
+    "detectarColumnas": [
+      {
+        "entrada": [
+          "Ap. Paterno",
+          "APELLIDO MATERNO",
+          "Nombres",
+          "DNI",
+          "Grupo de edad",
+          "Tipo",
+          "Correo"
+        ],
+        "esperado": {
+          "mapa": {
+            "apellidoPaterno": 0,
+            "apellidoMaterno": 1,
+            "nombres": 2,
+            "numeroDocumento": 3,
+            "grupoEtario": 4,
+            "tipoAfiliado": 5
+          },
+          "sinReconocer": [
+            "Correo"
+          ]
+        }
+      },
+      {
+        "entrada": [
+          "N°",
+          "Nro. documento",
+          "Tipo doc.",
+          "F. Nacimiento",
+          "Condición",
+          "Nombre(s)",
+          "Observaciones"
+        ],
+        "esperado": {
+          "mapa": {
+            "numeroDocumento": 1,
+            "tipoDocumento": 2,
+            "fechaNacimiento": 3,
+            "tipoAfiliado": 4,
+            "nombres": 5
+          },
+          "sinReconocer": [
+            "N°",
+            "Observaciones"
+          ]
+        }
+      },
+      {
+        "entrada": [
+          "DNI",
+          "dni",
+          "Nombres y apellidos",
+          "Apellidos y nombres",
+          "",
+          "Años",
+          "Género"
+        ],
+        "esperado": {
+          "mapa": {
+            "numeroDocumento": 0,
+            "nombres": 2,
+            "apellidos": 3,
+            "edad": 5,
+            "sexo": 6
+          },
+          "sinReconocer": []
+        }
+      },
+      {
+        "entrada": [
+          "Primer apellido",
+          "Segundo apellido",
+          "Etapa de vida",
+          "Categoría",
+          "Fecha nac",
+          "Número"
+        ],
+        "esperado": {
+          "mapa": {
+            "apellidoPaterno": 0,
+            "apellidoMaterno": 1,
+            "grupoEtario": 2,
+            "tipoAfiliado": 3,
+            "fechaNacimiento": 4,
+            "numeroDocumento": 5
+          },
+          "sinReconocer": []
+        }
+      },
+      {
+        "entrada": [
+          "Tipo de documento",
+          "Tipo de afiliada",
+          "Documento de identidad",
+          "Grupo etario (MIDIS)"
+        ],
+        "esperado": {
+          "mapa": {
+            "tipoDocumento": 0,
+            "tipoAfiliado": 1,
+            "numeroDocumento": 2,
+            "grupoEtario": 3
+          },
+          "sinReconocer": []
+        }
+      }
+    ],
+    "parsearFechaFlexible": [
+      {
+        "entrada": "14/09/1960",
+        "esperado": "1960-09-14"
+      },
+      {
+        "entrada": "1-2-05",
+        "esperado": "2005-02-01"
+      },
+      {
+        "entrada": "01.12.1999",
+        "esperado": "1999-12-01"
+      },
+      {
+        "entrada": " 2000-01-31 ",
+        "esperado": "2000-01-31"
+      },
+      {
+        "entrada": "14-09-27",
+        "esperado": "1927-09-14"
+      },
+      {
+        "entrada": "14-09-26",
+        "esperado": "2026-09-14"
+      },
+      {
+        "entrada": "5/5/2026",
+        "esperado": "2026-05-05"
+      },
+      {
+        "entrada": "2010.03.15",
+        "esperado": ""
+      },
+      {
+        "entrada": "ayer",
+        "esperado": ""
+      },
+      {
+        "entrada": "",
+        "esperado": ""
+      },
+      {
+        "entrada": "14/09",
+        "esperado": ""
+      },
+      {
+        "entrada": "14-09-2026x",
+        "esperado": ""
+      },
+      {
+        "entrada": "29/02/2024",
+        "esperado": "2024-02-29"
+      },
+      {
+        "entrada": "14/09-1960",
+        "esperado": "1960-09-14"
+      }
+    ],
+    "parsearGrupoEtario": [
+      {
+        "entrada": "NIÑOS",
+        "esperado": "nino"
+      },
+      {
+        "entrada": "menor de edad",
+        "esperado": "nino"
+      },
+      {
+        "entrada": "Infante",
+        "esperado": "nino"
+      },
+      {
+        "entrada": "adolescentes",
+        "esperado": "adolescente"
+      },
+      {
+        "entrada": "Adulto/a",
+        "esperado": "adulto"
+      },
+      {
+        "entrada": "adulto mayor",
+        "esperado": "adulto_mayor"
+      },
+      {
+        "entrada": "ANCIANO",
+        "esperado": "adulto_mayor"
+      },
+      {
+        "entrada": "Joven",
+        "esperado": "adulto"
+      },
+      {
+        "entrada": "tercera edad",
+        "esperado": "adulto_mayor"
+      },
+      {
+        "entrada": "etapa",
+        "esperado": null
+      },
+      {
+        "entrada": "",
+        "esperado": null
+      },
+      {
+        "entrada": "  adulto  ",
+        "esperado": "adulto"
+      },
+      {
+        "entrada": "Adulta",
+        "esperado": null
+      },
+      {
+        "entrada": "Adulto. Mayor",
+        "esperado": "adulto_mayor"
+      }
+    ],
+    "parsearTipoAfiliado": [
+      {
+        "entrada": "Ayuda Social",
+        "esperado": "caso_social"
+      },
+      {
+        "entrada": "social",
+        "esperado": "caso_social"
+      },
+      {
+        "entrada": "Vulnerable",
+        "esperado": "caso_social"
+      },
+      {
+        "entrada": "Sí",
+        "esperado": "caso_social"
+      },
+      {
+        "entrada": "x",
+        "esperado": "caso_social"
+      },
+      {
+        "entrada": "X",
+        "esperado": "caso_social"
+      },
+      {
+        "entrada": "NO",
+        "esperado": "habitual"
+      },
+      {
+        "entrada": "Común",
+        "esperado": "habitual"
+      },
+      {
+        "entrada": "normal",
+        "esperado": "habitual"
+      },
+      {
+        "entrada": "regular",
+        "esperado": "habitual"
+      },
+      {
+        "entrada": "habitual ",
+        "esperado": "habitual"
+      },
+      {
+        "entrada": "quizás",
+        "esperado": ""
+      },
+      {
+        "entrada": "",
+        "esperado": ""
+      },
+      {
+        "entrada": "Caso  social",
+        "esperado": "caso_social"
+      }
+    ],
+    "parsearTipoDocumento": [
+      {
+        "entrada": "DNI",
+        "esperado": "dni"
+      },
+      {
+        "entrada": "C.E.",
+        "esperado": "ce"
+      },
+      {
+        "entrada": "CE",
+        "esperado": "ce"
+      },
+      {
+        "entrada": "Carné de extranjería",
+        "esperado": "ce"
+      },
+      {
+        "entrada": "extranjeria",
+        "esperado": "ce"
+      },
+      {
+        "entrada": "",
+        "esperado": "dni"
+      },
+      {
+        "entrada": "pasaporte",
+        "esperado": "dni"
+      }
+    ],
+    "pareceCabecera": [
+      {
+        "entrada": [
+          "Nombres",
+          "DNI"
+        ],
+        "esperado": true
+      },
+      {
+        "entrada": [
+          "Nombres",
+          "Correo"
+        ],
+        "esperado": false
+      },
+      {
+        "entrada": [
+          "PADRÓN DE BENEFICIARIOS"
+        ],
+        "esperado": false
+      },
+      {
+        "entrada": [],
+        "esperado": false
+      }
+    ]
+  },
+  "importaciones": [
+    {
+      "nombre": "TSV pegado de Excel, con título arriba y columnas con otros nombres",
+      "texto": "PADRÓN DE BENEFICIARIOS 2026\t\t\t\nComedor Ficticio Los Pinos\n\nN°\tAp. Paterno\tAp. Materno\tNombre(s)\tTipo doc.\tNro. documento\tF. Nacimiento\tSexo\tCondición\tObservaciones\n1\tQuispe\tRojas\tRosa Elena\tDNI\t00000011\t14/09/1960\tF\tHabitual\tninguna\n2\tMamani\t\tLuz\tC.E.\t000123\t1-2-05\tFemenino\tAyuda social\t\n3\tHuamán\tTorres\tJosé\tDNI\t1234567\t2010.03.15\tM\tSí\t\n4\tPaz\tSol\tAna\tDNI\t000 000 12\t2000-01-31\tmasculino\tregular\t\n5\t\t\t\t\t\t\t\t\t\nTOTAL\t\t\t\t\t\t\t\t\t4",
+      "padron": {
+        "version": 3,
+        "afiliados": [],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {
+          "apellidoPaterno": 1,
+          "apellidoMaterno": 2,
+          "nombres": 3,
+          "tipoDocumento": 4,
+          "numeroDocumento": 5,
+          "fechaNacimiento": 6,
+          "sexo": 7,
+          "tipoAfiliado": 8
+        },
+        "sinReconocer": [
+          "N°",
+          "Observaciones"
+        ],
+        "filas": [
+          {
+            "linea": 5,
+            "afiliado": {
+              "apellidoPaterno": "Quispe",
+              "apellidoMaterno": "Rojas",
+              "nombres": "Rosa Elena",
+              "numeroDocumento": "00000011",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "1960-09-14",
+              "grupoEtarioManual": null,
+              "sexo": "F",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Quispe Rojas Rosa Elena",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 6,
+            "afiliado": {
+              "apellidoPaterno": "Mamani",
+              "apellidoMaterno": "",
+              "nombres": "Luz",
+              "numeroDocumento": "000123",
+              "tipoDocumento": "ce",
+              "fechaNacimiento": "2005-02-01",
+              "grupoEtarioManual": null,
+              "sexo": "F",
+              "tipoAfiliado": "caso_social",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Mamani  Luz",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 7,
+            "afiliado": {
+              "apellidoPaterno": "Huamán",
+              "apellidoMaterno": "Torres",
+              "nombres": "José",
+              "numeroDocumento": "01234567",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": null,
+              "sexo": "M",
+              "tipoAfiliado": "caso_social",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Huamán Torres José",
+            "estado": "incompleta",
+            "avisos": [
+              "falta grupo de edad",
+              "se agregó el 0 de adelante que Excel había quitado",
+              "no se entendió la fecha de nacimiento"
+            ],
+            "ceroAgregado": true
+          },
+          {
+            "linea": 8,
+            "afiliado": {
+              "apellidoPaterno": "Paz",
+              "apellidoMaterno": "Sol",
+              "nombres": "Ana",
+              "numeroDocumento": "00000012",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "2000-01-31",
+              "grupoEtarioManual": null,
+              "sexo": "M",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Paz Sol Ana",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 9,
+            "afiliado": {
+              "apellidoPaterno": "",
+              "apellidoMaterno": "",
+              "nombres": "",
+              "numeroDocumento": "",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": null,
+              "sexo": "",
+              "tipoAfiliado": "",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "",
+            "estado": "vacia",
+            "avisos": [
+              "la fila no trae ni apellido ni nombre"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 10,
+            "afiliado": {
+              "apellidoPaterno": "",
+              "apellidoMaterno": "",
+              "nombres": "",
+              "numeroDocumento": "",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": null,
+              "sexo": "",
+              "tipoAfiliado": "",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "",
+            "estado": "vacia",
+            "avisos": [
+              "la fila no trae ni apellido ni nombre"
+            ],
+            "ceroAgregado": false
+          }
+        ],
+        "resumen": {
+          "lista": 3,
+          "incompleta": 1,
+          "duplicada": 0,
+          "vacia": 2,
+          "conCero": 1
+        },
+        "error": null,
+        "importables": [
+          5,
+          6,
+          7,
+          8
+        ]
+      }
+    },
+    {
+      "nombre": "CSV con punto y coma, BOM, \\r\\n, comillas y salto dentro de una celda",
+      "texto": "﻿Apellido paterno;Apellido materno;Nombres;DNI;Grupo de edad;Tipo;Sexo\r\n\"Quispe\";\"Rojas\";\"Rosa \"\"Rosita\"\"\";00000021;Adulto mayor;Ayuda social;F\r\nÑahui;Pérez;\"María; José\";=\"00000022\";niña;habitual;F\r\n'=Mamani;;Luz;00000021;adulto;no;\r\nTorres;;\"Ana\r\nBeatriz\";00000023;Joven;caso social;\r\n;;;;;;\r\nVargas;;Eva;00000024;vejete;???;\r\n  Rojas  ; ;  Sol  ;  00000025 ; ADOLESCENTE ; HABITUAL ; m \r\n",
+      "padron": {
+        "version": 3,
+        "afiliados": [],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {
+          "apellidoPaterno": 0,
+          "apellidoMaterno": 1,
+          "nombres": 2,
+          "numeroDocumento": 3,
+          "grupoEtario": 4,
+          "tipoAfiliado": 5,
+          "sexo": 6
+        },
+        "sinReconocer": [],
+        "filas": [
+          {
+            "linea": 2,
+            "afiliado": {
+              "apellidoPaterno": "Quispe",
+              "apellidoMaterno": "Rojas",
+              "nombres": "Rosa \"Rosita\"",
+              "numeroDocumento": "00000021",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto_mayor",
+              "sexo": "F",
+              "tipoAfiliado": "caso_social",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Quispe Rojas Rosa \"Rosita\"",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 3,
+            "afiliado": {
+              "apellidoPaterno": "Ñahui",
+              "apellidoMaterno": "Pérez",
+              "nombres": "María; José",
+              "numeroDocumento": "=00000022",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "nino",
+              "sexo": "F",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Ñahui Pérez María; José",
+            "estado": "incompleta",
+            "avisos": [
+              "el DNI no tiene 8 dígitos"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 4,
+            "afiliado": {
+              "apellidoPaterno": "=Mamani",
+              "apellidoMaterno": "",
+              "nombres": "Luz",
+              "numeroDocumento": "00000021",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto",
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "=Mamani  Luz",
+            "estado": "duplicada",
+            "avisos": [
+              "ese documento se repite dentro del propio archivo"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 5,
+            "afiliado": {
+              "apellidoPaterno": "Torres",
+              "apellidoMaterno": "",
+              "nombres": "Ana\nBeatriz",
+              "numeroDocumento": "00000023",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto",
+              "sexo": "",
+              "tipoAfiliado": "caso_social",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Torres  Ana\nBeatriz",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 7,
+            "afiliado": {
+              "apellidoPaterno": "Vargas",
+              "apellidoMaterno": "",
+              "nombres": "Eva",
+              "numeroDocumento": "00000024",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": null,
+              "sexo": "",
+              "tipoAfiliado": "",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Vargas  Eva",
+            "estado": "incompleta",
+            "avisos": [
+              "falta grupo de edad, tipo"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 8,
+            "afiliado": {
+              "apellidoPaterno": "Rojas",
+              "apellidoMaterno": "",
+              "nombres": "Sol",
+              "numeroDocumento": "00000025",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adolescente",
+              "sexo": "M",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Rojas  Sol",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          }
+        ],
+        "resumen": {
+          "lista": 3,
+          "incompleta": 2,
+          "duplicada": 1,
+          "vacia": 0,
+          "conCero": 0
+        },
+        "error": null,
+        "importables": [
+          2,
+          3,
+          5,
+          7,
+          8
+        ]
+      }
+    },
+    {
+      "nombre": "CSV con comas, títulos en mayúsculas y en otro orden, apellidos juntos, edad",
+      "texto": "DNI/CE,NOMBRES,APELLIDOS,EDAD,TIPO,GENERO\n00000031,Rosa,Quispe Rojas,45 años,Habitual,F\n00000032,Luz,Mamani,8,Habitual,\n00000033,Ana,De la Cruz Soto,999,Habitual,\n00000034,Eva,Torres,67,\"Ayuda social\",M\n00000035,,,30,Habitual,\n1234,Leo,Paz,17,habitual,\n12345,Eva,Díaz,70,Habitual,\n,María José,Ñahui Pérez,,,",
+      "padron": {
+        "version": 3,
+        "afiliados": [
+          {
+            "id": "p-1",
+            "apellidoPaterno": "Quispe",
+            "apellidoMaterno": "Rojas",
+            "nombres": "Rosa",
+            "numeroDocumento": "00000031",
+            "tipoDocumento": "dni",
+            "fechaNacimiento": "",
+            "grupoEtarioManual": null,
+            "sexo": "",
+            "tipoAfiliado": "",
+            "activo": true,
+            "altaEn": "2026-01-01",
+            "bajaEn": "",
+            "motivoBaja": "",
+            "origenDato": "manual",
+            "verificadoPor": "",
+            "nota": ""
+          },
+          {
+            "id": "p-2",
+            "apellidoPaterno": "Mamani",
+            "apellidoMaterno": "",
+            "nombres": "Luz",
+            "numeroDocumento": "00000032",
+            "tipoDocumento": "dni",
+            "fechaNacimiento": "",
+            "grupoEtarioManual": null,
+            "sexo": "",
+            "tipoAfiliado": "",
+            "activo": false,
+            "altaEn": "2026-01-01",
+            "bajaEn": "2026-05-01",
+            "motivoBaja": "",
+            "origenDato": "manual",
+            "verificadoPor": "",
+            "nota": ""
+          },
+          {
+            "id": "p-3",
+            "apellidoPaterno": "Torres",
+            "apellidoMaterno": "",
+            "nombres": "Eva",
+            "numeroDocumento": "00000099",
+            "tipoDocumento": "dni",
+            "fechaNacimiento": "",
+            "grupoEtarioManual": null,
+            "sexo": "",
+            "tipoAfiliado": "",
+            "activo": true,
+            "altaEn": "2026-01-01",
+            "bajaEn": "",
+            "motivoBaja": "",
+            "origenDato": "manual",
+            "verificadoPor": "",
+            "nota": ""
+          },
+          {
+            "id": "p-4",
+            "apellidoPaterno": "Ñahui",
+            "apellidoMaterno": "Pérez",
+            "nombres": "María  José",
+            "numeroDocumento": "",
+            "tipoDocumento": "dni",
+            "fechaNacimiento": "",
+            "grupoEtarioManual": null,
+            "sexo": "",
+            "tipoAfiliado": "",
+            "activo": true,
+            "altaEn": "2026-01-01",
+            "bajaEn": "",
+            "motivoBaja": "",
+            "origenDato": "manual",
+            "verificadoPor": "",
+            "nota": ""
+          },
+          {
+            "id": "p-5",
+            "apellidoPaterno": "Díaz",
+            "apellidoMaterno": "",
+            "nombres": "Eva",
+            "numeroDocumento": "00012345",
+            "tipoDocumento": "dni",
+            "fechaNacimiento": "",
+            "grupoEtarioManual": null,
+            "sexo": "",
+            "tipoAfiliado": "",
+            "activo": true,
+            "altaEn": "2026-01-01",
+            "bajaEn": "",
+            "motivoBaja": "",
+            "origenDato": "manual",
+            "verificadoPor": "",
+            "nota": ""
+          }
+        ],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {
+          "numeroDocumento": 0,
+          "nombres": 1,
+          "apellidos": 2,
+          "edad": 3,
+          "tipoAfiliado": 4,
+          "sexo": 5
+        },
+        "sinReconocer": [],
+        "filas": [
+          {
+            "linea": 2,
+            "afiliado": {
+              "apellidoPaterno": "Quispe",
+              "apellidoMaterno": "Rojas",
+              "nombres": "Rosa",
+              "numeroDocumento": "00000031",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto",
+              "sexo": "F",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Quispe Rojas Rosa",
+            "estado": "duplicada",
+            "avisos": [
+              "grupo de edad sacado de la edad: no cambiará solo con los años, conviene anotar la fecha de nacimiento",
+              "ese documento ya está en el padrón"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 3,
+            "afiliado": {
+              "apellidoPaterno": "Mamani",
+              "apellidoMaterno": "",
+              "nombres": "Luz",
+              "numeroDocumento": "00000032",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "nino",
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Mamani  Luz",
+            "estado": "lista",
+            "avisos": [
+              "grupo de edad sacado de la edad: no cambiará solo con los años, conviene anotar la fecha de nacimiento"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 4,
+            "afiliado": {
+              "apellidoPaterno": "De",
+              "apellidoMaterno": "la Cruz Soto",
+              "nombres": "Ana",
+              "numeroDocumento": "00000033",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto_mayor",
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "De la Cruz Soto Ana",
+            "estado": "lista",
+            "avisos": [
+              "grupo de edad sacado de la edad: no cambiará solo con los años, conviene anotar la fecha de nacimiento"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 5,
+            "afiliado": {
+              "apellidoPaterno": "Torres",
+              "apellidoMaterno": "",
+              "nombres": "Eva",
+              "numeroDocumento": "00000034",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto_mayor",
+              "sexo": "M",
+              "tipoAfiliado": "caso_social",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Torres  Eva",
+            "estado": "lista",
+            "avisos": [
+              "grupo de edad sacado de la edad: no cambiará solo con los años, conviene anotar la fecha de nacimiento",
+              "ya hay alguien con ese mismo nombre"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 6,
+            "afiliado": {
+              "apellidoPaterno": "",
+              "apellidoMaterno": "",
+              "nombres": "",
+              "numeroDocumento": "00000035",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto",
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "",
+            "estado": "vacia",
+            "avisos": [
+              "grupo de edad sacado de la edad: no cambiará solo con los años, conviene anotar la fecha de nacimiento",
+              "la fila no trae ni apellido ni nombre"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 7,
+            "afiliado": {
+              "apellidoPaterno": "Paz",
+              "apellidoMaterno": "",
+              "nombres": "Leo",
+              "numeroDocumento": "1234",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adolescente",
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Paz  Leo",
+            "estado": "incompleta",
+            "avisos": [
+              "grupo de edad sacado de la edad: no cambiará solo con los años, conviene anotar la fecha de nacimiento",
+              "el DNI no tiene 8 dígitos"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 8,
+            "afiliado": {
+              "apellidoPaterno": "Díaz",
+              "apellidoMaterno": "",
+              "nombres": "Eva",
+              "numeroDocumento": "00012345",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto_mayor",
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Díaz  Eva",
+            "estado": "duplicada",
+            "avisos": [
+              "se agregó el 0 de adelante que Excel había quitado",
+              "grupo de edad sacado de la edad: no cambiará solo con los años, conviene anotar la fecha de nacimiento",
+              "ese documento ya está en el padrón"
+            ],
+            "ceroAgregado": true
+          },
+          {
+            "linea": 9,
+            "afiliado": {
+              "apellidoPaterno": "Ñahui",
+              "apellidoMaterno": "Pérez",
+              "nombres": "María José",
+              "numeroDocumento": "",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": null,
+              "sexo": "",
+              "tipoAfiliado": "",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Ñahui Pérez María José",
+            "estado": "incompleta",
+            "avisos": [
+              "falta documento, grupo de edad, tipo",
+              "ya hay alguien con ese mismo nombre"
+            ],
+            "ceroAgregado": false
+          }
+        ],
+        "resumen": {
+          "lista": 3,
+          "incompleta": 2,
+          "duplicada": 2,
+          "vacia": 1,
+          "conCero": 0
+        },
+        "error": null,
+        "importables": [
+          3,
+          4,
+          5,
+          7,
+          9
+        ]
+      }
+    },
+    {
+      "nombre": "El reporte que exporta la app, con carné de extranjería y edad sin grupo",
+      "texto": "N°,Apellido paterno,Apellido materno,Nombres,Tipo de documento,Número de documento,Grupo de edad,Edad,Tipo,Días asistidos\n1,Álvarez,Rojas,Rosa,DNI,00000041,Adulto/a,,Habitual,3\n2,Benítez,,Luz,CE,001234567,Adolescente,,Ayuda social,0\n3,Cárdenas,Soto,Ana,Carné de extranjería,12345,Niño/a,,Habitual,1\n4,Díaz,,Eva,DNI,12345,,70,Habitual,2\n5,Espinoza,,Leo,DNI,00000045,Adulto/a mayor,40,Habitual,0",
+      "padron": {
+        "version": 3,
+        "afiliados": [],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {
+          "apellidoPaterno": 1,
+          "apellidoMaterno": 2,
+          "nombres": 3,
+          "tipoDocumento": 4,
+          "numeroDocumento": 5,
+          "grupoEtario": 6,
+          "edad": 7,
+          "tipoAfiliado": 8
+        },
+        "sinReconocer": [
+          "N°",
+          "Días asistidos"
+        ],
+        "filas": [
+          {
+            "linea": 2,
+            "afiliado": {
+              "apellidoPaterno": "Álvarez",
+              "apellidoMaterno": "Rojas",
+              "nombres": "Rosa",
+              "numeroDocumento": "00000041",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto",
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Álvarez Rojas Rosa",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 3,
+            "afiliado": {
+              "apellidoPaterno": "Benítez",
+              "apellidoMaterno": "",
+              "nombres": "Luz",
+              "numeroDocumento": "001234567",
+              "tipoDocumento": "ce",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adolescente",
+              "sexo": "",
+              "tipoAfiliado": "caso_social",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Benítez  Luz",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 4,
+            "afiliado": {
+              "apellidoPaterno": "Cárdenas",
+              "apellidoMaterno": "Soto",
+              "nombres": "Ana",
+              "numeroDocumento": "12345",
+              "tipoDocumento": "ce",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "nino",
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Cárdenas Soto Ana",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 5,
+            "afiliado": {
+              "apellidoPaterno": "Díaz",
+              "apellidoMaterno": "",
+              "nombres": "Eva",
+              "numeroDocumento": "00012345",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto_mayor",
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Díaz  Eva",
+            "estado": "lista",
+            "avisos": [
+              "se agregó el 0 de adelante que Excel había quitado",
+              "grupo de edad sacado de la edad: no cambiará solo con los años, conviene anotar la fecha de nacimiento"
+            ],
+            "ceroAgregado": true
+          },
+          {
+            "linea": 6,
+            "afiliado": {
+              "apellidoPaterno": "Espinoza",
+              "apellidoMaterno": "",
+              "nombres": "Leo",
+              "numeroDocumento": "00000045",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto_mayor",
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Espinoza  Leo",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          }
+        ],
+        "resumen": {
+          "lista": 5,
+          "incompleta": 0,
+          "duplicada": 0,
+          "vacia": 0,
+          "conCero": 1
+        },
+        "error": null,
+        "importables": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      }
+    },
+    {
+      "nombre": "Fechas de varias formas, con y sin grupo, y años de dos cifras",
+      "texto": "Apellido paterno\tNombres\tDNI\tFecha de nacimiento\tGrupo\tTipo\nUno\tA\t00000051\t14-09-27\t\tHabitual\nDos\tB\t00000052\t14-09-26\tAdulto\tHabitual\nTres\tC\t00000053\t5/5/2020\tAdulto mayor\tHabitual\nCuatro\tD\t00000054\tayer\tAdulto\tHabitual\nCinco\tE\t00000055\t29.02.2024\t\tHabitual\nSeis\tF\t00000056\t\t\tHabitual\nSiete\tG\t00000057\t1985-06-30\t\t",
+      "padron": {
+        "version": 3,
+        "afiliados": [],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {
+          "apellidoPaterno": 0,
+          "nombres": 1,
+          "numeroDocumento": 2,
+          "fechaNacimiento": 3,
+          "grupoEtario": 4,
+          "tipoAfiliado": 5
+        },
+        "sinReconocer": [],
+        "filas": [
+          {
+            "linea": 2,
+            "afiliado": {
+              "apellidoPaterno": "Uno",
+              "apellidoMaterno": "",
+              "nombres": "A",
+              "numeroDocumento": "00000051",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "1927-09-14",
+              "grupoEtarioManual": null,
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Uno  A",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 3,
+            "afiliado": {
+              "apellidoPaterno": "Dos",
+              "apellidoMaterno": "",
+              "nombres": "B",
+              "numeroDocumento": "00000052",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "2026-09-14",
+              "grupoEtarioManual": null,
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Dos  B",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 4,
+            "afiliado": {
+              "apellidoPaterno": "Tres",
+              "apellidoMaterno": "",
+              "nombres": "C",
+              "numeroDocumento": "00000053",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "2020-05-05",
+              "grupoEtarioManual": null,
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Tres  C",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 5,
+            "afiliado": {
+              "apellidoPaterno": "Cuatro",
+              "apellidoMaterno": "",
+              "nombres": "D",
+              "numeroDocumento": "00000054",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto",
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Cuatro  D",
+            "estado": "lista",
+            "avisos": [
+              "no se entendió la fecha de nacimiento"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 6,
+            "afiliado": {
+              "apellidoPaterno": "Cinco",
+              "apellidoMaterno": "",
+              "nombres": "E",
+              "numeroDocumento": "00000055",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "2024-02-29",
+              "grupoEtarioManual": null,
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Cinco  E",
+            "estado": "lista",
+            "avisos": [],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 7,
+            "afiliado": {
+              "apellidoPaterno": "Seis",
+              "apellidoMaterno": "",
+              "nombres": "F",
+              "numeroDocumento": "00000056",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": null,
+              "sexo": "",
+              "tipoAfiliado": "habitual",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Seis  F",
+            "estado": "incompleta",
+            "avisos": [
+              "falta grupo de edad"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 8,
+            "afiliado": {
+              "apellidoPaterno": "Siete",
+              "apellidoMaterno": "",
+              "nombres": "G",
+              "numeroDocumento": "00000057",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "1985-06-30",
+              "grupoEtarioManual": null,
+              "sexo": "",
+              "tipoAfiliado": "",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Siete  G",
+            "estado": "incompleta",
+            "avisos": [
+              "falta tipo"
+            ],
+            "ceroAgregado": false
+          }
+        ],
+        "resumen": {
+          "lista": 5,
+          "incompleta": 2,
+          "duplicada": 0,
+          "vacia": 0,
+          "conCero": 0
+        },
+        "error": null,
+        "importables": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      }
+    },
+    {
+      "nombre": "Saltos de línea \\r sueltos, columnas repetidas y sin reconocer",
+      "texto": "Nombres\tDNI\tdni\tCorreo\tTeléfono\tApellido\tEtapa\rRosa\t00000061\t99999999\trosa@ejemplo.test\t900000000\tQuispe\tAdulto\rLuz\t 00000062 \t\t\t\tMamani\tniño\rAna\t00000061\t\t\t\tTorres\tadulto",
+      "padron": {
+        "version": 3,
+        "afiliados": [],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {
+          "nombres": 0,
+          "numeroDocumento": 1,
+          "apellidos": 5,
+          "grupoEtario": 6
+        },
+        "sinReconocer": [
+          "Correo",
+          "Teléfono"
+        ],
+        "filas": [
+          {
+            "linea": 2,
+            "afiliado": {
+              "apellidoPaterno": "Quispe",
+              "apellidoMaterno": "",
+              "nombres": "Rosa",
+              "numeroDocumento": "00000061",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto",
+              "sexo": "",
+              "tipoAfiliado": "",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Quispe  Rosa",
+            "estado": "incompleta",
+            "avisos": [
+              "falta tipo"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 3,
+            "afiliado": {
+              "apellidoPaterno": "Mamani",
+              "apellidoMaterno": "",
+              "nombres": "Luz",
+              "numeroDocumento": "00000062",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "nino",
+              "sexo": "",
+              "tipoAfiliado": "",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Mamani  Luz",
+            "estado": "incompleta",
+            "avisos": [
+              "falta tipo"
+            ],
+            "ceroAgregado": false
+          },
+          {
+            "linea": 4,
+            "afiliado": {
+              "apellidoPaterno": "Torres",
+              "apellidoMaterno": "",
+              "nombres": "Ana",
+              "numeroDocumento": "00000061",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": "adulto",
+              "sexo": "",
+              "tipoAfiliado": "",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Torres  Ana",
+            "estado": "duplicada",
+            "avisos": [
+              "ese documento se repite dentro del propio archivo"
+            ],
+            "ceroAgregado": false
+          }
+        ],
+        "resumen": {
+          "lista": 0,
+          "incompleta": 2,
+          "duplicada": 1,
+          "vacia": 0,
+          "conCero": 0
+        },
+        "error": null,
+        "importables": [
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "nombre": "Solo títulos, sin nadie",
+      "texto": "Apellido paterno,Nombres,DNI\n\n",
+      "padron": {
+        "version": 3,
+        "afiliados": [],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {
+          "apellidoPaterno": 0,
+          "nombres": 1,
+          "numeroDocumento": 2
+        },
+        "sinReconocer": [],
+        "filas": [],
+        "resumen": {
+          "lista": 0,
+          "incompleta": 0,
+          "duplicada": 0,
+          "vacia": 0,
+          "conCero": 0
+        },
+        "error": null,
+        "importables": []
+      }
+    },
+    {
+      "nombre": "Los títulos después de la décima fila no se buscan",
+      "texto": "Línea de título 1\nLínea de título 2\nLínea de título 3\nLínea de título 4\nLínea de título 5\nLínea de título 6\nLínea de título 7\nLínea de título 8\nLínea de título 9\nLínea de título 10\nApellido paterno\tNombres\tDNI\nQuispe\tRosa\t00000071",
+      "padron": {
+        "version": 3,
+        "afiliados": [],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {},
+        "sinReconocer": [],
+        "filas": [],
+        "resumen": null,
+        "error": "No se encontró la fila de títulos. Debe traer títulos como «Apellido paterno», «Nombres», «DNI», «Grupo de edad», «Tipo».",
+        "importables": []
+      }
+    },
+    {
+      "nombre": "Los títulos en la décima fila sí",
+      "texto": "Línea de título 1\nLínea de título 2\nLínea de título 3\nLínea de título 4\nLínea de título 5\nLínea de título 6\nLínea de título 7\nLínea de título 8\nLínea de título 9\nApellido paterno\tNombres\tDNI\nQuispe\tRosa\t00000071",
+      "padron": {
+        "version": 3,
+        "afiliados": [],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {
+          "apellidoPaterno": 0,
+          "nombres": 1,
+          "numeroDocumento": 2
+        },
+        "sinReconocer": [],
+        "filas": [
+          {
+            "linea": 11,
+            "afiliado": {
+              "apellidoPaterno": "Quispe",
+              "apellidoMaterno": "",
+              "nombres": "Rosa",
+              "numeroDocumento": "00000071",
+              "tipoDocumento": "dni",
+              "fechaNacimiento": "",
+              "grupoEtarioManual": null,
+              "sexo": "",
+              "tipoAfiliado": "",
+              "activo": true,
+              "altaEn": "2026-10-20",
+              "bajaEn": "",
+              "motivoBaja": "",
+              "origenDato": "importado",
+              "verificadoPor": "",
+              "nota": ""
+            },
+            "nombreCompleto": "Quispe  Rosa",
+            "estado": "incompleta",
+            "avisos": [
+              "falta grupo de edad, tipo"
+            ],
+            "ceroAgregado": false
+          }
+        ],
+        "resumen": {
+          "lista": 0,
+          "incompleta": 1,
+          "duplicada": 0,
+          "vacia": 0,
+          "conCero": 0
+        },
+        "error": null,
+        "importables": [
+          11
+        ]
+      }
+    },
+    {
+      "nombre": "Vacío",
+      "texto": "",
+      "padron": {
+        "version": 3,
+        "afiliados": [],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {},
+        "sinReconocer": [],
+        "filas": [],
+        "resumen": null,
+        "error": "No se encontró ninguna fila.",
+        "importables": []
+      }
+    },
+    {
+      "nombre": "Solo espacios",
+      "texto": "   \n\t\n   ",
+      "padron": {
+        "version": 3,
+        "afiliados": [],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {},
+        "sinReconocer": [],
+        "filas": [],
+        "resumen": null,
+        "error": "No se encontró ninguna fila.",
+        "importables": []
+      }
+    },
+    {
+      "nombre": "Sin títulos",
+      "texto": "Ana;Perez;12345678\nRosa;Quispe;87654321",
+      "padron": {
+        "version": 3,
+        "afiliados": [],
+        "atenciones": []
+      },
+      "esperado": {
+        "columnas": {},
+        "sinReconocer": [],
+        "filas": [],
+        "resumen": null,
+        "error": "No se encontró la fila de títulos. Debe traer títulos como «Apellido paterno», «Nombres», «DNI», «Grupo de edad», «Tipo».",
+        "importables": []
+      }
+    }
+  ]
+}
