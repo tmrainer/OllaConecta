@@ -1,5 +1,7 @@
 // app: la app Android (Jetpack Compose). Las pantallas observan el Estado de
 // :nucleo; nada de lógica de negocio vive aquí.
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -14,13 +16,34 @@ android {
         applicationId = "io.github.tmrainer.asistencia"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
+        // Por encima del APK 1.7 (versionCode 11), para instalarse ENCIMA y
+        // traer sus datos (MigracionDel17). Del 12 al 19 quedan para arreglos del 1.x.
+        versionCode = 20
         versionName = "2.0.0"
         vectorDrawables.useSupportLibrary = true
     }
 
+    // La firma tiene que ser la MISMA que la del APK 1.7 instalado, o Android
+    // no deja instalar encima. Con nativo/firma.properties (mismo formato que
+    // mobile/firma.properties) se firma con la clave
+    // final; sin él, con la de depuración de esta máquina, como el 1.7.
+    val firma = Properties()
+    val archivoFirma = rootProject.file("firma.properties")
+    if (archivoFirma.exists()) archivoFirma.inputStream().use { firma.load(it) }
+    signingConfigs {
+        if (archivoFirma.exists()) {
+            create("final") {
+                storeFile = file(firma.getProperty("archivo"))
+                storePassword = firma.getProperty("clave")
+                keyAlias = firma.getProperty("alias")
+                keyPassword = firma.getProperty("claveAlias")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName(if (archivoFirma.exists()) "final" else "debug")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")

@@ -4,7 +4,12 @@
 package io.github.tmrainer.asistencia
 
 import android.content.Context
+import io.github.tmrainer.asistencia.nucleo.modelo.JSON
 import io.github.tmrainer.asistencia.nucleo.modelo.Perfil
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,4 +65,22 @@ class Preferencias(context: Context) {
     fun omitirPerfil() { _perfilOmitido.value = true; prefs.edit().putBoolean("perfil.omitido", true).apply() }
 
     fun marcarBienvenidaVista() { _bienvenidaVista.value = true; prefs.edit().putBoolean("bienvenidaVista", true).apply() }
+
+    /**
+     * Lo de este teléfono que el APK 1.7 guardaba en localStorage (pi3.*, ver
+     * MigracionDel17.kt). Solo lo que se reconoce; lo demás queda como está.
+     */
+    fun traerDeLaWeb(crudos: Map<String, String>) {
+        Tema.values().firstOrNull { it.clave == crudos["pi3.tema"] }?.let(::cambiarTema)
+        // «Letra grande» de antes (pi3.letraGrande = '1') sigue valiendo, como en preferencias.js.
+        val letra = crudos["pi3.letra"] ?: if (crudos["pi3.letraGrande"] == "1") "grande" else null
+        Letra.values().firstOrNull { it.clave == letra }?.let(::cambiarLetra)
+        val perfil = crudos["pi3.perfil"]?.let { try { JSON.parseToJsonElement(it) as? JsonObject } catch (e: SerializationException) { null } }
+        if (perfil != null) {
+            fun campo(k: String) = (perfil[k] as? JsonPrimitive)?.contentOrNull ?: ""
+            guardarPerfil(Perfil(nombre = campo("nombre"), rol = campo("rol"), dni = campo("dni"), celular = campo("celular")))
+        }
+        if (crudos["pi3.perfil.omitido"] == "1") omitirPerfil()
+        if (crudos["pi3.bienvenidaVista"] == "1") marcarBienvenidaVista()
+    }
 }

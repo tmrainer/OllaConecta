@@ -30,6 +30,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -102,7 +103,7 @@ class Contexto(
 }
 
 @Composable
-fun App(estado: Estado, preferencias: Preferencias) {
+fun App(estado: Estado, preferencias: Preferencias, avisoInicial: String? = null) {
     val tema by preferencias.tema.collectAsStateWithLifecycle()
     val letra by preferencias.letra.collectAsStateWithLifecycle()
     TemaOlla(tema, letra) {
@@ -113,6 +114,7 @@ fun App(estado: Estado, preferencias: Preferencias) {
         val entrada by nav.currentBackStackEntryAsState()
         val rutaActual = entrada?.destination?.route?.substringBefore("?") ?: Ruta.INICIO.ruta
         val c = colores
+        LaunchedEffect(avisoInicial) { avisoInicial?.let { avisos.mostrar(it) } }
 
         CompositionLocalProvider(LocalAvisos provides avisos) {
             Box(Modifier.fillMaxSize().background(c.fondo)) {

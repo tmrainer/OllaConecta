@@ -249,9 +249,9 @@ class Estado(
         return armarRespaldo(_rendiciones.value, _padron.value, _calendario.value, _config.value, ahora())
     }
 
-    /** Anota que hoy se guardó una copia, para el recordatorio. */
-    fun registrarCopia(): Boolean =
-        almacen.guardar(Clave.RESPALDO, buildJsonObject { put("ultimoEn", hoy()) })
+    /** Anota que hoy (o `en`, la del APK 1.7) se guardó una copia, para el recordatorio. */
+    fun registrarCopia(en: String = hoy()): Boolean =
+        almacen.guardar(Clave.RESPALDO, buildJsonObject { put("ultimoEn", en) })
 
     /** Días desde la última copia guardada, o null si nunca se guardó una. */
     fun diasDesdeUltimaCopia(): Int? {

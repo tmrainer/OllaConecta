@@ -4,3 +4,5 @@ build/
 local.properties
 *.iml
 .idea/
+# Claves de firma: NUNCA en el repositorio (ver app/build.gradle.kts)
+firma.properties
