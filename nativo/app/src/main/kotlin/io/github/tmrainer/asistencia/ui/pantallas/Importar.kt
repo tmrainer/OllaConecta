@@ -7,9 +7,7 @@ package io.github.tmrainer.asistencia.ui.pantallas
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,8 +22,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import io.github.tmrainer.asistencia.nucleo.calculos.etiquetaGrupoEtario
 import io.github.tmrainer.asistencia.nucleo.calculos.grupoEtario
@@ -63,6 +58,7 @@ import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.Campo
+import io.github.tmrainer.asistencia.ui.componentes.Casilla
 import io.github.tmrainer.asistencia.ui.componentes.CampoFecha
 import io.github.tmrainer.asistencia.ui.componentes.Chip
 import io.github.tmrainer.asistencia.ui.componentes.Chips
@@ -303,21 +299,4 @@ private fun Grupo(titulo: String, pista: String, contenido: @Composable () -> Un
     TituloSeccion(titulo)
     Pista(pista, Modifier.padding(bottom = Medidas.e2))
     Superficie { contenido() }
-}
-
-/** Una persona con su casilla: toda la fila la marca o desmarca. */
-@Composable
-private fun Casilla(marcada: Boolean, alCambiar: (Boolean) -> Unit, nombre: String, detalle: String, aviso: String? = null) {
-    val c = colores
-    Row(
-        Modifier.fillMaxWidth().clickable(role = Role.Checkbox) { alCambiar(!marcada) }.padding(Medidas.e2, Medidas.e2),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(marcada, alCambiar, colors = CheckboxDefaults.colors(checkedColor = c.acento, uncheckedColor = c.contorno))
-        Column(Modifier.weight(1f)) {
-            Text(nombre, style = tipos.textoNegrita, color = c.titulo)
-            Text(detalle, style = tipos.chico, color = c.tintaSuave)
-            if (aviso != null) Text(aviso, style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = 2.dp))
-        }
-    }
 }

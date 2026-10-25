@@ -2,8 +2,8 @@
 // contraseña, recuperar y cuándo fue la última), qué va en ella, dónde se
 // guardan los datos y, al final y lejos de «Guardar una copia», «Borrar todo».
 //
-// Pasar a otro teléfono por QR, traer un padrón de Excel y la cuenta llegan
-// en una fase siguiente.
+// Pasar a otro teléfono por QR (PasarDatos.kt), sin internet. La cuenta y la
+// nube esperan una cuenta de la organización.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import android.net.Uri
@@ -180,7 +180,15 @@ fun PantallaDatos(ctx: Contexto) {
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Pasar a otro teléfono")
-            Pista("Pasar datos por código QR y traer un padrón de Excel llegan en una fase siguiente de la app nativa. Mientras tanto: guarda una copia aquí y recupérala en el otro teléfono.")
+            Pista("Sin internet: este teléfono muestra un código QR y el otro lo lee con la cámara. Antes de guardar, el otro teléfono muestra qué cambia.", Modifier.padding(bottom = Medidas.e3))
+            Acciones {
+                Boton("Pasar el padrón", { enviarPorQr(ctx, "padron") })
+                Boton("Pasar la asistencia", { elegirDiasYEnviar(ctx) })
+                Boton("Pasar las entregas", { enviarPorQr(ctx, "entregas") })
+            }
+            Spacer(Modifier.height(Medidas.e3))
+            Boton("Recibir por QR", { recibirPorQr(ctx) }, tipo = TipoBoton.PRINCIPAL, icono = "camara")
+            Pista("Para todo de una vez (también el B-1), guarda una copia aquí y recupérala en el otro teléfono.", Modifier.padding(top = Medidas.e3))
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Dónde se guardan")
