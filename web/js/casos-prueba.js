@@ -893,6 +893,11 @@ export const casos = [
       igual(avanzarPeriodo('2026-09-14', 'mensual'), '2026-10-14');
       igual(avanzarPeriodo('2026-01-31', 'mensual'), '2026-02-28', 'ajusta a fin de mes');
       igual(avanzarPeriodo('2026-09-14', 'mensual', -1), '2026-08-14');
+      // Quincenal: la misma distancia del fin de cada quincena (no «cada 15 días»).
+      igual(avanzarPeriodo('2026-10-20', 'quincenal'), '2026-11-05');
+      igual(avanzarPeriodo('2026-10-20', 'quincenal', 6), '2027-01-20');
+      igual(avanzarPeriodo('2026-10-20', 'quincenal', -20), '2025-12-20');
+      igual(avanzarPeriodo('2027-02-15', 'quincenal'), '2027-02-28');
     }
   },
   {

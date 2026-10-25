@@ -22,13 +22,36 @@ export function avanzarPeriodo(fechaIso, periodicidad, pasos = 1) {
     return aIso(new Date(f.getFullYear(), f.getMonth(), f.getDate() + 7 * pasos));
   }
   if (periodicidad === 'quincenal') {
-    return aIso(new Date(f.getFullYear(), f.getMonth(), f.getDate() + 15 * pasos));
+    // Conserva la distancia al fin de la quincena (el 15 o el último día del
+    // mes): «cada 15 días» se iba corriendo 1–3 días cada pocos meses.
+    const fin = finDeQuincenaAnterior(f);
+    const desfase = Math.round((f - fin) / 86400000);
+    const destino = finDeQuincena(fin, pasos);
+    return aIso(new Date(destino.getFullYear(), destino.getMonth(), destino.getDate() + desfase));
   }
   const dia = f.getDate();
   const destino = new Date(f.getFullYear(), f.getMonth() + pasos, 1);
   const ultimoDia = new Date(destino.getFullYear(), destino.getMonth() + 1, 0).getDate();
   destino.setDate(Math.min(dia, ultimoDia));
   return aIso(destino);
+}
+
+/** El último fin de quincena (15 o fin de mes) que no es posterior a f. */
+function finDeQuincenaAnterior(f) {
+  const ultimo = new Date(f.getFullYear(), f.getMonth() + 1, 0).getDate();
+  if (f.getDate() === ultimo) return new Date(f.getFullYear(), f.getMonth(), ultimo);
+  if (f.getDate() >= 15) return new Date(f.getFullYear(), f.getMonth(), 15);
+  return new Date(f.getFullYear(), f.getMonth(), 0);
+}
+
+/** El fin de quincena que está «pasos» quincenas después del fin «fin». */
+function finDeQuincena(fin, pasos) {
+  const k = (fin.getFullYear() * 12 + fin.getMonth()) * 2 + (fin.getDate() === 15 ? 0 : 1) + pasos;
+  const meses = Math.floor(k / 2);
+  const segunda = k - meses * 2;   // 0: la que termina el 15; 1: la que termina a fin de mes
+  const anio = Math.floor(meses / 12);
+  const mes = meses - anio * 12;
+  return segunda === 0 ? new Date(anio, mes, 15) : new Date(anio, mes + 1, 0);
 }
 
 export function retrocederPeriodo(fechaIso, periodicidad, pasos = 1) {

@@ -13,6 +13,8 @@ import io.github.tmrainer.asistencia.nucleo.modelo.cuantos
 import io.github.tmrainer.asistencia.nucleo.modelo.diasEntre
 import io.github.tmrainer.asistencia.nucleo.modelo.esIso
 import io.github.tmrainer.asistencia.nucleo.modelo.hoyIso
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 data class Periodicidad(val clave: String, val etiqueta: String, val detalle: String)
 
@@ -22,14 +24,36 @@ val PERIODICIDADES = listOf(
     Periodicidad("mensual", "Mensual", "el mismo día de cada mes")
 )
 
-/** Avanza una fecha un periodo. Mensual conserva el día, ajustando a fin de mes. */
+/**
+ * Avanza una fecha un periodo. Mensual conserva el día, ajustando a fin de
+ * mes. Quincenal conserva la distancia al fin de la quincena (el 15 o el
+ * último día del mes): «cada 15 días» se iba corriendo 1–3 días cada pocos
+ * meses respecto de las quincenas del B-1.
+ */
 fun avanzarPeriodo(fechaIso: String?, periodicidad: String?, pasos: Int = 1): String {
     val f = aFecha(fechaIso) ?: return ""
     return when (periodicidad) {
         "semanal" -> aIso(f.plusDays(7L * pasos))
-        "quincenal" -> aIso(f.plusDays(15L * pasos))
+        "quincenal" -> {
+            val fin = finDeQuincenaAnterior(f)
+            aIso(finDeQuincena(fin, pasos).plusDays(ChronoUnit.DAYS.between(fin, f)))
+        }
         else -> aIso(f.plusMonths(pasos.toLong()))
     }
+}
+
+/** El último fin de quincena (15 o fin de mes) que no es posterior a [f]. */
+internal fun finDeQuincenaAnterior(f: LocalDate): LocalDate = when {
+    f.dayOfMonth == f.lengthOfMonth() -> f
+    f.dayOfMonth >= 15 -> f.withDayOfMonth(15)
+    else -> f.withDayOfMonth(1).minusDays(1)
+}
+
+/** El fin de quincena que está [pasos] quincenas después del fin [fin]. */
+private fun finDeQuincena(fin: LocalDate, pasos: Int): LocalDate {
+    val k = (fin.year * 12 + fin.monthValue - 1) * 2 + (if (fin.dayOfMonth == 15) 0 else 1) + pasos
+    val mes = LocalDate.of(Math.floorDiv(Math.floorDiv(k, 2), 12), Math.floorMod(Math.floorDiv(k, 2), 12) + 1, 1)
+    return if (Math.floorMod(k, 2) == 0) mes.withDayOfMonth(15) else mes.withDayOfMonth(mes.lengthOfMonth())
 }
 
 fun retrocederPeriodo(fechaIso: String?, periodicidad: String?, pasos: Int = 1): String =

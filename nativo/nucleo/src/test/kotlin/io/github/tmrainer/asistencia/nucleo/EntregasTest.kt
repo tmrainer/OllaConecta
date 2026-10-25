@@ -28,6 +28,20 @@ class EntregasTest {
     }
 
     @Test
+    fun `Quincenal - la entrega queda a la misma distancia del fin de cada quincena`() {
+        // 20-10 es 5 días después del 15: las siguientes, 5 días después de cada fin de quincena.
+        igual(avanzarPeriodo("2026-10-20", "quincenal"), "2026-11-05", "fin de octubre + 5 (cada 15 días daba 04-11)")
+        igual(avanzarPeriodo("2026-10-20", "quincenal", 2), "2026-11-20")
+        igual(avanzarPeriodo("2026-10-20", "quincenal", 6), "2027-01-20", "no se corre con los meses")
+        igual(avanzarPeriodo("2026-10-20", "quincenal", -1), "2026-10-05", "hacia atrás: fin de setiembre + 5")
+        igual(avanzarPeriodo("2026-10-20", "quincenal", -20), "2025-12-20", "hacia atrás, cruzando el año")
+        // El mismo fin de quincena: el 15 y el último día del mes.
+        igual(avanzarPeriodo("2026-10-31", "quincenal"), "2026-11-15")
+        igual(avanzarPeriodo("2026-11-15", "quincenal"), "2026-11-30")
+        igual(avanzarPeriodo("2027-02-15", "quincenal"), "2027-02-28", "febrero")
+    }
+
+    @Test
     fun `Las fechas se cuentan hacia adelante y hacia atrás desde la base`() {
         val cal = calendarioVacio().copy(periodicidad = "mensual", fechaLimiteBase = "2026-03-14")
         val f = fechasDeEntrega(cal, "2026-09-20", 3)
