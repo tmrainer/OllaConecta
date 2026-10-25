@@ -12,6 +12,9 @@ import io.github.tmrainer.asistencia.nucleo.envio.correoDeAsistencia
 import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDeAsistencia
 import io.github.tmrainer.asistencia.nucleo.documentos.pdfDeAsistencia
+import androidx.compose.foundation.lazy.rememberLazyListState
+import io.github.tmrainer.asistencia.ui.ListaParaGuia
+import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.componentes.horaAhora
 import io.github.tmrainer.asistencia.ui.componentes.Documento
 import io.github.tmrainer.asistencia.ui.componentes.BloqueEnvio
@@ -90,6 +93,7 @@ import io.github.tmrainer.asistencia.nucleo.validaciones.Hallazgo
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarAtenciones
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarPreciosMenu
 import io.github.tmrainer.asistencia.ui.Cabecera
+import io.github.tmrainer.asistencia.ui.GUIA_ASISTENCIA
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
@@ -226,9 +230,12 @@ fun PantallaAsistencia(ctx: Contexto) {
     var fin by remember { mutableStateOf(periodoDefecto.fin) }
 
     Column(Modifier.fillMaxWidth()) {
-        Cabecera(ctx, "Asistencia", fechaLarga(hoy))
+        Cabecera(ctx, "Asistencia", fechaLarga(hoy), guia = GUIA_ASISTENCIA)
+        val lista = rememberLazyListState()
+        ListaParaGuia(lista)
         LazyColumn(
             Modifier.fillMaxWidth().widthIn(max = Medidas.anchoColumna).align(Alignment.CenterHorizontally),
+            state = lista,
             contentPadding = androidx.compose.foundation.layout.PaddingValues(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
         ) {
             val avisosAlmacen = estado.avisosAlmacenamiento()
@@ -236,7 +243,7 @@ fun PantallaAsistencia(ctx: Contexto) {
 
             item { Pista("Toca a quien vino. Las raciones se cuentan solas.", Modifier.padding(bottom = Medidas.e3)) }
             if (activos.isNotEmpty()) item {
-                Boton("Pasar lista leyendo el DNI", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeerDni = ::marcarPorDni) } }, Modifier.padding(bottom = Medidas.e3), icono = "camara")
+                Boton("Pasar lista leyendo el DNI", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeerDni = ::marcarPorDni) } }, Modifier.padding(bottom = Medidas.e3).objetivoGuia("asistencia.dni"), icono = "camara")
             }
 
             if (activos.isEmpty()) {
@@ -249,7 +256,7 @@ fun PantallaAsistencia(ctx: Contexto) {
                 stickyHeader {
                     Column(Modifier.fillMaxWidth().background(c.fondo).padding(bottom = Medidas.e2)) {
                         BarraHoy(atHoy, activos.size)
-                        Row(Modifier.padding(top = Medidas.e2), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Medidas.e2)) {
+                        Row(Modifier.padding(top = Medidas.e2).objetivoGuia("asistencia.buscar"), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Medidas.e2)) {
                             if (activos.size > 12) {
                                 Campo("Buscar", busqueda, { busqueda = it }, Modifier.weight(1f), placeholder = "Buscar…")
                             }
@@ -269,18 +276,21 @@ fun PantallaAsistencia(ctx: Contexto) {
                     }
                 }
                 items(visibles, key = { "hoy-" + it.id }) { persona ->
-                    FilaToque(
-                        persona = persona,
-                        presente = persona.id in marcados,
-                        menu = menus[persona.id] ?: menuPorDefecto(persona),
-                        grupo = grupoEtario(persona, hoy),
-                        primera = persona.id == visibles.first().id,
-                        ultima = persona.id == visibles.last().id,
-                        alTocar = { alternar(atHoy, persona) }
-                    )
+                    // La primera fila es la que muestra la guía («Toca a quien vino»).
+                    Box(if (persona.id == visibles.first().id) Modifier.objetivoGuia("asistencia.lista") else Modifier) {
+                        FilaToque(
+                            persona = persona,
+                            presente = persona.id in marcados,
+                            menu = menus[persona.id] ?: menuPorDefecto(persona),
+                            grupo = grupoEtario(persona, hoy),
+                            primera = persona.id == visibles.first().id,
+                            ultima = persona.id == visibles.last().id,
+                            alTocar = { alternar(atHoy, persona) }
+                        )
+                    }
                 }
                 item {
-                    ContadorSinInscribir(atHoy) { nuevo -> cambiarDia(atHoy) { it.copy(sinInscribir = nuevo) } }
+                    Box(Modifier.objetivoGuia("asistencia.sinPadron")) { ContadorSinInscribir(atHoy) { nuevo -> cambiarDia(atHoy) { it.copy(sinInscribir = nuevo) } } }
                     Acciones(Modifier.padding(top = Medidas.e3)) {
                         Boton("Marcar a todos", { marcarTodos(atHoy, activos, true) }, diminuto = true)
                         Boton("Quitar a todos", { marcarTodos(atHoy, activos, false) }, diminuto = true)
@@ -317,7 +327,7 @@ fun PantallaAsistencia(ctx: Contexto) {
             item {
                 TituloSeccion("Otros días", apoyo = true)
                 Pista("Para corregir o completar días pasados.", Modifier.padding(bottom = Medidas.e3))
-                Boton("+ Registrar otro día", {
+                Boton("+ Registrar otro día", modifier = Modifier.objetivoGuia("asistencia.otros"), onClick = {
                     // Sin fecha: la pone la persona; la ficha se abre.
                     val at = nuevaAtencion(estado.preciosActuales()).copy(fecha = "")
                     estado.cambiarPadron { it.copy(atenciones = it.atenciones + at) }
@@ -351,24 +361,26 @@ fun PantallaAsistencia(ctx: Contexto) {
             // ---- precio del menú ----
             item {
                 Spacer(Modifier.height(Medidas.e5))
+                Column(Modifier.objetivoGuia("asistencia.precio")) {
                 TituloSeccion("Precio del menú", apoyo = true)
                 Pista("Vale para hoy y los días nuevos. Cada día anterior guarda su precio.", Modifier.padding(bottom = Medidas.e3))
                 CampoSoles("Menú normal (S/)", config.precioMenuNormalCent, { v -> estado.cambiarConfig { it.copy(precioMenuNormalCent = v) } })
                 Spacer(Modifier.height(Medidas.e3))
                 CampoSoles("Menú de ayuda social (S/)", config.precioMenuAyudaSocialCent, { v -> estado.cambiarConfig { it.copy(precioMenuAyudaSocialCent = v) } }, pista = "Si es gratuito, escribe 0.00.")
+                }
             }
 
             // ---- resumen ----
             item {
                 Spacer(Modifier.height(Medidas.e5))
                 TituloSeccion("Resumen", apoyo = true)
-                Boton("Reporte del día y del mes", { ctx.ir(Ruta.REPORTES) }, Modifier.padding(bottom = Medidas.e3), icono = "archivo")
+                Boton("Reporte del día y del mes", { ctx.ir(Ruta.REPORTES) }, Modifier.padding(bottom = Medidas.e3).objetivoGuia("asistencia.reporte"), icono = "archivo")
                 Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                     CampoFecha("Desde", inicio, { if (it.isNotEmpty()) inicio = it }, Modifier.weight(1f))
                     CampoFecha("Hasta", fin, { if (it.isNotEmpty()) fin = it }, Modifier.weight(1f))
                 }
                 val r = remember(padron, inicio, fin) { resumenEconomicoRaciones(padron, inicio, fin) }
-                Chips(Modifier.padding(top = Medidas.e3)) {
+                Chips(Modifier.padding(top = Medidas.e3).objetivoGuia("asistencia.cifras")) {
                     Chip("Raciones", "${r.racionesTotales}")
                     Chip("Normales", "${r.racionesNormales}")
                     Chip("Ayuda social", "${r.racionesAyudaSocial}")

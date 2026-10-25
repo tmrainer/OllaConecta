@@ -13,6 +13,8 @@ import io.github.tmrainer.asistencia.nucleo.documentos.pdfDePendientes
 import io.github.tmrainer.asistencia.nucleo.padron.inscribirEnLaOlla
 import io.github.tmrainer.asistencia.nucleo.dni.EstadoCampo
 import io.github.tmrainer.asistencia.nucleo.dni.CampoCruzado
+import io.github.tmrainer.asistencia.ui.ListaParaGuia
+import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.camara.LecturaDni
 import io.github.tmrainer.asistencia.ui.camara.CamaraDni
 import io.github.tmrainer.asistencia.ui.componentes.Superficie
@@ -95,6 +97,8 @@ import io.github.tmrainer.asistencia.nucleo.validaciones.indicePadron
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarAfiliado
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarAfiliados
 import io.github.tmrainer.asistencia.ui.Cabecera
+import io.github.tmrainer.asistencia.ui.GUIA_INSCRIBIR
+import io.github.tmrainer.asistencia.ui.GUIA_PADRON
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
@@ -182,7 +186,8 @@ fun PantallaPadron(ctx: Contexto) {
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxWidth()) {
-            Cabecera(ctx, "Padrón", (if (hojaActual != null) "Hoja del ${aDdMmAa(hojaActual.fecha)} · " else "") + cuantos(padron.afiliados.count { it.activo }, "persona activa", "personas activas"))
+            Cabecera(ctx, "Padrón", (if (hojaActual != null) "Hoja del ${aDdMmAa(hojaActual.fecha)} · " else "") + cuantos(padron.afiliados.count { it.activo }, "persona activa", "personas activas"), guia = GUIA_PADRON)
+            ListaParaGuia(listaEstado)
             LazyColumn(
                 Modifier.fillMaxWidth().widthIn(max = Medidas.anchoColumna).align(Alignment.CenterHorizontally),
                 state = listaEstado,
@@ -197,16 +202,16 @@ fun PantallaPadron(ctx: Contexto) {
                     }
                     TituloSeccion("Personas afiliadas")
                     if (padron.afiliados.isNotEmpty()) {
-                        Campo("Buscar", busqueda, { busqueda = it }, placeholder = "Nombre o DNI")
+                        Campo("Buscar", busqueda, { busqueda = it }, Modifier.objetivoGuia("padron.buscar"), placeholder = "Nombre o DNI")
                         Spacer(Modifier.height(Medidas.e3))
                         CampoFecha("Edades a la fecha", fechaRef, { if (it.isNotEmpty()) fechaRef = it })
                         Spacer(Modifier.height(10.dp))
                         val pendientes = padron.afiliados.count { it.activo && it.registroMunicipal == "pendiente" }
                         // Sin pendientes, el filtro desaparece: no se queda elegido y escondido.
                         if (filtro == "pendientes" && pendientes == 0) filtro = "activos"
-                        Opciones(FILTROS.filter { it.first != "pendientes" || pendientes > 0 }.map { (v, t) ->
+                        Box(Modifier.objetivoGuia("padron.filtros")) { Opciones(FILTROS.filter { it.first != "pendientes" || pendientes > 0 }.map { (v, t) ->
                             v to when { v == "incompletas" && incompletas > 0 -> "$t ($incompletas)"; v == "pendientes" -> "$t ($pendientes)"; else -> t }
-                        }, { it == filtro }, { filtro = it })
+                        }, { it == filtro }, { filtro = it }) }
                         val conteo = resumenEtario(padron, fechaRef)
                         Chips(Modifier.padding(top = Medidas.e3)) {
                             Chip("Activas", "${afiliadosActivos(padron, fechaRef).size}")
@@ -234,22 +239,25 @@ fun PantallaPadron(ctx: Contexto) {
                     }
                 }
                 items(visibles, key = { it.id }) { a ->
-                    FilaPersona(
-                        a = a, fechaRef = fechaRef, errores = erroresPor[a.id] ?: 0, abierta = abierta == a.id,
-                        primera = a.id == visibles.first().id, ultima = a.id == visibles.last().id,
-                        alAbrir = { abierta = if (abierta == a.id) null else a.id },
-                        cambiar = { cambio -> cambiarPersona(a.id, cambio) },
-                        retirar = { fecha -> estado.cambiarPadron { retirarPorLaHoja(it, a.id, fecha) } },
-                        fechaUltimaHoja = hojaActual?.fecha,
-                        borrar = {
-                            val pos = padron.afiliados.indexOfFirst { it.id == a.id }
-                            estado.cambiarPadron { p -> p.copy(afiliados = p.afiliados.filter { it.id != a.id }) }
-                            abierta = null
-                            avisos.mostrar("Borraste a ${nombreCompleto(a)}") {
-                                estado.cambiarPadron { p -> p.copy(afiliados = p.afiliados.toMutableList().also { it.add(maxOf(0, minOf(pos, it.size)), a) }) }
+                    // La primera fila es la que muestra la guía («Las personas de la olla»).
+                    Box(if (a.id == visibles.first().id) Modifier.objetivoGuia("padron.lista") else Modifier) {
+                        FilaPersona(
+                            a = a, fechaRef = fechaRef, errores = erroresPor[a.id] ?: 0, abierta = abierta == a.id,
+                            primera = a.id == visibles.first().id, ultima = a.id == visibles.last().id,
+                            alAbrir = { abierta = if (abierta == a.id) null else a.id },
+                            cambiar = { cambio -> cambiarPersona(a.id, cambio) },
+                            retirar = { fecha -> estado.cambiarPadron { retirarPorLaHoja(it, a.id, fecha) } },
+                            fechaUltimaHoja = hojaActual?.fecha,
+                            borrar = {
+                                val pos = padron.afiliados.indexOfFirst { it.id == a.id }
+                                estado.cambiarPadron { p -> p.copy(afiliados = p.afiliados.filter { it.id != a.id }) }
+                                abierta = null
+                                avisos.mostrar("Borraste a ${nombreCompleto(a)}") {
+                                    estado.cambiarPadron { p -> p.copy(afiliados = p.afiliados.toMutableList().also { it.add(maxOf(0, minOf(pos, it.size)), a) }) }
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
                 item {
                     Spacer(Modifier.height(Medidas.e5))
@@ -297,14 +305,14 @@ fun PantallaPadron(ctx: Contexto) {
                     Spacer(Modifier.height(Medidas.e5))
                     TituloSeccion("La hoja de la Municipalidad", apoyo = true)
                     Pista("Cada hoja nueva actualiza el padrón. Antes de guardar verás qué cambia.", Modifier.padding(bottom = Medidas.e3))
-                    Boton("Cargar la hoja (Excel)", { ctx.ir(Ruta.IMPORTAR) }, icono = "archivo")
+                    Boton("Cargar la hoja (Excel)", { ctx.ir(Ruta.IMPORTAR) }, Modifier.objetivoGuia("padron.hoja"), icono = "archivo")
                     Pista("¿Hoja en papel? En «Inscribir», elige «Ya está en la hoja de la Municipalidad».", Modifier.padding(top = Medidas.e2))
                     HistorialHojas(padron)
                     EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
                 }
             }
         }
-        BotonFlotante("Inscribir", { ctx.ir(Ruta.INSCRIBIR) }, Modifier.align(Alignment.BottomEnd).padding(end = Medidas.e4, bottom = Medidas.e4))
+        BotonFlotante("Inscribir", { ctx.ir(Ruta.INSCRIBIR) }, Modifier.align(Alignment.BottomEnd).padding(end = Medidas.e4, bottom = Medidas.e4).objetivoGuia("padron.inscribir"))
     }
 }
 
@@ -441,8 +449,9 @@ private fun EditorPersona(a: Afiliado, cambiar: ((Afiliado) -> Afiliado) -> Unit
 /**
  * Copiar de la hoja en papel: una pantalla propia, no una ventana encima del padrón. Los datos
  * en una lista que se desplaza; abajo, siempre a la vista y sobre el teclado,
- * qué falta (o a quién se inscribió) y el botón. Queda abierta para inscribir
- * a varias seguidas; salir con algo escrito pregunta antes de perderlo.
+ * qué falta (o a quién se copió) y el botón. Al inscribir a quien llegó a la
+ * olla se cierra; copiando de la hoja queda abierta para copiar a varias
+ * seguidas. Salir con algo escrito pregunta antes de perderlo.
  */
 @Composable
 fun PantallaInscribir(ctx: Contexto) {
@@ -459,6 +468,8 @@ fun PantallaInscribir(ctx: Contexto) {
     var mensaje by remember { mutableStateOf("") }
     var mensajeOk by remember { mutableStateOf(false) }
     var confirmarNombre by remember { mutableStateOf<Afiliado?>(null) }
+    // Leído un DNI que ya está en el padrón: se avisa y no se llena nada.
+    var yaInscrita by remember { mutableStateOf<Afiliado?>(null) }
     var saliendo by remember { mutableStateOf(false) }
     // De dónde viene: llegó a la olla (queda pendiente de la
     // Municipalidad) o ya figura en la hoja municipal (se copia con su fecha).
@@ -490,10 +501,13 @@ fun PantallaInscribir(ctx: Contexto) {
      * Llena el formulario con lo leído del DNI (llenarConDni de ui-personas.js).
      * No inscribe: una letra dudosa queda vacía con sus opciones, y se dice qué revisar.
      */
+    fun inscritaCon(dni: String) = estado.padron.value.afiliados.firstOrNull { it.activo && it.numeroDocumento == dni }
+
     fun llenarConDni(l: LecturaDni) {
         val m = l.mrz.campos
         notaDni = emptyList(); dudas = emptyList(); avisoDni = ""
         if (m.pais != "PER") { avisoDni = "No parece un DNI peruano. Escribe los datos a mano."; return }
+        inscritaCon(m.numeroDocumento)?.let { yaInscrita = it; return }
         tipoDoc = "dni"; doc = m.numeroDocumento; nacimiento = m.fechaNacimiento
         val revisar = ArrayList<String>()
         val ds = ArrayList<Triple<String, List<String>, (String) -> Unit>>()
@@ -523,7 +537,10 @@ fun PantallaInscribir(ctx: Contexto) {
             avisar("${nombreCompleto(a)} quedó en el padrón. Puedes copiar a otra persona.", ok = true)
         } else {
             estado.cambiarPadron { inscribirEnLaOlla(it, a) }
-            avisar("${nombreCompleto(a)} quedó inscrita. Llévala a la Municipalidad para registrarla.", ok = true)
+            // Inscrita: la pantalla se cierra y el aviso queda abajo, en la de antes.
+            ctx.avisos.mostrar("${nombreCompleto(a)} quedó inscrita. Llévala a la Municipalidad para registrarla.")
+            ctx.volver()
+            return
         }
         paterno = ""; materno = ""; nombres = ""; doc = ""; nacimiento = ""; grupo = null; tipo = ""
         escaneo = null; notaDni = emptyList(); dudas = emptyList(); avisoDni = ""
@@ -557,7 +574,7 @@ fun PantallaInscribir(ctx: Contexto) {
     }
 
     Column(Modifier.fillMaxSize().background(c.fondo)) {
-        Cabecera(ctx, "Inscribir a una persona", "Los campos con * son obligatorios", alVolver = ::salir)
+        Cabecera(ctx, "Inscribir a una persona", "Los campos con * son obligatorios", guia = GUIA_INSCRIBIR, alVolver = ::salir)
         Column(
             Modifier.weight(1f).fillMaxWidth().verticalScroll(desplazamiento).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, Medidas.e5)
@@ -571,7 +588,7 @@ fun PantallaInscribir(ctx: Contexto) {
                 Pista("Queda pendiente hasta que la registren en la Municipalidad.", Modifier.padding(top = Medidas.e2, bottom = Medidas.e3))
                 // ---- leer el DNI (en prueba) ----
                 Pista("En prueba. Revisa todo antes de inscribir.", Modifier.padding(bottom = Medidas.e2))
-                Boton("Leer el DNI con la cámara", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeer = ::llenarConDni) } }, icono = "camara")
+                Boton("Leer el DNI con la cámara", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeer = ::llenarConDni, yaEsta = { inscritaCon(it) != null }) } }, Modifier.objetivoGuia("inscribir.dni"), icono = "camara")
                 if (avisoDni.isNotEmpty()) Text(avisoDni, style = tipos.chicoFuerte, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
                 if (escaneo != null) {
                     Text("Listo. Revisa los datos con el DNI en la mano.", style = tipos.textoFuerte, color = c.ok, modifier = Modifier.padding(top = Medidas.e3))
@@ -590,16 +607,19 @@ fun PantallaInscribir(ctx: Contexto) {
             Spacer(Modifier.height(Medidas.e4))
             Separador()
             Spacer(Modifier.height(Medidas.e4))
-            Campo("Apellido paterno", paterno, { paterno = it }, obligatorio = true, capitalizar = true)
+            Campo("Apellido paterno", paterno, { paterno = it }, Modifier.objetivoGuia("inscribir.paterno"), obligatorio = true, capitalizar = true)
             Spacer(Modifier.height(Medidas.e3))
             Campo("Apellido materno", materno, { materno = it }, capitalizar = true)
             Spacer(Modifier.height(Medidas.e3))
-            Campo("Nombres", nombres, { nombres = it }, obligatorio = true, capitalizar = true)
+            Campo("Nombres", nombres, { nombres = it }, Modifier.objetivoGuia("inscribir.nombres"), obligatorio = true, capitalizar = true)
             Spacer(Modifier.height(Medidas.e4))
             Leyenda("Documento")
             Opciones(listOf("dni" to "DNI", "ce" to "Carné de extranjería"), { it == tipoDoc }, { tipoDoc = it })
             Spacer(Modifier.height(Medidas.e3))
-            Campo("Número", doc, { doc = it }, obligatorio = true, soloDigitos = tipoDoc == "dni", maxLargo = 12)
+            // Al escribir el número, si ya está en el padrón se dice aquí mismo: no hace falta llenar el resto.
+            val yaEsta = doc.trim().takeIf { it.isNotEmpty() }?.let(::inscritaCon)
+            Campo("Número", doc, { doc = it }, obligatorio = true, soloDigitos = tipoDoc == "dni", maxLargo = 12,
+                aviso = yaEsta?.let { "Ya está inscrita: ${nombreCompleto(it)}. No hace falta inscribirla otra vez." })
             Spacer(Modifier.height(Medidas.e4))
             CampoFecha("Fecha de nacimiento (opcional)", nacimiento, { nacimiento = it }, pista = "Con la fecha, el grupo de edad se calcula solo.")
             Spacer(Modifier.height(Medidas.e4))
@@ -623,11 +643,26 @@ fun PantallaInscribir(ctx: Contexto) {
                         modifier = Modifier.padding(bottom = Medidas.e2).semantics { liveRegion = LiveRegionMode.Polite }
                     )
                 }
-                Boton("Inscribir", ::inscribir, Modifier.fillMaxWidth(), tipo = TipoBoton.PRINCIPAL, icono = "personaMas")
+                Boton("Inscribir", ::inscribir, Modifier.fillMaxWidth().objetivoGuia("inscribir.boton"), tipo = TipoBoton.PRINCIPAL, icono = "personaMas")
             }
         }
     }
 
+
+    yaInscrita?.let { a ->
+        AlertDialog(
+            onDismissRequest = { yaInscrita = null },
+            containerColor = c.superficie,
+            icon = { Icono("ok", 32.dp, c.ok) },
+            title = { Text("Ya está inscrita", style = tipos.seccion, color = c.titulo) },
+            text = {
+                Text("${nombreCompleto(a)} (DNI ${a.numeroDocumento}) ya está en el padrón. No hace falta inscribirla otra vez.",
+                    style = tipos.texto, color = c.tinta)
+            },
+            confirmButton = { Boton("Inscribir a otra persona", { yaInscrita = null }, tipo = TipoBoton.PRINCIPAL) },
+            dismissButton = { Boton("Volver al padrón", { yaInscrita = null; ctx.ir(Ruta.PADRON) }) }
+        )
+    }
 
     if (saliendo) {
         AlertDialog(

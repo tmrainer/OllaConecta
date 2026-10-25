@@ -53,6 +53,7 @@ import io.github.tmrainer.asistencia.nucleo.padron.EleccionHoja
 import io.github.tmrainer.asistencia.nucleo.padron.aplicarHoja
 import io.github.tmrainer.asistencia.nucleo.padron.compararConHoja
 import io.github.tmrainer.asistencia.ui.Cabecera
+import io.github.tmrainer.asistencia.ui.GUIA_PADRON
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
@@ -134,7 +135,7 @@ fun PantallaImportar(ctx: Contexto) {
     }
 
     Column(Modifier.fillMaxSize().background(c.fondo)) {
-        Cabecera(ctx, "Hoja de la Municipalidad", "Actualizar el padrón")
+        Cabecera(ctx, "Hoja de la Municipalidad", "Actualizar el padrón", guia = GUIA_PADRON)
         Column(
             Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, Medidas.e5)

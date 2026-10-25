@@ -12,6 +12,7 @@ import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
 import io.github.tmrainer.asistencia.nucleo.documentos.hojasDelB1
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDelB1
 import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelB1
+import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.componentes.Documento
 import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
 import io.github.tmrainer.asistencia.AlElegir
@@ -72,7 +73,9 @@ import io.github.tmrainer.asistencia.nucleo.sugerencias.sugerenciasPerfil
 import io.github.tmrainer.asistencia.nucleo.validaciones.Hallazgo
 import io.github.tmrainer.asistencia.nucleo.validaciones.Severidad
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarRendicion
+import io.github.tmrainer.asistencia.nucleo.calculos.codigoPeriodo
 import io.github.tmrainer.asistencia.ui.Cabecera
+import io.github.tmrainer.asistencia.ui.GUIA_B1
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
@@ -245,7 +248,8 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
-            Cabecera(ctx, "Formato B-1", "Rendición de cuentas")
+            // El código del B-1 abierto («Octubre-2026-Q1»), si sus fechas son un periodo completo.
+            Cabecera(ctx, "Formato B-1", codigoPeriodo(rendicion.periodo) ?: "Rendición de cuentas", guia = GUIA_B1)
             Column(
                 Modifier.weight(1f).fillMaxWidth().verticalScroll(desplazamiento).widthIn(max = Medidas.anchoColumna)
                     .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, if (pasoActual == 4) 110.dp else 40.dp)
@@ -259,7 +263,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                 PanelHallazgos(hallazgos, alIrA = { irACampo(it) })
 
                 // ---- la barra de pasos ----
-                Row(Modifier.fillMaxWidth().padding(bottom = 2.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.objetivoGuia("b1.barra").fillMaxWidth().padding(bottom = 2.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     PASOS.forEachIndexed { i, nombre ->
                         val n = i + 1
                         val color = when {
@@ -269,13 +273,20 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                             else -> c.seleccion
                         }
                         Box(
-                            Modifier.weight(1f).height(24.dp).clip(RoundedCornerShape(Medidas.rS)).clickable(role = Role.Button) { avanzarA(n) }
+                            Modifier.weight(1f).objetivoGuia("b1.paso$n").height(48.dp).clip(RoundedCornerShape(Medidas.rS)).clickable(role = Role.Button) { avanzarA(n) }
                                 .semantics { contentDescription = "Paso $n: $nombre" + if (n in pendientesPorPaso) ", le falta algo" else "" },
                             contentAlignment = Alignment.Center
                         ) { Box(Modifier.fillMaxWidth().height(if (n == pasoActual) 8.dp else 6.dp).clip(RoundedCornerShape(999.dp)).background(color)) }
                     }
                 }
-                Text("Paso $pasoActual de ${PASOS.size}", style = tipos.pista, color = c.tintaSuave, modifier = Modifier.padding(bottom = Medidas.e3))
+                // Lo que dice el ámbar de la barra también va en palabras (el color nunca va solo).
+                val faltan = pendientesPorPaso.sorted()
+                val queFalta = when (faltan.size) {
+                    0 -> ""
+                    1 -> ". Al paso ${faltan[0]} le falta algo"
+                    else -> ". A los pasos ${faltan.dropLast(1).joinToString(", ")} y ${faltan.last()} les falta algo"
+                }
+                Text("Paso $pasoActual de ${PASOS.size}$queFalta", style = tipos.pista, color = c.tintaSuave, modifier = Modifier.padding(bottom = Medidas.e3))
 
                 when (pasoActual) {
                     1 -> PasoCentro(rendicion, hallazgos, config, perfil, propuestos, ::cambiar)
@@ -432,13 +443,20 @@ private fun PasoPeriodo(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) 
                 Boton("Usar estas fechas", { cambiar { it.copy(periodo = it.periodo.copy(inicio = p.inicio, fin = p.fin)) } }, diminuto = true, tipo = TipoBoton.PRINCIPAL)
             }
             Text("Escríbelo así (toca uno)", style = tipos.chicoNegrita, color = c.acentoTexto, modifier = Modifier.padding(top = Medidas.e3, bottom = Medidas.e2))
-            Acciones { for (alt in p.alternativas) Boton(alt, { cambiar { it.copy(periodo = it.periodo.copy(etiqueta = alt)) } }, diminuto = true, tipo = TipoBoton.PRINCIPAL) }
+            // También su código, para saber en la hoja cuál es cuál («Octubre-2026-Q1»).
+            Acciones { for (alt in p.alternativas + listOfNotNull(codigoPeriodo(p.aPeriodo()))) Boton(alt, { cambiar { it.copy(periodo = it.periodo.copy(etiqueta = alt)) } }, diminuto = true, tipo = TipoBoton.PRINCIPAL) }
         }
     }
     Spacer(Modifier.height(Medidas.e3))
     Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
         CampoFecha("Primer día del periodo", r.periodo.inicio, { v -> cambiar { it.copy(periodo = it.periodo.copy(inicio = v)) } }, Modifier.weight(1f), error = hs.errorDe("periodo.inicio"), aviso = hs.avisoDe("periodo.inicio"), obligatorio = true)
         CampoFecha("Último día del periodo", r.periodo.fin, { v -> cambiar { it.copy(periodo = it.periodo.copy(fin = v)) } }, Modifier.weight(1f), pista = "Las compras que rindes van de un día al otro.", obligatorio = true)
+    }
+    // El código sale de las fechas: una quincena, un mes o una semana completos.
+    if (r.periodo.inicio.isNotEmpty() && r.periodo.fin.isNotEmpty()) {
+        val codigo = codigoPeriodo(r.periodo)
+        if (codigo != null) FranjaEstado("Código de este B-1: $codigo", TonoPastilla.OK, Modifier.padding(top = Medidas.e3), icono = "boleta")
+        else FranjaEstado("Estas fechas no son una quincena, un mes ni una semana completos: este B-1 no tiene código.", TonoPastilla.NEUTRA, Modifier.padding(top = Medidas.e3), icono = "aviso")
     }
     Spacer(Modifier.height(Medidas.e3))
     Campo("Mes de rendición", r.periodo.etiqueta, { v -> cambiar { it.copy(periodo = it.periodo.copy(etiqueta = v)) } }, pista = "Lo que se escribe en la hoja, en «Mes de rendición».", error = hs.errorDe("periodo.etiqueta"), placeholder = "Ej.: Setiembre 2026", obligatorio = true)
@@ -654,7 +672,7 @@ private fun PasoRevisar(
         }
     }
     Spacer(Modifier.height(Medidas.e4))
-    Boton("Ver cómo queda en la hoja", verHoja, icono = "boleta")
+    Boton("Ver cómo queda en la hoja", verHoja, Modifier.objetivoGuia("b1.hoja"), icono = "boleta")
     Spacer(Modifier.height(Medidas.e5))
     TituloSeccion("Exportar el B-1")
     Pista("En PDF o Excel, para guardar o mandar por WhatsApp.", Modifier.padding(bottom = Medidas.e3))
@@ -679,7 +697,10 @@ private fun PasoRevisar(
                 if (i == 0) return@forEachIndexed
                 val tx = totales(x)
                 Row(Modifier.fillMaxWidth().background(if (i == indice) c.superficie2 else c.superficie).padding(Medidas.e4, Medidas.e3), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                    Text(nombreDelMes(x), style = tipos.textoFuerte, color = c.titulo, modifier = Modifier.weight(1f))
+                    Column(Modifier.weight(1f)) {
+                        Text(nombreDelMes(x), style = tipos.textoFuerte, color = c.titulo)
+                        codigoPeriodo(x.periodo)?.takeIf { it != nombreDelMes(x) }?.let { Text(it, style = tipos.chico, color = c.tintaSuave) }
+                    }
                     Text(if (tx.total == null) "sin subsidio" else "S/ ${formatearSoles(tx.total)}", style = tipos.chico, color = c.tintaSuave)
                     if (i == indice) Text("abierto", style = tipos.chicoNegrita, color = c.acentoTexto) else Boton("Abrir", { abrir(x.id) }, diminuto = true)
                 }

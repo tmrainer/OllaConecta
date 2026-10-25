@@ -1,12 +1,14 @@
-// App.kt — la cáscara: tema, navegación, cabecera con el menú ⋮, el menú de
-// abajo (ícono y palabra, la sección actual con una píldora) y el aviso de
-// abajo con «Deshacer». Las pantallas van en ui/pantallas. Cada pantalla
-// anota lo que se lee en voz alta (Lectura); el menú ⋮ o el botón 🔊 lo leen.
+// App.kt — la cáscara: tema, navegación, cabecera con sus botones con palabra
+// (Ayuda, Ajustes), el menú de abajo (ícono y palabra, la sección actual con
+// una píldora) y el aviso de abajo con «Deshacer». Las pantallas van en
+// ui/pantallas. Cada pantalla anota lo que se lee en voz alta (Lectura);
+// «Ayuda» o el botón «Escuchar» lo leen.
 package io.github.tmrainer.asistencia.ui
 
 import androidx.compose.ui.semantics.heading
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,8 +30,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -62,6 +63,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import io.github.tmrainer.asistencia.Preferencias
 import io.github.tmrainer.asistencia.Voz
+import io.github.tmrainer.asistencia.perfilListo
+import io.github.tmrainer.asistencia.ui.pantallas.PrimerUso
 import io.github.tmrainer.asistencia.nucleo.estado.Estado
 import io.github.tmrainer.asistencia.ui.componentes.AvisoAbajo
 import io.github.tmrainer.asistencia.ui.componentes.Avisador
@@ -82,7 +85,6 @@ import io.github.tmrainer.asistencia.ui.pantallas.PantallaImportar
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaReportes
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaInscribir
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaPadron
-import io.github.tmrainer.asistencia.ui.pantallas.Bienvenida
 import io.github.tmrainer.asistencia.ui.tema.Medidas
 import io.github.tmrainer.asistencia.ui.tema.TemaOlla
 import io.github.tmrainer.asistencia.ui.tema.colores
@@ -112,8 +114,11 @@ class Contexto(
     val nav: NavHostController,
     val avisos: Avisador,
     val voz: Voz,
-    val abrirBienvenida: () -> Unit
+    val abrirGuia: (Guia) -> Unit
 ) {
+    /** La bienvenida de la primera vez: la guía del Inicio. */
+    fun abrirBienvenida() = abrirGuia(GUIA_INICIO)
+
     /** Lo que se muestra sobre toda la app (la cámara): tapa también el menú de abajo. */
     var capa by mutableStateOf<(@Composable () -> Unit)?>(null)
         private set
@@ -151,10 +156,16 @@ fun App(estado: Estado, preferencias: Preferencias, voz: Voz, avisoInicial: Stri
     TemaOlla(tema, letra) {
         val nav = rememberNavController()
         val avisos = remember { Avisador() }
-        var bienvenida by remember { mutableStateOf(false) }
-        val ctx = remember(nav) { Contexto(estado, preferencias, nav, avisos, voz) { bienvenida = true } }
+        val objetivos = remember { Objetivos() }
+        var guia by remember { mutableStateOf<Guia?>(null) }
+        // Quién eres y de qué olla: se pide al abrir mientras falte (PrimerUso).
+        val perfil by preferencias.perfil.collectAsStateWithLifecycle()
+        val config by estado.config.collectAsStateWithLifecycle()
+        var trayendoDatos by remember { mutableStateOf(false) }
+        val ctx = remember(nav) { Contexto(estado, preferencias, nav, avisos, voz) { guia = it } }
         val entrada by nav.currentBackStackEntryAsState()
         val rutaActual = entrada?.destination?.route?.substringBefore("?") ?: Ruta.INICIO.ruta
+        val pidiendoPerfil = !perfilListo(perfil) && !(trayendoDatos && rutaActual == Ruta.DATOS.ruta)
         val c = colores
         LaunchedEffect(avisoInicial) { avisoInicial?.let { avisos.mostrar(it) } }
         // Tocar un aviso del teléfono abre su pantalla (MainActivity deja la ruta en `abrir`).
@@ -165,9 +176,10 @@ fun App(estado: Estado, preferencias: Preferencias, voz: Voz, avisoInicial: Stri
             }
         }
 
-        CompositionLocalProvider(LocalAvisos provides avisos) {
+        CompositionLocalProvider(LocalAvisos provides avisos, LocalObjetivos provides objetivos) {
             Box(Modifier.fillMaxSize().background(c.fondo)) {
-                Column(Modifier.fillMaxSize()) {
+                // Lo de abajo de PrimerUso y de una guía no se usa: TalkBack tampoco lo lee.
+                Column(Modifier.fillMaxSize().then(if (pidiendoPerfil || guia != null) Modifier.clearAndSetSemantics { } else Modifier)) {
                     Box(Modifier.weight(1f)) {
                         NavHost(nav, startDestination = Ruta.INICIO.ruta) {
                             pantalla(ctx, Ruta.INICIO.ruta) { PantallaInicio(ctx) }
@@ -188,7 +200,15 @@ fun App(estado: Estado, preferencias: Preferencias, voz: Voz, avisoInicial: Stri
                     if (rutaActual != Ruta.INSCRIBIR.ruta && rutaActual != Ruta.IMPORTAR.ruta) BarraAbajo(rutaActual) { ctx.ir(it) }
                 }
                 AvisoAbajo(avisos, Modifier.align(Alignment.BottomCenter).padding(bottom = 68.dp + Medidas.e3).windowInsetsPadding(WindowInsets.navigationBars))
-                if (bienvenida) Bienvenida(ctx) { bienvenida = false }
+                // Mientras falte el perfil, la app no se usa; salvo para ir a «Tus datos» a traerlos de otro teléfono.
+                if (pidiendoPerfil) {
+                    PrimerUso(
+                        ctx, ollaPropuesta = config.ultimoCentro?.nombreCentro?.trim().orEmpty(),
+                        alTraerDatos = { trayendoDatos = true; ctx.ir(Ruta.DATOS) },
+                        alTerminar = { trayendoDatos = false; if (!preferencias.bienvenidaVista.value) ctx.abrirBienvenida() }
+                    )
+                }
+                guia?.let { g -> GuiaFoco(ctx, g) { if (g === GUIA_INICIO) preferencias.marcarBienvenidaVista(); guia = null } }
                 ctx.capa?.let { contenido ->
                     // Los toques no pasan a la pantalla de abajo.
                     Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { } }) {
@@ -212,17 +232,22 @@ private fun NavGraphBuilder.pantalla(ctx: Contexto, ruta: String, contenido: @Co
         CompositionLocalProvider(LocalLectura provides lectura) { contenido(entrada) }
     }
 
-/** Cabecera verde: flecha para volver (salvo en el Inicio), título, subtítulo y el menú ⋮. */
+/**
+ * Cabecera verde: flecha para volver (salvo en el Inicio), título, subtítulo
+ * y, a la derecha, botones con ícono Y palabra: nada escondido tras «⋮», que
+ * quien recién empieza no toca (NN/g). «Ayuda» siempre, con la [guia] de
+ * esta pantalla; «Ajustes» en el Inicio ([conAjustes]); «Escuchar» si se
+ * pidió en Ajustes.
+ */
 @Composable
-fun Cabecera(ctx: Contexto, titulo: String, subtitulo: String? = null, conVolver: Boolean = true, alVolver: () -> Unit = { ctx.volver() }) {
+fun Cabecera(ctx: Contexto, titulo: String, subtitulo: String? = null, conVolver: Boolean = true, conAjustes: Boolean = false, guia: Guia = GUIA_INICIO, alVolver: () -> Unit = { ctx.volver() }) {
     val c = colores
-    var menu by remember { mutableStateOf(false) }
     val conVoz by ctx.preferencias.vozBoton.collectAsStateWithLifecycle()
     TituloParaLeer(titulo)
     Column(Modifier.fillMaxWidth().background(c.marca).windowInsetsPadding(WindowInsets.statusBars)) {
         Row(
             Modifier.widthIn(max = Medidas.anchoColumna).align(Alignment.CenterHorizontally).fillMaxWidth()
-                .defaultMinSize(minHeight = 64.dp).padding(start = if (conVolver) Medidas.e1 else Medidas.e4, end = 6.dp, top = Medidas.e2, bottom = Medidas.e2),
+                .defaultMinSize(minHeight = 64.dp).padding(start = if (conVolver) Medidas.e1 else Medidas.e4, end = Medidas.e3, top = Medidas.e2, bottom = Medidas.e2),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (conVolver) {
@@ -234,32 +259,31 @@ fun Cabecera(ctx: Contexto, titulo: String, subtitulo: String? = null, conVolver
                 Text(titulo, style = tipos.titulo, color = Color.White, modifier = Modifier.semantics { heading() })
                 if (subtitulo != null) Text(subtitulo, style = tipos.chico, color = c.marcaSuave)
             }
-            // 🔊 si se pidió en Ajustes: leer la pantalla con un toque.
-            if (conVoz) {
-                Box(Modifier.size(48.dp).clip(CircleShape).clickable(role = Role.Button) { ctx.leerPantalla() }.semantics { contentDescription = "Leer esta pantalla en voz alta" }, contentAlignment = Alignment.Center) {
-                    Icono("voz", 26.dp, Color.White)
-                }
-            }
-            Box {
-                Box(Modifier.size(48.dp).clip(CircleShape).background(if (menu) Color.White.copy(alpha = .14f) else Color.Transparent).clickable(role = Role.Button) { menu = true }.semantics { contentDescription = "Más opciones" }, contentAlignment = Alignment.Center) {
-                    Icono("puntos", 26.dp, Color.White)
-                }
-                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }, containerColor = c.superficie, shape = RoundedCornerShape(Medidas.rM)) {
-                    for ((icono, texto, accion) in listOf(
-                        Triple("voz", "Leer esta pantalla en voz alta") { ctx.leerPantalla() },
-                        Triple("ayuda", "¿Cómo se usa?") { ctx.abrirBienvenida() },
-                        Triple("escudo", "Tus datos") { ctx.ir(Ruta.DATOS) },
-                        Triple("ajustes", "Ajustes") { ctx.ir(Ruta.AJUSTES) }
-                    )) {
-                        DropdownMenuItem(
-                            text = { Text(texto, style = tipos.texto, color = c.tinta) },
-                            leadingIcon = { Icono(icono, 22.dp, c.acentoTexto) },
-                            onClick = { menu = false; accion() }
-                        )
-                    }
-                }
+            Spacer(Modifier.width(Medidas.e3))
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Medidas.e2)) {
+                if (conAjustes) BotonCabecera("ajustes", "Ajustes") { ctx.ir(Ruta.AJUSTES) }
+                // «Escuchar» con un toque, si se pidió en Ajustes (también está en Ayuda).
+                if (conVoz) BotonCabecera("voz", "Escuchar") { ctx.leerPantalla() }
+                // La ayuda en el lugar, cuando se pide: cómo se usa ESTA pantalla (Guias.kt).
+                BotonCabecera("ayuda", "Ayuda", Modifier.objetivoGuia("ayuda")) { ctx.abrirGuia(guia) }
             }
         }
+    }
+}
+
+/** Un botón de la cabecera: ícono y palabra, 48 dp de alto, con borde claro sobre el verde. */
+@Composable
+private fun BotonCabecera(icono: String, texto: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Row(
+        modifier.defaultMinSize(minHeight = 48.dp).clip(RoundedCornerShape(999.dp))
+            .border(1.dp, Color.White.copy(alpha = .5f), RoundedCornerShape(999.dp))
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = Medidas.e3),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icono(icono, 20.dp, Color.White)
+        Spacer(Modifier.width(6.dp))
+        Text(texto, style = tipos.chicoFuerte, color = Color.White)
     }
 }
 
@@ -273,7 +297,7 @@ fun BarraAbajo(rutaActual: String, alIr: (Ruta) -> Unit) {
             for (s in SECCIONES) {
                 val activa = s.ruta == rutaActual
                 Column(
-                    Modifier.weight(1f).defaultMinSize(minHeight = 68.dp)
+                    Modifier.weight(1f).objetivoGuia("nav." + s.ruta).defaultMinSize(minHeight = 68.dp)
                         .clickable(role = Role.Tab) { if (!activa) alIr(s) }
                         .semantics { contentDescription = s.texto + if (activa) ", sección actual" else "" }
                         .padding(top = Medidas.e2, bottom = 10.dp),

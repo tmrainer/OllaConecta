@@ -45,6 +45,7 @@ import io.github.tmrainer.asistencia.nucleo.documentos.dibujarHoja
 import io.github.tmrainer.asistencia.nucleo.documentos.hojasDelB1
 import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
 import io.github.tmrainer.asistencia.ui.Cabecera
+import io.github.tmrainer.asistencia.ui.GUIA_B1
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.componentes.EstadoVacio
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
@@ -70,7 +71,7 @@ fun PantallaHojaB1(ctx: Contexto, rendicionId: String?) {
         }
     }
     Column(Modifier.fillMaxWidth()) {
-        Cabecera(ctx, "Vista previa del B-1", r?.periodo?.etiqueta?.trim()?.ifEmpty { null } ?: "En curso")
+        Cabecera(ctx, "Vista previa del B-1", r?.periodo?.etiqueta?.trim()?.ifEmpty { null } ?: "En curso", guia = GUIA_B1)
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)

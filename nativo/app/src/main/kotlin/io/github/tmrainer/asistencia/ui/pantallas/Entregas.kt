@@ -47,6 +47,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -67,7 +69,11 @@ import io.github.tmrainer.asistencia.nucleo.modelo.nuevaEntrega
 import io.github.tmrainer.asistencia.nucleo.validaciones.Severidad
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarCalendario
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarRendicion
+import io.github.tmrainer.asistencia.nucleo.calculos.codigoPeriodo
+import io.github.tmrainer.asistencia.nucleo.calculos.proponerPeriodo
+import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Cabecera
+import io.github.tmrainer.asistencia.ui.GUIA_ENTREGAS
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
@@ -103,7 +109,7 @@ fun PantallaEntregas(ctx: Contexto) {
     var msgAviso by remember { mutableStateOf("") }
 
     Column(Modifier.fillMaxWidth()) {
-        Cabecera(ctx, "Entregas", "Fechas de entrega del B-1")
+        Cabecera(ctx, "Entregas", "Fechas de entrega del B-1", guia = GUIA_ENTREGAS)
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
@@ -175,7 +181,7 @@ fun PantallaEntregas(ctx: Contexto) {
                 EstadoVacio("calendario", "Todavía no hay fechas", "Pon abajo una fecha de entrega que conozcas. Aquí verás las próximas.")
             } else {
                 val agenda = agendaEntregas(calendario, hoy, 6)
-                Superficie {
+                Box(Modifier.objetivoGuia("entregas.lista")) { Superficie {
                     agenda.forEachIndexed { i, item ->
                         val reg = calendario.entregas.firstOrNull { it.fechaLimite == item.fechaLimite }
                         val estadoItem = reg?.estado ?: "pendiente"
@@ -187,14 +193,22 @@ fun PantallaEntregas(ctx: Contexto) {
                         }
                         Row(Modifier.fillMaxWidth().padding(Medidas.e4, Medidas.e3), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                             Text(aDdMmAa(item.fechaLimite), style = tipos.textoNegrita, color = c.titulo, modifier = Modifier.width(76.dp))
-                            Text(
-                                texto, style = if (item.nivel == Nivel.LEJANA || item.nivel == Nivel.PROXIMA) tipos.chico else tipos.chicoFuerte,
-                                color = when (item.nivel) { Nivel.VENCIDA -> c.error; Nivel.HOY, Nivel.URGENTE -> c.aviso; else -> c.tintaSuave },
-                                modifier = Modifier.weight(1f)
-                            )
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    texto, style = if (item.nivel == Nivel.LEJANA || item.nivel == Nivel.PROXIMA) tipos.chico else tipos.chicoFuerte,
+                                    color = when (item.nivel) { Nivel.VENCIDA -> c.error; Nivel.HOY, Nivel.URGENTE -> c.aviso; else -> c.tintaSuave }
+                                )
+                                // Qué B-1 se entrega ese día: el periodo que contiene la fecha, como propone el paso «Periodo».
+                                codigoPeriodo(proponerPeriodo(calendario.periodicidad, item.fechaLimite).aPeriodo())?.let {
+                                    Text("B-1 $it", style = tipos.chico, color = c.tintaSuave)
+                                }
+                            }
                             var abierto by remember { mutableStateOf(false) }
                             Box {
-                                Ficha(ETIQUETA_ESTADO.first { it.first == estadoItem }.second, estadoItem != "pendiente", { abierto = true })
+                                val textoEstado = ETIQUETA_ESTADO.first { it.first == estadoItem }.second
+                                // Cada entrega dice de qué fecha es: no cinco «Pendiente» iguales.
+                                Ficha(textoEstado, estadoItem != "pendiente", { abierto = true }, comoBoton = true,
+                                    modifier = Modifier.semantics { contentDescription = "Entrega del ${aDdMmAa(item.fechaLimite)}: $textoEstado" })
                                 DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }, containerColor = c.superficie) {
                                     for ((v, t) in ETIQUETA_ESTADO) DropdownMenuItem(text = { Text(t, style = tipos.texto, color = c.tinta) }, onClick = {
                                         abierto = false
@@ -209,7 +223,7 @@ fun PantallaEntregas(ctx: Contexto) {
                         }
                         if (i < agenda.size - 1) Separador()
                     }
-                }
+                } }
             }
             AvisosDelTelefono(esIso(calendario.fechaLimiteBase))
 
@@ -217,12 +231,12 @@ fun PantallaEntregas(ctx: Contexto) {
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Cada cuánto entregas")
             Leyenda("Cada cuánto")
-            Opciones(PERIODICIDADES.map { it.clave to "${it.etiqueta} (${it.detalle})" }, { it == calendario.periodicidad }, { v -> estado.cambiarCalendario { it.copy(periodicidad = v) } })
+            Box(Modifier.objetivoGuia("entregas.cada")) { Opciones(PERIODICIDADES.map { it.clave to "${it.etiqueta} (${it.detalle})" }, { it == calendario.periodicidad }, { v -> estado.cambiarCalendario { it.copy(periodicidad = v) } }) }
             Spacer(Modifier.height(Medidas.e3))
-            CampoFecha("Una fecha de entrega que conoces", calendario.fechaLimiteBase, { v -> estado.cambiarCalendario { it.copy(fechaLimiteBase = v) } }, pista = "La próxima o una pasada, da igual.")
+            CampoFecha("Una fecha de entrega que conoces", calendario.fechaLimiteBase, { v -> estado.cambiarCalendario { it.copy(fechaLimiteBase = v) } }, Modifier.objetivoGuia("entregas.fecha"), pista = "La próxima o una pasada, da igual.")
             Spacer(Modifier.height(Medidas.e3))
             Leyenda("Avisarme")
-            Opciones(OPCIONES_AVISO, { it in calendario.diasDeAviso }, { dias ->
+            Box(Modifier.objetivoGuia("entregas.avisar")) { Opciones(OPCIONES_AVISO, { it in calendario.diasDeAviso }, { dias ->
                 val otros = calendario.diasDeAviso.filter { it != dias }
                 val marcado = dias in calendario.diasDeAviso
                 if (marcado && otros.isEmpty()) { msgAviso = "Deja marcado al menos uno." }
@@ -230,7 +244,7 @@ fun PantallaEntregas(ctx: Contexto) {
                     msgAviso = ""
                     estado.cambiarCalendario { it.copy(diasDeAviso = (if (marcado) otros else otros + dias).sortedDescending()) }
                 }
-            })
+            }) }
             if (msgAviso.isNotEmpty()) Text(msgAviso, style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = 4.dp))
             EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
         }
