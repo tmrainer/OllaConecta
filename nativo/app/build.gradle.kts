@@ -6,6 +6,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
+    id("androidx.baselineprofile")
 }
 
 android {
@@ -79,6 +80,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.navigation:navigation-compose:2.8.5")
     implementation("androidx.core:core-splashscreen:1.0.1")
+    // Instala el perfil de arranque al abrir la app por primera vez: los APK
+    // se reparten a mano, sin Play, que es quien lo instalaría si no.
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+    baselineProfile(project(":perfil"))
 
     // La cámara (leer el DNI y los QR), autorizada el 24-10-2026: CameraX para el
     // visor y ML Kit de los servicios de Google Play para leer. Los modelos los
@@ -90,4 +95,10 @@ dependencies {
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
     implementation("com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1")
     debugImplementation("androidx.compose.ui:ui-tooling")
+}
+
+// El perfil de arranque (módulo :perfil) se genera en una app aparte, con
+// otro applicationId: nunca reemplaza la app instalada ni toca sus datos.
+androidComponents {
+    onVariants(selector().withBuildType("nonMinifiedRelease")) { it.applicationId.set("io.github.tmrainer.asistencia.generarperfil") }
 }

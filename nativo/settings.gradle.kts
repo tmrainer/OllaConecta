@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "ollaconecta"
-include(":nucleo", ":app")
+include(":nucleo", ":app", ":perfil")
