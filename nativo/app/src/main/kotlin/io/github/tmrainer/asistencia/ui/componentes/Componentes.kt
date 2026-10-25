@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -179,7 +180,8 @@ fun BotonFlotante(texto: String, onClick: () -> Unit, modifier: Modifier = Modif
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Acciones(modifier: Modifier = Modifier, contenido: @Composable () -> Unit) {
-    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e2), verticalArrangement = Arrangement.spacedBy(Medidas.e2)) { contenido() }
+    // 12 dp entre botones: con dedos menos precisos, no se toca el de al lado.
+    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e3), verticalArrangement = Arrangement.spacedBy(Medidas.e3)) { contenido() }
 }
 
 // --------------------------------------------------------------- campos
@@ -368,17 +370,23 @@ fun <T> Opciones(
     }
 }
 
-/** Una ficha: borde contorno, y rellena de «selección» cuando está elegida. */
+/**
+ * Una ficha: borde contorno, y rellena de «selección» cuando está elegida.
+ * Es una opción de un grupo (TalkBack dice si está elegida); con [comoBoton],
+ * un botón que se ve como ficha (abre un menú).
+ */
 @Composable
-fun Ficha(texto: String, elegida: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, habilitado: Boolean = true, minAlto: Dp = 48.dp) {
+fun Ficha(texto: String, elegida: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, habilitado: Boolean = true, minAlto: Dp = 48.dp, comoBoton: Boolean = false) {
     val c = colores
     Box(
         modifier
             .clip(RoundedCornerShape(999.dp))
             .background(if (elegida) c.seleccion else c.superficie)
             .border(1.dp, if (elegida) c.acentoTexto else c.contorno, RoundedCornerShape(999.dp))
-            .clickable(enabled = habilitado, role = Role.RadioButton, onClick = onClick)
-            .semantics { }
+            .then(
+                if (comoBoton) Modifier.clickable(enabled = habilitado, role = Role.Button, onClick = onClick)
+                else Modifier.selectable(selected = elegida, enabled = habilitado, role = Role.RadioButton, onClick = onClick)
+            )
             .defaultMinSize(minHeight = minAlto)
             .padding(horizontal = Medidas.e4),
         contentAlignment = Alignment.Center
@@ -509,19 +517,18 @@ fun AvisoSistema(texto: String, modifier: Modifier = Modifier, boton: Pair<Strin
     }
 }
 
-/** Fondo suave de un estado (ok, aviso, error) con texto y, si hay, un botón al lado. */
+/** Fondo suave de un estado (ok, aviso, error) con texto y, si hay, un botón debajo: así el texto no queda apretado. */
 @Composable
 fun FranjaEstado(texto: String, tono: TonoPastilla, modifier: Modifier = Modifier, icono: String? = null, boton: Pair<String, () -> Unit>? = null) {
     val c = colores
     val fondo = when (tono) { TonoPastilla.OK -> c.okFondo; TonoPastilla.ERROR -> c.errorFondo; TonoPastilla.ADVERTENCIA -> c.avisoFondo; TonoPastilla.NEUTRA -> c.superficie2 }
     val colorIcono = when (tono) { TonoPastilla.OK -> c.ok; TonoPastilla.ERROR -> c.error; TonoPastilla.ADVERTENCIA -> c.aviso; TonoPastilla.NEUTRA -> c.tintaSuave }
-    Row(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(fondo).padding(Medidas.e4, Medidas.e3),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (icono != null) { Icono(icono, 17.dp, colorIcono); Spacer(Modifier.width(Medidas.e2)) }
-        Text(texto, style = tipos.pista, color = c.tinta, modifier = Modifier.weight(1f))
-        if (boton != null) { Spacer(Modifier.width(Medidas.e2)); Boton(boton.first, boton.second, diminuto = true) }
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(fondo).padding(Medidas.e4, Medidas.e3)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (icono != null) { Icono(icono, 17.dp, colorIcono); Spacer(Modifier.width(Medidas.e2)) }
+            Text(texto, style = tipos.pista, color = c.tinta, modifier = Modifier.weight(1f))
+        }
+        if (boton != null) Boton(boton.first, boton.second, Modifier.padding(top = Medidas.e3), diminuto = true)
     }
 }
 
