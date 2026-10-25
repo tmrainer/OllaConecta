@@ -123,6 +123,35 @@ class EscaneoDniTest {
     }
 
     @Test
+    fun `Una letra de más o de menos en un nombre - se ofrecen las dos, y Apelido es Apellido`() {
+        // Visto en DNI reales: la MRZ salió «ROSAA» y el rótulo «Segundo Apelido».
+        val mrz = CamposMrz(pais = "PER", apellidos = listOf("QUISPE"), nombres = "ROSAA MARIA")
+        val r = assertNotNull(combinarMrzYAnverso(mrz, listOf("Primer Apellido", "QUISPE", "Segundo Apelido", "HUAMÁN", "Prenombres", "ROSA MARÍA")))
+        igual(r.apellidoPaterno.estado, EstadoCampo.CONFIRMADO)
+        igual(r.nombres.estado, EstadoCampo.DUDOSO, "no se elige: decide la persona")
+        igual(r.nombres.opciones, listOf("ROSA MARÍA", "ROSAA MARIA"))
+        igual(r.apellidoMaterno.valor, "HUAMÁN", "el rótulo con una L también vale")
+        // Una letra de menos («LUS» por LUIS) también es dudosa; dos ya no se parecen.
+        val luis = CamposMrz(pais = "PER", apellidos = listOf("QUISPE"), nombres = "JOSE LUIS")
+        igual(combinarMrzYAnverso(luis, listOf("Primer Apellido", "QUISPE", "Prenombres", "JOSE LUS"))?.nombres?.estado, EstadoCampo.DUDOSO)
+        igual(combinarMrzYAnverso(luis, listOf("Primer Apellido", "QUISPE", "Prenombres", "JOSE LS"))?.nombres?.estado, EstadoCampo.SIN_CONFIRMAR)
+    }
+
+    @Test
+    fun `El número del DNI es de cifras - una O en el número es un 0 si el control cuadra`() {
+        val num = "10203040<"
+        val l1 = ("I<PER" + num + digitoControlIcao(num)).padEnd(30, '<')
+        val l2sin = "900101" + digitoControlIcao("900101") + "M" + "300101" + digitoControlIcao("300101") + "PER" + "<".repeat(11)
+        val l2 = l2sin + digitoControlIcao(l1.substring(5, 30) + l2sin.substring(0, 7) + l2sin.substring(8, 15) + l2sin.substring(18, 29))
+        val l3 = "QUISPE<<ROSA".padEnd(30, '<')
+        igual(buscarMrzTd1(listOf(l1, l2, l3), "2026-10-24")?.campos?.numeroDocumento, "10203040")
+        val r = assertNotNull(buscarMrzTd1(listOf(l1.replace('0', 'O'), l2, l3), "2026-10-24"), "con O en el número, debía encontrarla")
+        igual(r.campos.numeroDocumento, "10203040", "O → 0 en el número")
+        igual(buscarMrzTd1(listOf(l1.replace('0', 'O').replaceFirst('1', '7'), l2, l3), "2026-10-24"), null,
+            "con otra cifra cambiada el control no cuadra: no hay MRZ")
+    }
+
+    @Test
     fun `MRZ partida en pedazos y sin algunos « (así la leyó ML Kit en un moto g77)`() {
         // Lo que devolvió el reconocimiento de texto del APK con la MRZ de la
         // norma impresa en una imagen: pedazos sueltos y «<» de menos.

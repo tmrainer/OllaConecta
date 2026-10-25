@@ -348,6 +348,10 @@ private fun ajustarLineaTd1(l: String, n: Int): String? {
 private fun conCifras(l: String, n: Int) =
     l.mapIndexed { j, c -> if (j in CIFRAS_TD1[n]) A_CIFRA[c] ?: c else c }.joinToString("")
 
+/** El número de documento (posiciones 5 a 13 de la línea 1) leído como cifras. */
+private fun numeroEnCifras(l: String) =
+    l.mapIndexed { j, c -> if (j in 5..13) A_CIFRA[c] ?: c else c }.joinToString("")
+
 /**
  * Busca una MRZ TD1 en el texto que devolvió el reconocimiento de texto, y
  * solo la da por buena si pasan TODOS sus dígitos de control. NUNCA lanza.
@@ -370,6 +374,13 @@ fun buscarMrzTd1(lineasOcr: List<String>?, fechaRef: String = hoyIso()): Lectura
                 val r = leerMrzTd1(tres, fechaRef)
                 // Las líneas van solo en memoria, para comparar dos lecturas seguidas.
                 if (r.estructura && r.controles.todos) return r.copy(lineas = tres.map { it!! })
+                // La norma deja letras en el número, pero el del DNI es de cifras: si
+                // tal cual no cuadró, se prueba «O» por 0 (y las demás) en el número.
+                val conNumero = listOf(numeroEnCifras(tres[0]!!), tres[1]!!, tres[2]!!)
+                if (conNumero[0] != tres[0]) {
+                    val r2 = leerMrzTd1(conNumero, fechaRef)
+                    if (r2.estructura && r2.controles.todos) return r2.copy(lineas = conNumero)
+                }
             }
         }
         i += 1
@@ -405,9 +416,19 @@ private fun textoImpreso(texto: String?): String =
 private val CONFUSIBLES = listOf("BS8E", "O0DQU", "I1LJT", "NMH", "CG", "VY", "KX", "PR", "FE")
 private fun confusibles(a: Char, b: Char) = CONFUSIBLES.any { a in it && b in it }
 
-/** ¿Dos textos normalizados difieren solo en 1 o 2 letras que se suelen confundir? */
+/**
+ * ¿Dos textos normalizados difieren solo en 1 o 2 letras que se suelen
+ * confundir, o en UNA letra de más o de menos? El reconocimiento también
+ * duplica o se come una letra (visto en DNI reales: «ALEJANDROO», «LUS» por LUIS).
+ */
 private fun casiIguales(a: String, b: String): Boolean {
-    if (a.length != b.length || a == b) return false
+    if (a == b) return false
+    if (abs(a.length - b.length) == 1) {
+        val (largo, corto) = if (a.length > b.length) a to b else b to a
+        if (corto.length < 4) return false
+        return largo.indices.any { i -> largo.removeRange(i, i + 1) == corto }
+    }
+    if (a.length != b.length) return false
     var distintas = 0
     for (i in a.indices) {
         if (a[i] == b[i]) continue
@@ -420,7 +441,7 @@ private fun casiIguales(a: String, b: String): Boolean {
 enum class EstadoCampo(val clave: String) {
     /** El anverso es igual a la MRZ: se usa como está impreso, con tildes y ñ. */
     CONFIRMADO("confirmado"),
-    /** Difieren en una letra confundible: hay que elegir entre `opciones`. */
+    /** Difieren en una letra confundible (o una de más o de menos): hay que elegir entre `opciones`. */
     DUDOSO("dudoso"),
     /** Solo la MRZ, o el segundo apellido (que la MRZ no trae): hay que mirarlo. */
     SIN_CONFIRMAR("sin-confirmar"),
@@ -466,11 +487,12 @@ private fun sinOtrosRotulos(impreso: String): FilaAnverso {
     return FilaAnverso(impresoLimpio, normalizarLetras(impresoLimpio))
 }
 
-private val ROTULO = Regex("PRIMER ?APELLIDO|SEGUNDO ?APELLIDO|PRE ?NOMBRES|NOMBRES")
-private val RE_PRIMER_APELLIDO = Regex("PRIMER ?APELLIDO")
-private val RE_SEGUNDO_APELLIDO = Regex("SEGUNDO ?APELLIDO")
+// «APELL?IDO»: el reconocimiento a veces se come una L del rótulo («Primer Apelido»).
+private val ROTULO = Regex("PRIMER ?APELL?IDO|SEGUNDO ?APELL?IDO|PRE ?NOMBRES|NOMBRES")
+private val RE_PRIMER_APELLIDO = Regex("PRIMER ?APELL?IDO")
+private val RE_SEGUNDO_APELLIDO = Regex("SEGUNDO ?APELL?IDO")
 private val RE_PRENOMBRES = Regex("PRE ?NOMBRES")
-private val HASTA_EL_ROTULO = Regex("^.*?(NOMBRES|APELLIDO)\\s*")
+private val HASTA_EL_ROTULO = Regex("^.*?(NOMBRES|APELL?IDO)\\s*")
 
 /**
  * Cruza los nombres de la MRZ con las filas leídas del anverso. NUNCA lanza.

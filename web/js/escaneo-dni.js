@@ -179,6 +179,8 @@ const CIFRAS_TD1 = [
 const A_LETRA = { 0: 'O', 1: 'I', 2: 'Z', 5: 'S', 6: 'G', 8: 'B' };
 const LETRAS_TD1 = [[0, 1, 2, 3, 4], [7, 15, 16, 17], null];   // null: toda la línea
 const soloLetras = (n, j) => LETRAS_TD1[n] === null || LETRAS_TD1[n].includes(j);
+/** El número de documento (posiciones 5 a 13 de la línea 1) leído como cifras. */
+const numeroEnCifras = (l) => [...l].map((c, j) => (j >= 5 && j <= 13 && A_CIFRA[c]) || c).join('');
 
 function limpiarLineaMrz(texto) {
   return String(texto).toUpperCase().replace(/«/g, '<<').replace(/\s+/g, '').replace(/[^A-Z0-9<]/g, '');
@@ -253,6 +255,13 @@ export function buscarMrzTd1(lineasOcr, fechaRef) {
     const r = leerMrzTd1(tres, fechaRef);
     // Las líneas van solo en memoria, para la plantilla anónima del modo de prueba.
     if (r.estructura && Object.values(r.controles).every(Boolean)) return { ...r, lineas: tres };
+    // La norma deja letras en el número, pero el del DNI es de cifras: si
+    // tal cual no cuadró, se prueba «O» por 0 (y las demás) en el número.
+    const conNumero = [numeroEnCifras(tres[0]), tres[1], tres[2]];
+    if (conNumero[0] !== tres[0]) {
+      const r2 = leerMrzTd1(conNumero, fechaRef);
+      if (r2.estructura && Object.values(r2.controles).every(Boolean)) return { ...r2, lineas: conNumero };
+    }
   }
   return null;
 }
@@ -284,9 +293,20 @@ function confusibles(a, b) {
   return CONFUSIBLES.some((g) => g.includes(a) && g.includes(b));
 }
 
-/** ¿Dos textos normalizados difieren solo en 1 o 2 letras que se suelen confundir? */
+/**
+ * ¿Dos textos normalizados difieren solo en 1 o 2 letras que se suelen
+ * confundir, o en UNA letra de más o de menos? El reconocimiento también
+ * duplica o se come una letra (visto en DNI reales: «ALEJANDROO», «LUS» por LUIS).
+ */
 function casiIguales(a, b) {
-  if (a.length !== b.length || a === b) return false;
+  if (a === b) return false;
+  if (Math.abs(a.length - b.length) === 1) {
+    const [largo, corto] = a.length > b.length ? [a, b] : [b, a];
+    if (corto.length < 4) return false;
+    for (let i = 0; i < largo.length; i += 1) if (largo.slice(0, i) + largo.slice(i + 1) === corto) return true;
+    return false;
+  }
+  if (a.length !== b.length) return false;
   let distintas = 0;
   for (let i = 0; i < a.length; i += 1) {
     if (a[i] === b[i]) continue;
@@ -346,11 +366,12 @@ export function combinarMrzYAnverso(camposMrz, filasAnverso) {
   // siguiente que no sea otro rótulo. En el DNI azul, la columna de al lado
   // («Fecha de Emisión»…) cae casi a la misma altura y se mete entre el
   // rótulo y su valor: esos rótulos se quitan.
-  const ROTULO = /PRIMER ?APELLIDO|SEGUNDO ?APELLIDO|PRE ?NOMBRES|NOMBRES/;
+  // «APELL?IDO»: el reconocimiento a veces se come una L del rótulo («Primer Apelido»).
+  const ROTULO = /PRIMER ?APELL?IDO|SEGUNDO ?APELL?IDO|PRE ?NOMBRES|NOMBRES/;
   const porRotulo = (re) => {
     const i = filas.findIndex((f) => re.test(f.normal));
     if (i < 0) return null;
-    const enLaFila = sinOtrosRotulos(filas[i].impreso.replace(/^.*?(NOMBRES|APELLIDO)\s*/u, ''));
+    const enLaFila = sinOtrosRotulos(filas[i].impreso.replace(/^.*?(NOMBRES|APELL?IDO)\s*/u, ''));
     if (enLaFila.normal && !ROTULO.test(enLaFila.normal)) return enLaFila;
     for (const f of filas.slice(i + 1)) {
       if (ROTULO.test(f.normal)) return null;
@@ -368,7 +389,7 @@ export function combinarMrzYAnverso(camposMrz, filasAnverso) {
   const sinK = (t) => t.replace(/K/g, '');
   const empieza = (v) => letras.startsWith(v) || sinK(letras).startsWith(sinK(v));
   const termina = (v) => letras.length > v.length && (letras.endsWith(v) || sinK(letras).endsWith(sinK(v)));
-  const primero = porRotulo(/PRIMER ?APELLIDO/);
+  const primero = porRotulo(/PRIMER ?APELL?IDO/);
   if (paterno.estado !== 'confirmado' && primero && sinK(sinEspacios(primero)) && empieza(sinEspacios(primero))) {
     paterno = { valor: primero.impreso, estado: 'confirmado' };
   }
@@ -382,7 +403,7 @@ export function combinarMrzYAnverso(camposMrz, filasAnverso) {
 
   // El segundo apellido solo está en el anverso.
   let materno = { valor: '', estado: 'no-leido' };
-  const segundo = porRotulo(/SEGUNDO ?APELLIDO/);
+  const segundo = porRotulo(/SEGUNDO ?APELL?IDO/);
   if (segundo) materno = { valor: segundo.impreso, estado: 'sin-confirmar' };
   return { apellidoPaterno: paterno, apellidoMaterno: materno, nombres };
 }
