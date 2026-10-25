@@ -8,6 +8,14 @@
 // abrir la pantalla: se crea cuando se marca a la primera persona.
 package io.github.tmrainer.asistencia.ui.pantallas
 
+import io.github.tmrainer.asistencia.nucleo.envio.correoDeAsistencia
+import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
+import io.github.tmrainer.asistencia.nucleo.documentos.excelDeAsistencia
+import io.github.tmrainer.asistencia.nucleo.documentos.pdfDeAsistencia
+import io.github.tmrainer.asistencia.ui.componentes.horaAhora
+import io.github.tmrainer.asistencia.ui.componentes.Documento
+import io.github.tmrainer.asistencia.ui.componentes.BloqueEnvio
+import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
 import io.github.tmrainer.asistencia.ui.camara.CamaraDni
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -276,6 +284,22 @@ fun PantallaAsistencia(ctx: Contexto) {
                         Boton("Quitar a todos", { marcarTodos(atHoy, activos, false) }, diminuto = true)
                     }
                 }
+                // A UNACEM va la asistencia de HOY (el periodo del resumen es para exportar).
+                item {
+                    Spacer(Modifier.height(Medidas.e5))
+                    TituloSeccion("Enviar a UNACEM")
+                    BloqueEnvio(
+                        ctx, "asistencia", hoy,
+                        "Manda la asistencia de hoy en Excel al correo de UNACEM, desde tu propio correo.",
+                        siNoHay = "Todavía no marcaste a nadie hoy: no hay asistencia que mandar.",
+                        armar = {
+                            val p = estado.padron.value
+                            val delDia = p.atenciones.firstOrNull { it.fecha == hoy }
+                            if (delDia == null || desgloseDelDia(delDia).total == 0) null
+                            else correoDeAsistencia(p, hoy, hoy, estado.config.value.ultimoCentro?.nombreCentro.orEmpty(), horaAhora(), ctx.preferencias.perfil.value.nombre)
+                        }
+                    )
+                }
             }
 
             item { Spacer(Modifier.height(Medidas.e4)); PanelHallazgos(hallazgos) }
@@ -354,7 +378,12 @@ fun PantallaAsistencia(ctx: Contexto) {
                 }
                 if (r.diasDeLegado > 0) partes.add("${if (r.diasDeLegado == 1) "1 día trae" else "${r.diasDeLegado} días traen"} raciones anotadas a mano en la versión anterior.")
                 if (partes.isNotEmpty()) Text(partes.joinToString(" "), style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
-                Pista("Exportar en PDF o Excel llega en una fase siguiente de la app nativa; mientras tanto, la app web sigue exportando.", Modifier.padding(top = Medidas.e3))
+                val centro = estado.config.value.ultimoCentro?.nombreCentro?.trim().orEmpty()
+                BotonesExportar(
+                    pdf = { Documento(pdfDeAsistencia(estado.padron.value, inicio, fin, centro, selloAhora()), "Asistencia $inicio a $fin", "Asistencia (copia de referencia)") },
+                    excel = { Documento(excelDeAsistencia(estado.padron.value, inicio, fin, centro), "Asistencia $inicio a $fin", "Asistencia") },
+                    modifier = Modifier.padding(top = Medidas.e3)
+                )
                 EstadoGuardado(guardado, "Se guarda solo, mientras tocas.")
             }
         }

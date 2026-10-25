@@ -1,5 +1,6 @@
 // Ajustes.kt — lo que es de este teléfono (pagina-ajustes.js): quién lo usa,
-// el modo claro u oscuro, el tamaño de la letra y la voz. No va en las copias.
+// el modo claro u oscuro, el tamaño de la letra, la voz y a qué correo va el
+// envío a UNACEM. No va en las copias.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import androidx.compose.foundation.Image
@@ -26,7 +27,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.platform.LocalContext
 import io.github.tmrainer.asistencia.Letra
+import io.github.tmrainer.asistencia.OllaConectaApp
+import io.github.tmrainer.asistencia.nucleo.envio.pareceCorreo
 import io.github.tmrainer.asistencia.R
 import io.github.tmrainer.asistencia.ROLES
 import io.github.tmrainer.asistencia.Tema
@@ -54,6 +58,9 @@ fun PantallaAjustes(ctx: Contexto) {
     val letra by prefs.letra.collectAsStateWithLifecycle()
     val vozBoton by prefs.vozBoton.collectAsStateWithLifecycle()
     val vozLenta by prefs.vozLenta.collectAsStateWithLifecycle()
+    val envios = (LocalContext.current.applicationContext as OllaConectaApp).envios
+    val correoUnacem by envios.correo.collectAsStateWithLifecycle()
+    val recordar by envios.recordar.collectAsStateWithLifecycle()
     val c = colores
 
     Column(Modifier.fillMaxWidth()) {
@@ -98,6 +105,18 @@ fun PantallaAjustes(ctx: Contexto) {
             Opciones(listOf(false to "Normal", true to "Lenta"), { it == vozLenta }, { prefs.cambiarVozLenta(it) })
             Spacer(Modifier.height(Medidas.e3))
             Boton("Probar la voz", { ctx.decir("Hola. Así suena la voz que lee la pantalla. Toca a quien vino y las raciones se cuentan solas.") }, icono = "voz")
+
+            Spacer(Modifier.height(Medidas.e5))
+            TituloSeccion("Envío a UNACEM")
+            Pista("La asistencia del día y el padrón van en Excel a UNACEM desde tu propio correo: la app lo deja listo y tú tocas «Enviar». Pon una vez a dónde.", Modifier.padding(bottom = Medidas.e3))
+            Campo(
+                "Correo de UNACEM", correoUnacem, { envios.cambiarCorreo(it) }, correo = true,
+                placeholder = "nombre@unacem.com.pe",
+                error = if (correoUnacem.isNotBlank() && !pareceCorreo(correoUnacem)) "Revisa el correo: le falta la @ o el punto." else null
+            )
+            Spacer(Modifier.height(Medidas.e3))
+            Leyenda("Recordarme a las ${envios.horaRecordatorio}:00 si falta enviar")
+            Opciones(listOf(true to "Sí", false to "No"), { it == recordar }, { envios.cambiarRecordar(it) })
 
             Spacer(Modifier.height(Medidas.e5))
             EnlaceMas("escudo", "¿Buscas la copia de tus datos?", "Está en Tus datos, con borrar todo") { ctx.ir(Ruta.DATOS) }

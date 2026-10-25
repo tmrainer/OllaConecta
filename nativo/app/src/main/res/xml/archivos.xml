@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lo único que la app entrega a otras apps (Compartir.kt): el archivo recién
+     armado en cache/compartir. Nada de la carpeta de datos. -->
+<paths>
+    <cache-path name="compartir" path="compartir/" />
+</paths>

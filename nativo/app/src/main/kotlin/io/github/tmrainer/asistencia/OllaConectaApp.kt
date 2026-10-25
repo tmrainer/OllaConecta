@@ -9,6 +9,9 @@ import android.app.Application
 import android.content.ComponentCallbacks2
 import io.github.tmrainer.asistencia.nucleo.almacen.Almacen
 import io.github.tmrainer.asistencia.nucleo.estado.Estado
+import io.github.tmrainer.asistencia.nucleo.calculos.totales
+import io.github.tmrainer.asistencia.nucleo.modelo.Generacion
+import io.github.tmrainer.asistencia.nucleo.modelo.ahoraIso
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,6 +28,9 @@ class OllaConectaApp : Application() {
     /** Lo que es de este teléfono: modo, letra, perfil. No va en las copias. */
     lateinit var preferencias: Preferencias
         private set
+
+    /** El correo a UNACEM: a dónde, cuándo se preparó cada envío y el recordatorio de la noche. */
+    val envios by lazy { Envios(this) }
 
     /** La voz del teléfono; se prende la primera vez que se usa. */
     val voz by lazy { Voz(this) { preferencias.vozLenta.value } }
@@ -44,6 +50,15 @@ class OllaConectaApp : Application() {
         estado.guardarYa()
         preferencias = Preferencias(this)
         fondo.launch { estado.calendario.collect { AvisosTelefono.reprogramar(this@OllaConectaApp, it) } }
+        envios.programarRecordatorio()
+    }
+
+    /** El B-1 exportado (registrarExportacion de pagina-b1.js): los últimos 20 van en la copia. */
+    fun anotarB1Exportado(rendicionId: String, formato: String) {
+        estado.cambiarRendicion(rendicionId) { r ->
+            r.copy(generaciones = (r.generaciones + Generacion(en = ahoraIso(), formato = formato, totalCent = totales(r).total, como = "compartido")).takeLast(20))
+        }
+        estado.guardarYa()
     }
 
     /** Tras dar el permiso de avisos: programarlos ya, sin esperar un cambio del calendario. */

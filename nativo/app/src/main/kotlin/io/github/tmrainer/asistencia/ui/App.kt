@@ -75,6 +75,8 @@ import io.github.tmrainer.asistencia.ui.pantallas.PantallaB1
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaDatos
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaEntregas
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaInicio
+import io.github.tmrainer.asistencia.ui.pantallas.PantallaHojaB1
+import io.github.tmrainer.asistencia.ui.pantallas.PantallaImportar
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaInscribir
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaPadron
 import io.github.tmrainer.asistencia.ui.pantallas.Bienvenida
@@ -89,6 +91,8 @@ enum class Ruta(val ruta: String, val texto: String, val icono: String) {
     ASISTENCIA("asistencia", "Asistencia", "lista"),
     PADRON("padron", "Padrón", "personas"),
     INSCRIBIR("inscribir", "Inscribir", "personaMas"),
+    IMPORTAR("importar", "Cargar un padrón", "archivo"),
+    HOJA("hoja", "Vista previa del B-1", "boleta"),
     B1("b1", "B-1", "boleta"),
     ENTREGAS("entregas", "Entregas", "calendario"),
     DATOS("datos", "Tus datos", "escudo"),
@@ -166,6 +170,8 @@ fun App(estado: Estado, preferencias: Preferencias, voz: Voz, avisoInicial: Stri
                             pantalla(ctx, Ruta.ASISTENCIA.ruta) { PantallaAsistencia(ctx) }
                             pantalla(ctx, Ruta.PADRON.ruta) { PantallaPadron(ctx) }
                             pantalla(ctx, Ruta.INSCRIBIR.ruta) { PantallaInscribir(ctx) }
+                            pantalla(ctx, Ruta.IMPORTAR.ruta) { PantallaImportar(ctx) }
+                            pantalla(ctx, "${Ruta.HOJA.ruta}?a={a}") { PantallaHojaB1(ctx, it.arguments?.getString("a")) }
                             pantalla(ctx, "${Ruta.B1.ruta}?a={a}") { PantallaB1(ctx, it.arguments?.getString("a")) }
                             pantalla(ctx, Ruta.B1.ruta) { PantallaB1(ctx, null) }
                             pantalla(ctx, Ruta.ENTREGAS.ruta) { PantallaEntregas(ctx) }
@@ -173,8 +179,8 @@ fun App(estado: Estado, preferencias: Preferencias, voz: Voz, avisoInicial: Stri
                             pantalla(ctx, Ruta.AJUSTES.ruta) { PantallaAjustes(ctx) }
                         }
                     }
-                    // Inscribir lleva su propio botón abajo: el menú no se pone en medio.
-                    if (rutaActual != Ruta.INSCRIBIR.ruta) BarraAbajo(rutaActual) { ctx.ir(it) }
+                    // Inscribir y cargar un padrón llevan su propio botón abajo: el menú no se pone en medio.
+                    if (rutaActual != Ruta.INSCRIBIR.ruta && rutaActual != Ruta.IMPORTAR.ruta) BarraAbajo(rutaActual) { ctx.ir(it) }
                 }
                 AvisoAbajo(avisos, Modifier.align(Alignment.BottomCenter).padding(bottom = 68.dp + Medidas.e3).windowInsetsPadding(WindowInsets.navigationBars))
                 if (bienvenida) Bienvenida(ctx) { bienvenida = false }

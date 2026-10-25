@@ -6,6 +6,13 @@
 // Ver cómo queda en la hoja y exportar llegan en una fase siguiente.
 package io.github.tmrainer.asistencia.ui.pantallas
 
+import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
+import io.github.tmrainer.asistencia.nucleo.documentos.hojasDelB1
+import io.github.tmrainer.asistencia.nucleo.documentos.excelDelB1
+import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelB1
+import io.github.tmrainer.asistencia.ui.componentes.Documento
+import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
+import io.github.tmrainer.asistencia.AlElegir
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -210,6 +217,17 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
         if (campo.startsWith("egreso.")) egresoAbierto = campo.removePrefix("egreso.")
     }
 
+    /** Exportar pide el B-1 completo: si falta algo, se dice qué y se lleva ahí (listoParaExportar de la web). */
+    fun listoParaExportar(): Boolean {
+        val pendientes = validarRendicion(rendicion).filter { it.severidad == Severidad.ERROR }.sortedBy { pasoDe(it.campo) }
+        if (pendientes.isEmpty()) { ctx.estado.guardarPendiente(); return true }
+        ctx.avisos.mostrar("Antes de exportar, completa el B-1: " +
+            pendientes.take(2).joinToString("; ") { it.mensaje.removeSuffix(".").replace(Regex("^Faltan? "), "falta ") } +
+            (if (pendientes.size > 2) " y ${pendientes.size - 2} más" else "") + ".")
+        irACampo(pendientes[0].campo)
+        return false
+    }
+
     fun agregarCompra() {
         val nuevo = nuevoEgreso()
         cambiar { it.copy(egresos = it.egresos + nuevo) }
@@ -263,7 +281,10 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                     3 -> PasoIngresos(rendicion, hallazgos, ::cambiar)
                     4 -> PasoCompras(rendicion, hallazgos, egresoAbierto, { egresoAbierto = it }, ::cambiar, ::cambiarEgreso, agregar = ::agregarCompra)
                     5 -> PasoFirmas(rendicion, hallazgos, ::cambiar)
-                    else -> PasoRevisar(rendicion, rendiciones, indice, hallazgos, ::irACampo, abrir = { verId = it }, empezarMes = { confirmarMes = true })
+                    else -> PasoRevisar(
+                        rendicion, rendiciones, indice, hallazgos, ::irACampo, abrir = { verId = it }, empezarMes = { confirmarMes = true },
+                        listoParaExportar = ::listoParaExportar, verHoja = { ctx.ir(Ruta.HOJA, rendicion.id) }
+                    )
                 }
                 EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
                 Text("El Formato B-1 es una declaración jurada: revisa que todo sea correcto.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e5))
@@ -563,7 +584,8 @@ private fun PasoFirmas(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) -
 @Composable
 private fun PasoRevisar(
     r: Rendicion, rendiciones: List<Rendicion>, indice: Int, hs: List<Hallazgo>,
-    irACampo: (String) -> Unit, abrir: (String) -> Unit, empezarMes: () -> Unit
+    irACampo: (String) -> Unit, abrir: (String) -> Unit, empezarMes: () -> Unit,
+    listoParaExportar: () -> Boolean, verHoja: () -> Unit
 ) {
     val c = colores
     TituloSeccion("Revisar antes de entregar")
@@ -597,7 +619,17 @@ private fun PasoRevisar(
             Chip("Aporte de la olla", "S/ ${formatearSoles(t.aporte)}")
         }
     }
-    Pista("Ver cómo queda en la hoja y exportar en PDF o Excel llegan en una fase siguiente de la app nativa; mientras tanto, la app web sigue haciéndolo.", Modifier.padding(top = Medidas.e4))
+    Spacer(Modifier.height(Medidas.e4))
+    Boton("Ver cómo queda en la hoja", verHoja, icono = "boleta")
+    Spacer(Modifier.height(Medidas.e5))
+    TituloSeccion("Exportar el B-1")
+    Pista("Una copia de referencia en PDF, o el Excel, para guardarla o mandarla por WhatsApp.", Modifier.padding(bottom = Medidas.e3))
+    val etiqueta = r.periodo.etiqueta.trim().ifEmpty { "en curso" }
+    BotonesExportar(
+        pdf = { Documento(pdfDelB1(hojasDelB1(r), selloAhora(), "Formato B-1 $etiqueta"), "B-1 $etiqueta", "Formato B-1 $etiqueta (copia de referencia)", AlElegir.B1(r.id, "pdf")) },
+        excel = { Documento(excelDelB1(r), "B-1 $etiqueta", "Formato B-1 $etiqueta", AlElegir.B1(r.id, "excel")) },
+        puede = listoParaExportar
+    )
 
     // ---- meses anteriores ----
     Spacer(Modifier.height(Medidas.e5))

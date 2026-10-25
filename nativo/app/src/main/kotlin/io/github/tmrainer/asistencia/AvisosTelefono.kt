@@ -34,6 +34,7 @@ object AvisosTelefono {
     const val HORA_DEL_AVISO = 9
 
     private const val CANAL_ENTREGAS = "entregas"
+    private const val CANAL_ENVIOS = "envios"
     private const val ACCION_MOSTRAR = "io.github.tmrainer.asistencia.MOSTRAR_AVISO"
     const val EXTRA_ABRIR = "abrir"
 
@@ -81,8 +82,10 @@ object AvisosTelefono {
     internal fun mostrar(context: Context, id: Int, titulo: String, texto: String, abrir: String = "entregas") {
         if (!hayPermiso(context)) return
         val gestor = context.getSystemService(NotificationManager::class.java) ?: return
-        if (Build.VERSION.SDK_INT >= 26 && gestor.getNotificationChannel(CANAL_ENTREGAS) == null) {
-            gestor.createNotificationChannel(NotificationChannel(CANAL_ENTREGAS, "Entregas del B-1", NotificationManager.IMPORTANCE_DEFAULT))
+        val canal = if (abrir == "entregas") CANAL_ENTREGAS else CANAL_ENVIOS
+        if (Build.VERSION.SDK_INT >= 26 && gestor.getNotificationChannel(canal) == null) {
+            val nombre = if (canal == CANAL_ENTREGAS) "Entregas del B-1" else "Envío a UNACEM"
+            gestor.createNotificationChannel(NotificationChannel(canal, nombre, NotificationManager.IMPORTANCE_DEFAULT))
         }
         // Tocar el aviso abre la app en la pantalla que corresponde.
         val abrirApp = PendingIntent.getActivity(
@@ -91,7 +94,7 @@ object AvisosTelefono {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val aviso = NotificationCompat.Builder(context, CANAL_ENTREGAS)
+        val aviso = NotificationCompat.Builder(context, canal)
             .setSmallIcon(R.drawable.ic_stat_aviso)
             .setContentTitle(titulo)
             .setContentText(texto)
@@ -116,6 +119,7 @@ class ReceptorAvisos : BroadcastReceiver() {
             intent.action == Intent.ACTION_BOOT_COMPLETED || intent.action == Intent.ACTION_MY_PACKAGE_REPLACED -> {
                 val app = context.applicationContext as OllaConectaApp
                 AvisosTelefono.reprogramar(context, app.estado.calendario.value)
+                app.envios.programarRecordatorio()
             }
         }
     }

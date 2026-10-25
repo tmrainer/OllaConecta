@@ -202,7 +202,8 @@ fun Campo(
     maxLargo: Int = Int.MAX_VALUE,
     habilitado: Boolean = true,
     unaLinea: Boolean = true,
-    capitalizar: Boolean = false
+    capitalizar: Boolean = false,
+    correo: Boolean = false
 ) {
     val c = colores
     Column(modifier.fillMaxWidth()) {
@@ -227,6 +228,7 @@ fun Campo(
                 keyboardType = when {
                     soloDigitos -> KeyboardType.Number
                     decimal -> KeyboardType.Decimal
+                    correo -> KeyboardType.Email
                     else -> KeyboardType.Text
                 }
             ),

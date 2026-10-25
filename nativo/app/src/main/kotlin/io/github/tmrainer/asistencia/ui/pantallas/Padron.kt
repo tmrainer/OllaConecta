@@ -6,6 +6,15 @@
 // Cargar un padrón desde Excel y exportarlo llegan en una fase siguiente.
 package io.github.tmrainer.asistencia.ui.pantallas
 
+import androidx.compose.foundation.layout.Arrangement
+import io.github.tmrainer.asistencia.nucleo.envio.correoDelPadron
+import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
+import io.github.tmrainer.asistencia.nucleo.documentos.excelDelPadron
+import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelPadron
+import io.github.tmrainer.asistencia.ui.componentes.horaAhora
+import io.github.tmrainer.asistencia.ui.componentes.Documento
+import io.github.tmrainer.asistencia.ui.componentes.BloqueEnvio
+import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
 import io.github.tmrainer.asistencia.nucleo.dni.EstadoCampo
 import io.github.tmrainer.asistencia.nucleo.dni.CampoCruzado
 import io.github.tmrainer.asistencia.ui.camara.LecturaDni
@@ -123,6 +132,9 @@ fun PantallaPadron(ctx: Contexto) {
     var fechaRef by remember { mutableStateOf(hoyIso()) }
     var abierta by remember { mutableStateOf<String?>(null) }
     val listaEstado = rememberLazyListState()
+    val periodo = remember { estado.periodoPorDefecto() }
+    var repInicio by remember { mutableStateOf(periodo.inicio) }
+    var repFin by remember { mutableStateOf(periodo.fin) }
 
     val indice = remember(padron) { indicePadron(padron) }
     val erroresPor = remember(padron) {
@@ -222,8 +234,39 @@ fun PantallaPadron(ctx: Contexto) {
                 }
                 item {
                     Spacer(Modifier.height(Medidas.e5))
-                    TituloSeccion("Exportar y cargar desde Excel", apoyo = true)
-                    Pista("Exportar el padrón y cargar uno desde Excel llegan en una fase siguiente de la app nativa; mientras tanto, la app web sigue haciéndolo.")
+                    TituloSeccion("Exportar el padrón", apoyo = true)
+                    Pista("Las personas activas a la fecha de arriba, numeradas y por apellido, con los días que vinieron entre estas fechas.", Modifier.padding(bottom = Medidas.e3))
+                    Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+                        CampoFecha("Días asistidos, desde", repInicio, { if (it.isNotEmpty()) repInicio = it }, Modifier.weight(1f))
+                        CampoFecha("Hasta", repFin, { if (it.isNotEmpty()) repFin = it }, Modifier.weight(1f))
+                    }
+                    Spacer(Modifier.height(Medidas.e3))
+                    val centro = estado.config.value.ultimoCentro?.nombreCentro?.trim().orEmpty()
+                    fun vacio(): Boolean {
+                        if (estado.padron.value.afiliados.isNotEmpty()) return false
+                        avisos.mostrar("El padrón está vacío: inscribe a alguien primero.")
+                        return true
+                    }
+                    BotonesExportar(
+                        pdf = { if (vacio()) null else Documento(pdfDelPadron(estado.padron.value, fechaRef, repInicio, repFin, centro, selloAhora()), "Padron ${hoyIso()}", "Padrón (copia de referencia)") },
+                        excel = { if (vacio()) null else Documento(excelDelPadron(estado.padron.value, fechaRef, repInicio, repFin, centro), "Padron ${hoyIso()}", "Padrón") }
+                    )
+                    Pista("El Excel se puede volver a cargar en otro teléfono, en «Cargar un padrón desde Excel».", Modifier.padding(top = Medidas.e2))
+
+                    Spacer(Modifier.height(Medidas.e5))
+                    TituloSeccion("Enviar el padrón a UNACEM", apoyo = true)
+                    val hoy = hoyIso()
+                    BloqueEnvio(
+                        ctx, "padron", hoy,
+                        "El 15 y el último día del mes, el padrón va en Excel a UNACEM: las personas activas hoy, con los días que vinieron en esta quincena.",
+                        siNoHay = "No hay personas activas en el padrón: no hay nada que mandar.",
+                        armar = { if (estado.padron.value.afiliados.none { it.activo }) null else correoDelPadron(estado.padron.value, hoy, centro, horaAhora(), ctx.preferencias.perfil.value.nombre) }
+                    )
+
+                    Spacer(Modifier.height(Medidas.e5))
+                    TituloSeccion("Cargar un padrón desde Excel", apoyo = true)
+                    Pista("Elige el archivo de Excel (o un CSV). Nada se guarda hasta que revises. Para pasar el padrón a otro teléfono, usa Tus datos.", Modifier.padding(bottom = Medidas.e3))
+                    Boton("Cargar un padrón desde Excel", { ctx.ir(Ruta.IMPORTAR) }, icono = "archivo")
                     EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
                 }
             }

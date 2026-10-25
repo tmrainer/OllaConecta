@@ -1,0 +1,143 @@
+{
+ "olla": "Olla ficticia Los Ñandúes",
+ "quien": "Rosa Quispe",
+ "hora": "20:15",
+ "casos": [
+  {
+   "tipo": "asistencia",
+   "fecha": "2026-08-01",
+   "asunto": "Asistencia · Olla ficticia Los Ñandúes · 01-08-26",
+   "cuerpo": "Asistencia de la olla Olla ficticia Los Ñandúes, 01-08-26.\n\nRaciones: 30 (21 de menú normal, 9 de ayuda social).\nRecaudado: S/ 72.00.\nVa adjunto el Excel con el resumen por día y la lista por persona.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Asistencia Olla ficticia Los Nandues 2026-08-01.xlsx"
+  },
+  {
+   "tipo": "padron",
+   "fecha": "2026-08-01",
+   "inicio": "2026-08-01",
+   "fin": "2026-08-15",
+   "esDiaDePadron": false,
+   "asunto": "Padrón · Olla ficticia Los Ñandúes · al 01-08-26",
+   "cuerpo": "Padrón de la olla Olla ficticia Los Ñandúes: 38 personas activas al 01-08-26, con los días que vinieron del 01-08-26 al 15-08-26.\nVa adjunto el Excel con el padrón y el resumen por grupo de edad.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Padron Olla ficticia Los Nandues 2026-08-01.xlsx"
+  },
+  {
+   "tipo": "asistencia",
+   "fecha": "2026-09-10",
+   "asunto": "Asistencia · Olla ficticia Los Ñandúes · 10-09-26",
+   "cuerpo": "Asistencia de la olla Olla ficticia Los Ñandúes, 10-09-26.\n\nRaciones: 24 (19 de menú normal, 5 de ayuda social).\nRecaudado: S/ 62.00.\nVa adjunto el Excel con el resumen por día y la lista por persona.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Asistencia Olla ficticia Los Nandues 2026-09-10.xlsx"
+  },
+  {
+   "tipo": "padron",
+   "fecha": "2026-09-10",
+   "inicio": "2026-09-01",
+   "fin": "2026-09-15",
+   "esDiaDePadron": false,
+   "asunto": "Padrón · Olla ficticia Los Ñandúes · al 10-09-26",
+   "cuerpo": "Padrón de la olla Olla ficticia Los Ñandúes: 39 personas activas al 10-09-26, con los días que vinieron del 01-09-26 al 15-09-26.\nVa adjunto el Excel con el padrón y el resumen por grupo de edad.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Padron Olla ficticia Los Nandues 2026-09-10.xlsx"
+  },
+  {
+   "tipo": "asistencia",
+   "fecha": "2026-10-19",
+   "asunto": "Asistencia · Olla ficticia Los Ñandúes · 19-10-26",
+   "cuerpo": "Asistencia de la olla Olla ficticia Los Ñandúes, 19-10-26.\n\nRaciones: 29 (19 de menú normal, 10 de ayuda social).\nRecaudado: S/ 67.00.\nVa adjunto el Excel con el resumen por día y la lista por persona.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Asistencia Olla ficticia Los Nandues 2026-10-19.xlsx"
+  },
+  {
+   "tipo": "padron",
+   "fecha": "2026-10-19",
+   "inicio": "2026-10-16",
+   "fin": "2026-10-31",
+   "esDiaDePadron": false,
+   "asunto": "Padrón · Olla ficticia Los Ñandúes · al 19-10-26",
+   "cuerpo": "Padrón de la olla Olla ficticia Los Ñandúes: 38 personas activas al 19-10-26, con los días que vinieron del 16-10-26 al 31-10-26.\nVa adjunto el Excel con el padrón y el resumen por grupo de edad.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Padron Olla ficticia Los Nandues 2026-10-19.xlsx"
+  },
+  {
+   "tipo": "asistencia",
+   "fecha": "2026-09-15",
+   "asunto": "Asistencia · Olla ficticia Los Ñandúes · 15-09-26",
+   "cuerpo": "Asistencia de la olla Olla ficticia Los Ñandúes, 15-09-26.\n\nRaciones: 24 (17 de menú normal, 7 de ayuda social).\nRecaudado: S/ 58.00.\nVa adjunto el Excel con el resumen por día y la lista por persona.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Asistencia Olla ficticia Los Nandues 2026-09-15.xlsx"
+  },
+  {
+   "tipo": "padron",
+   "fecha": "2026-09-15",
+   "inicio": "2026-09-01",
+   "fin": "2026-09-15",
+   "esDiaDePadron": true,
+   "asunto": "Padrón · Olla ficticia Los Ñandúes · al 15-09-26",
+   "cuerpo": "Padrón de la olla Olla ficticia Los Ñandúes: 38 personas activas al 15-09-26, con los días que vinieron del 01-09-26 al 15-09-26.\nVa adjunto el Excel con el padrón y el resumen por grupo de edad.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Padron Olla ficticia Los Nandues 2026-09-15.xlsx"
+  },
+  {
+   "tipo": "asistencia",
+   "fecha": "2026-09-30",
+   "asunto": "Asistencia · Olla ficticia Los Ñandúes · 30-09-26",
+   "cuerpo": "Asistencia de la olla Olla ficticia Los Ñandúes, 30-09-26.\n\nRaciones: 23 (20 de menú normal, 3 de ayuda social).\nRecaudado: S/ 63.00.\nVa adjunto el Excel con el resumen por día y la lista por persona.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Asistencia Olla ficticia Los Nandues 2026-09-30.xlsx"
+  },
+  {
+   "tipo": "padron",
+   "fecha": "2026-09-30",
+   "inicio": "2026-09-16",
+   "fin": "2026-09-30",
+   "esDiaDePadron": true,
+   "asunto": "Padrón · Olla ficticia Los Ñandúes · al 30-09-26",
+   "cuerpo": "Padrón de la olla Olla ficticia Los Ñandúes: 38 personas activas al 30-09-26, con los días que vinieron del 16-09-26 al 30-09-26.\nVa adjunto el Excel con el padrón y el resumen por grupo de edad.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Padron Olla ficticia Los Nandues 2026-09-30.xlsx"
+  },
+  {
+   "tipo": "asistencia",
+   "fecha": "2026-10-31",
+   "asunto": "Asistencia · Olla ficticia Los Ñandúes · 31-10-26",
+   "cuerpo": "Asistencia de la olla Olla ficticia Los Ñandúes, 31-10-26.\n\nRaciones: 0 (0 de menú normal, 0 de ayuda social).\nRecaudado: sin precio del menú, no se calcula.\nVa adjunto el Excel con el resumen por día y la lista por persona.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Asistencia Olla ficticia Los Nandues 2026-10-31.xlsx"
+  },
+  {
+   "tipo": "padron",
+   "fecha": "2026-10-31",
+   "inicio": "2026-10-16",
+   "fin": "2026-10-31",
+   "esDiaDePadron": true,
+   "asunto": "Padrón · Olla ficticia Los Ñandúes · al 31-10-26",
+   "cuerpo": "Padrón de la olla Olla ficticia Los Ñandúes: 38 personas activas al 31-10-26, con los días que vinieron del 16-10-26 al 31-10-26.\nVa adjunto el Excel con el padrón y el resumen por grupo de edad.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Padron Olla ficticia Los Nandues 2026-10-31.xlsx"
+  },
+  {
+   "tipo": "asistencia",
+   "fecha": "2024-02-29",
+   "asunto": "Asistencia · Olla ficticia Los Ñandúes · 29-02-24",
+   "cuerpo": "Asistencia de la olla Olla ficticia Los Ñandúes, 29-02-24.\n\nRaciones: 0 (0 de menú normal, 0 de ayuda social).\nRecaudado: sin precio del menú, no se calcula.\nVa adjunto el Excel con el resumen por día y la lista por persona.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Asistencia Olla ficticia Los Nandues 2024-02-29.xlsx"
+  },
+  {
+   "tipo": "padron",
+   "fecha": "2024-02-29",
+   "inicio": "2024-02-16",
+   "fin": "2024-02-29",
+   "esDiaDePadron": true,
+   "asunto": "Padrón · Olla ficticia Los Ñandúes · al 29-02-24",
+   "cuerpo": "Padrón de la olla Olla ficticia Los Ñandúes: 0 personas activas al 29-02-24, con los días que vinieron del 16-02-24 al 29-02-24.\nVa adjunto el Excel con el padrón y el resumen por grupo de edad.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Padron Olla ficticia Los Nandues 2024-02-29.xlsx"
+  },
+  {
+   "tipo": "asistencia",
+   "fecha": "2026-01-01",
+   "asunto": "Asistencia · Olla ficticia Los Ñandúes · 01-01-26",
+   "cuerpo": "Asistencia de la olla Olla ficticia Los Ñandúes, 01-01-26.\n\nRaciones: 0 (0 de menú normal, 0 de ayuda social).\nRecaudado: sin precio del menú, no se calcula.\nVa adjunto el Excel con el resumen por día y la lista por persona.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Asistencia Olla ficticia Los Nandues 2026-01-01.xlsx"
+  },
+  {
+   "tipo": "padron",
+   "fecha": "2026-01-01",
+   "inicio": "2026-01-01",
+   "fin": "2026-01-15",
+   "esDiaDePadron": false,
+   "asunto": "Padrón · Olla ficticia Los Ñandúes · al 01-01-26",
+   "cuerpo": "Padrón de la olla Olla ficticia Los Ñandúes: 0 personas activas al 01-01-26, con los días que vinieron del 01-01-26 al 15-01-26.\nVa adjunto el Excel con el padrón y el resumen por grupo de edad.\n\nEnviado desde OllaConecta por Rosa Quispe a las 20:15.\nSi falta algo, la olla puede volver a enviar desde la app.",
+   "archivo": "Padron Olla ficticia Los Nandues 2026-01-01.xlsx"
+  }
+ ]
+}
