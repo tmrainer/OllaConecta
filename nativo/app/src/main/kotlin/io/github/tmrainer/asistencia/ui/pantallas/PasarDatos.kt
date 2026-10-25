@@ -70,7 +70,7 @@ import io.github.tmrainer.asistencia.ui.tema.colores
 import io.github.tmrainer.asistencia.ui.tema.tipos
 
 private const val AVISO_PRIVADO = "Lleva nombres y DNI: muéstralo solo al otro teléfono de la olla."
-private const val DONDE_RECIBIR = "En el otro teléfono: «Recibir por QR», en Tus datos."
+private const val DONDE_RECIBIR = "En el otro teléfono: Tus datos → «Recibir por QR»."
 
 // ----------------------------------------------------------------- enviar
 
@@ -102,9 +102,8 @@ fun enviarPorQr(ctx: Contexto, tipo: String, fechas: List<String> = emptyList())
         }
     }
     val partes = codificarParaQr(paquete)
-    if (partes.isEmpty()) { ctx.avisos.mostrar("Son demasiados datos para pasar por QR. Elige menos días, o usa «Guardar una copia»."); return }
-    val quien = ctx.preferencias.perfil.value.nombre.trim()
-    ctx.abrirCapa { MostrarQr(partes, titulo, detalle + if (quien.isNotEmpty()) " Enviado por $quien." else "", ctx::cerrarCapa) }
+    if (partes.isEmpty()) { ctx.avisos.mostrar("Son demasiados datos para un QR. Elige menos días o guarda una copia."); return }
+    ctx.abrirCapa { MostrarQr(partes, titulo, detalle, ctx::cerrarCapa) }
 }
 
 /** Elegir qué días de asistencia pasar: los que tienen marcas, del más nuevo al más viejo. */
@@ -211,7 +210,7 @@ private fun Marco(ctx: Contexto, titulo: String, resumen: List<Pair<String, Stri
             Boton("Listo", ctx::cerrarCapa, tipo = TipoBoton.PRINCIPAL)
             return@PantallaEncima
         }
-        Pista("Revisa antes de guardar. Lo que no coincide se queda como aquí, salvo que elijas lo recibido.")
+        Pista("Revisa antes de guardar. Lo distinto se queda como aquí, salvo que elijas lo recibido.")
         secciones()
         Spacer(Modifier.height(Medidas.e5))
         Acciones {
@@ -265,7 +264,7 @@ private fun CompararPadron(ctx: Contexto, paquete: PaquetePadron) {
                 Casilla(nuevas[i] == true, { nuevas[i] = it }, nombreCompleto(p), "${p.numeroDocumento.ifEmpty { "sin documento" }}${if (p.tipoAfiliado == "caso_social") " · Caso social" else ""}")
             }
         }
-        if (k.dudosas.isNotEmpty()) Seccion("Mismo nombre, otro DNI (${k.dudosas.size})", "Puede ser la misma persona con el DNI mal escrito en uno de los teléfonos. Mira su DNI antes de agregarla.", aviso = true) {
+        if (k.dudosas.isNotEmpty()) Seccion("Mismo nombre, otro DNI (${k.dudosas.size})", "Puede ser la misma persona con el DNI mal escrito. Revisa su DNI.", aviso = true) {
             k.dudosas.forEachIndexed { i, d ->
                 Text("Aquí: DNI ${d.mia.numeroDocumento}. Recibido: DNI ${d.recibida.numeroDocumento}.", style = tipos.chico, color = c.tinta)
                 Casilla(dudosas[i] == true, { dudosas[i] = it }, "Agregar a ${nombreCompleto(d.recibida)} como persona nueva")
@@ -274,7 +273,7 @@ private fun CompararPadron(ctx: Contexto, paquete: PaquetePadron) {
         if (k.distintas.isNotEmpty()) Seccion("Con datos distintos (${k.distintas.size})") {
             k.distintas.forEachIndexed { i, d ->
                 Text("${nombreCompleto(d.mia)} · ${d.mia.numeroDocumento}", style = tipos.textoNegrita, color = c.titulo, modifier = Modifier.padding(top = Medidas.e2))
-                if (d.nombreDistinto) Text("El nombre no coincide con el mismo DNI: puede ser otra persona. Mira su DNI.", style = tipos.chico, color = c.aviso)
+                if (d.nombreDistinto) Text("Mismo DNI con otro nombre: puede ser otra persona.", style = tipos.chico, color = c.aviso)
                 Text("Cambia: ${d.campos.joinToString(", ") { it.etiqueta.lowercase() }}.", style = tipos.chico, color = c.tintaSuave)
                 ElegirLado(d.campos.joinToString(" · ") { enPalabras(it.campo, it.mio) }, d.campos.joinToString(" · ") { enPalabras(it.campo, it.recibido) }, distintas[i] == true) { distintas[i] = it }
                 if (i < k.distintas.size - 1) Separador()
@@ -342,7 +341,7 @@ private fun CompararAsistencia(ctx: Contexto, paquete: PaqueteAsistencia) {
             }
             if (!d.existe && d.fuera.total > 0) Text("Sin estar en el padrón comieron ${cuenta(d.fuera)}.", style = tipos.chico, color = c.tinta)
             d.fueraDistinto?.let { f ->
-                Text("No coincide cuántos comieron sin estar en el padrón. Elige uno: no se suman, porque pueden ser las mismas personas.", style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
+                Text("No coincide cuántos comieron sin estar en el padrón. Elige uno.", style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
                 ElegirLado(cuenta(f.mio), cuenta(f.recibido), lado["f${d.fecha}"] ?: (f.mio.total == 0)) { lado["f${d.fecha}"] = it }
             }
             Casilla(incluir[d.fecha] == true, { incluir[d.fecha] = it }, if (d.existe) "Sumar a este día" else "Agregar este día")

@@ -70,7 +70,7 @@ fun PantallaReportes(ctx: Contexto) {
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
         ) {
             TituloSeccion("Reporte del día")
-            Pista("Qué se cocinó, las raciones preparadas y servidas, y quiénes recibieron ración. Con la línea para tu firma.", Modifier.padding(bottom = Medidas.e3))
+            Pista("Menú, raciones y quiénes recibieron. Con línea para firmar.", Modifier.padding(bottom = Medidas.e3))
             CampoFecha("Día", fecha, { if (it.isNotEmpty()) fecha = it })
             val dia = remember(padron, fecha) { reporteDelDia(padron, fecha) }
             val textoDia = if (dia.servidas == 0 && dia.menuDelDia.isEmpty()) "Ese día no tiene nada anotado."
@@ -85,7 +85,7 @@ fun PantallaReportes(ctx: Contexto) {
 
             Spacer(Modifier.height(Medidas.e6))
             TituloSeccion("Reporte del mes")
-            Pista("La asistencia de cada persona, las raciones del mes día por día y los insumos del B-1. El gasto propio va aparte: no es del B-1.", Modifier.padding(bottom = Medidas.e3))
+            Pista("Asistencia por persona, raciones del mes e insumos del B-1. El gasto propio va aparte.", Modifier.padding(bottom = Medidas.e3))
             Opciones(meses.map { it to etiquetaMes(it) }, { it == mes }, { mes = it })
             val delMes = remember(padron, rendiciones, mes) { reporteDelMes(padron, rendiciones, mes) }
             val textoMes = "${delMes.etiqueta}: ${cuantos(delMes.dias.size, "día")} con atención, ${cuantos(delMes.servidas, "ración servida", "raciones servidas")}, " +

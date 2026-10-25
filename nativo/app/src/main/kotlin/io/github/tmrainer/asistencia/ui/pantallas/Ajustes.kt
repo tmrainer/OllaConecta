@@ -70,7 +70,7 @@ fun PantallaAjustes(ctx: Contexto) {
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
         ) {
             TituloSeccion("Quién usa este teléfono")
-            Pista("Con tu nombre y tu rol, la app te propone tus datos en el B-1. Se queda en este teléfono: no va en las copias.", Modifier.padding(bottom = Medidas.e3))
+            Pista("Se usa para llenar el B-1. Queda solo en este teléfono.", Modifier.padding(bottom = Medidas.e3))
             Campo("Tu nombre completo", perfil.nombre, { prefs.guardarPerfil(perfil.copy(nombre = it)) })
             Spacer(Modifier.height(10.dp))
             Leyenda("Tu rol en la olla")
@@ -79,7 +79,6 @@ fun PantallaAjustes(ctx: Contexto) {
             Campo("Tu DNI (opcional)", perfil.dni, { prefs.guardarPerfil(perfil.copy(dni = it)) }, soloDigitos = true, maxLargo = 8)
             Spacer(Modifier.height(10.dp))
             Campo("Tu celular (opcional)", perfil.celular, { prefs.guardarPerfil(perfil.copy(celular = it)) }, soloDigitos = true, maxLargo = 9)
-            Text("Se guarda solo en este teléfono.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Aspecto")
@@ -97,18 +96,18 @@ fun PantallaAjustes(ctx: Contexto) {
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Leer en voz alta")
-            Pista("La app puede leer la pantalla con la voz de este teléfono, sin internet. Está en el menú ⋮ de cada pantalla.", Modifier.padding(bottom = Medidas.e3))
+            Pista("La app lee la pantalla en voz alta, sin internet. Está en el menú de los tres puntos, arriba a la derecha.", Modifier.padding(bottom = Medidas.e3))
             Leyenda("Botón de la voz en cada pantalla")
             Opciones(listOf(false to "No", true to "Sí, arriba a la derecha"), { it == vozBoton }, { prefs.cambiarVozBoton(it) })
             Spacer(Modifier.height(Medidas.e3))
             Leyenda("Velocidad de la voz")
             Opciones(listOf(false to "Normal", true to "Lenta"), { it == vozLenta }, { prefs.cambiarVozLenta(it) })
             Spacer(Modifier.height(Medidas.e3))
-            Boton("Probar la voz", { ctx.decir("Hola. Así suena la voz que lee la pantalla. Toca a quien vino y las raciones se cuentan solas.") }, icono = "voz")
+            Boton("Probar la voz", { ctx.decir("Hola. Así suena la voz de la app.") }, icono = "voz")
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Envío a UNACEM")
-            Pista("La asistencia del día y el padrón van en Excel a UNACEM desde tu propio correo: la app lo deja listo y tú tocas «Enviar». Pon una vez a dónde.", Modifier.padding(bottom = Medidas.e3))
+            Pista("La asistencia y el padrón van en Excel desde tu correo. Escribe a dónde, una sola vez.", Modifier.padding(bottom = Medidas.e3))
             Campo(
                 "Correo de UNACEM", correoUnacem, { envios.cambiarCorreo(it) }, correo = true,
                 placeholder = "nombre@unacem.com.pe",
@@ -125,8 +124,8 @@ fun PantallaAjustes(ctx: Contexto) {
             TituloSeccion("Acerca de")
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Image(painterResource(if (c.esOscuro) R.drawable.utec_blanco else R.drawable.utec_color), contentDescription = "UTEC, Universidad de Ingeniería y Tecnología", Modifier.width(130.dp).padding(vertical = Medidas.e3))
-                ParaLeer("Proyecto de estudiantes de UTEC, hecho junto a las ollas comunes y comedores de Villa María del Triunfo.")
-                Text("Proyecto de estudiantes de UTEC, hecho junto a las ollas comunes y comedores de Villa María del Triunfo.", style = tipos.texto, color = c.tinta, textAlign = TextAlign.Center)
+                ParaLeer("Proyecto de estudiantes de UTEC con ollas comunes y comedores de Villa María del Triunfo y Pachacámac.")
+                Text("Proyecto de estudiantes de UTEC con ollas comunes y comedores de Villa María del Triunfo y Pachacámac.", style = tipos.texto, color = c.tinta, textAlign = TextAlign.Center)
                 Text("Versión $VERSION_APP", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
             }
         }

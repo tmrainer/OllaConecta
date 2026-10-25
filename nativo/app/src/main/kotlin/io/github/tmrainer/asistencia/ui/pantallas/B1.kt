@@ -281,7 +281,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                     1 -> PasoCentro(rendicion, hallazgos, config, perfil, propuestos, ::cambiar)
                     2 -> PasoPeriodo(rendicion, hallazgos, ::cambiar)
                     3 -> PasoIngresos(rendicion, hallazgos, ::cambiar)
-                    4 -> PasoCompras(rendicion, hallazgos, egresoAbierto, { egresoAbierto = it }, ::cambiar, ::cambiarEgreso, agregar = ::agregarCompra)
+                    4 -> PasoCompras(rendicion, hallazgos, egresoAbierto, { egresoAbierto = it }, ::cambiar, ::cambiarEgreso)
                     5 -> PasoFirmas(rendicion, hallazgos, ::cambiar)
                     else -> PasoRevisar(
                         rendicion, rendiciones, indice, hallazgos, ::irACampo, abrir = { verId = it }, empezarMes = { confirmarMes = true },
@@ -289,10 +289,11 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                     )
                 }
                 EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
-                Text("El Formato B-1 es una declaración jurada: revisa que todo sea correcto.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e5))
+                Text("El B-1 es una declaración jurada: revisa todo.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e5))
             }
-            // ---- Atrás / Siguiente, pegados abajo ----
-            Column(Modifier.fillMaxWidth().background(c.fondo).padding(Medidas.e4, 10.dp)) {
+            // ---- Atrás / Siguiente, pegados abajo, con su propio fondo y una línea arriba ----
+            Separador()
+            Column(Modifier.fillMaxWidth().background(c.superficie).padding(Medidas.e4, 10.dp)) {
                 if (avisoPasos.isNotEmpty()) {
                     Text(avisoPasos, style = tipos.textoFuerte, color = c.error, modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(c.errorFondo).padding(Medidas.e4, Medidas.e3))
                     Spacer(Modifier.height(10.dp))
@@ -348,7 +349,8 @@ private fun BannerEntrega(ctx: Contexto, calendario: io.github.tmrainer.asistenc
         else -> "faltan $dias días"
     }
     val tono = when (alerta.nivel) { Nivel.VENCIDA -> TonoPastilla.ERROR; Nivel.HOY, Nivel.URGENTE -> TonoPastilla.ADVERTENCIA; else -> TonoPastilla.NEUTRA }
-    FranjaEstado("$titulo: $cuenta. ${alerta.mensaje}", tono, Modifier.padding(bottom = Medidas.e4), icono = if (alerta.nivel == Nivel.VENCIDA) "aviso" else "reloj", boton = "Ver entregas" to { ctx.ir(Ruta.ENTREGAS) })
+    // Una sola idea: la cuenta. El detalle está en Entregas.
+    FranjaEstado("$titulo: $cuenta.", tono, Modifier.padding(bottom = Medidas.e4), icono = if (alerta.nivel == Nivel.VENCIDA) "aviso" else "reloj", boton = "Ver entregas" to { ctx.ir(Ruta.ENTREGAS) })
 }
 
 // ------------------------------------------------------------------ pasos
@@ -454,12 +456,12 @@ private fun PasoIngresos(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion)
 @Composable
 private fun PasoCompras(
     r: Rendicion, hs: List<Hallazgo>, abierto: String?, alAbrir: (String?) -> Unit,
-    cambiar: ((Rendicion) -> Rendicion) -> Unit, cambiarEgreso: (String, (Egreso) -> Egreso) -> Unit, agregar: () -> Unit
+    cambiar: ((Rendicion) -> Rendicion) -> Unit, cambiarEgreso: (String, (Egreso) -> Egreso) -> Unit
 ) {
     val c = colores
     val avisos = LocalAvisos.current
     TituloSeccion("Egresos")
-    Pista("Una ficha por boleta, copiada tal como está en la boleta. Si la boleta junta varios productos sin precio de uno, marca «varios» y escribe solo el total.", Modifier.padding(bottom = Medidas.e3))
+    Pista("Una ficha por boleta, copiada tal cual. Si dice «varios», márcalo y escribe solo el total.", Modifier.padding(bottom = Medidas.e3))
     hs.errorDe("egresos")?.let { Text(it, style = tipos.chico, color = c.error, modifier = Modifier.padding(bottom = Medidas.e2)) }
     Superficie {
         r.egresos.forEachIndexed { i, f ->
@@ -533,9 +535,7 @@ private fun PasoCompras(
             if (i < r.egresos.size - 1) Separador()
         }
     }
-    Acciones(Modifier.padding(top = Medidas.e3)) {
-        Boton("+ Agregar compra", agregar, tipo = TipoBoton.PRINCIPAL)
-    }
+    // Agregar es el botón flotante «Compra»: una sola acción principal por pantalla.
     Text("${cuantos(r.egresos.size, "compra")}. La hoja del formato tiene 17 filas.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
 
     // ---- totales: se suman solos; de solo lectura ----
@@ -562,7 +562,7 @@ private fun PasoCompras(
     // ---- gasto propio: fuera del B-1 ----
     Spacer(Modifier.height(Medidas.e5))
     TituloSeccion("Gasto propio (no va en el B-1)", apoyo = true)
-    Pista("Lo que compraron con su propio dinero, por ejemplo el azúcar que faltó. Es opcional: no se suma al B-1 ni sale en la hoja; se ve en el reporte del mes.", Modifier.padding(bottom = Medidas.e3))
+    Pista("Lo comprado con su propio dinero, como azúcar extra. No va en el B-1: sale en el reporte del mes.", Modifier.padding(bottom = Medidas.e3))
     if (r.gastosPropios.isNotEmpty()) {
         Superficie {
             r.gastosPropios.forEachIndexed { i, g ->
@@ -583,7 +583,7 @@ private fun PasoCompras(
             }
         }
         val suma = r.gastosPropios.mapNotNull { it.montoCent }.sum()
-        Text("Gasto propio: S/ ${formatearSoles(suma)}. No cuenta en el B-1.", style = tipos.chicoFuerte, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
+        Text("Gasto propio: S/ ${formatearSoles(suma)}. No va en el B-1.", style = tipos.chicoFuerte, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
     }
     Boton("Anotar un gasto propio", {
         cambiar { x -> x.copy(gastosPropios = x.gastosPropios + GastoPropio(id = uuid(), fecha = hoyIso())) }
@@ -657,7 +657,7 @@ private fun PasoRevisar(
     Boton("Ver cómo queda en la hoja", verHoja, icono = "boleta")
     Spacer(Modifier.height(Medidas.e5))
     TituloSeccion("Exportar el B-1")
-    Pista("Una copia de referencia en PDF, o el Excel, para guardarla o mandarla por WhatsApp.", Modifier.padding(bottom = Medidas.e3))
+    Pista("En PDF o Excel, para guardar o mandar por WhatsApp.", Modifier.padding(bottom = Medidas.e3))
     val etiqueta = r.periodo.etiqueta.trim().ifEmpty { "en curso" }
     BotonesExportar(
         pdf = { Documento(pdfDelB1(hojasDelB1(r), selloAhora(), "Formato B-1 $etiqueta"), "B-1 $etiqueta", "Formato B-1 $etiqueta (copia de referencia)", AlElegir.B1(r.id, "pdf")) },
@@ -669,7 +669,7 @@ private fun PasoRevisar(
     Spacer(Modifier.height(Medidas.e5))
     TituloSeccion("Meses anteriores", apoyo = true)
     if (indice == 0) {
-        Pista("Cuando entregues este B-1, empieza el del mes siguiente. Este queda guardado aquí abajo.", Modifier.padding(bottom = Medidas.e3))
+        Pista("Al entregar este B-1, empieza el del mes siguiente. Este queda guardado abajo.", Modifier.padding(bottom = Medidas.e3))
         Boton("Empezar el B-1 del mes siguiente", empezarMes)
     }
     val anteriores = rendiciones.drop(1)

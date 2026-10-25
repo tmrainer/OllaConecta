@@ -137,7 +137,7 @@ fun PantallaDatos(ctx: Contexto) {
             if (avisosAlmacen.isNotEmpty()) AvisoSistema(avisosAlmacen.joinToString(" "), Modifier.padding(bottom = Medidas.e4))
 
             TituloSeccion("Copia de tus datos")
-            Pista("Una copia es un archivo con todos tus datos. Con ella los recuperas en otro teléfono o si se pierden en este. Guarda una cada dos semanas.", Modifier.padding(bottom = Medidas.e2))
+            Pista("Un archivo con todos tus datos, para recuperarlos o pasarlos a otro teléfono. Guarda una cada dos semanas.", Modifier.padding(bottom = Medidas.e2))
             val dias = remember(tick) { estado.diasDesdeUltimaCopia() }
             val textoUltima = when {
                 dias == null -> "Todavía no guardaste ninguna copia en este teléfono."
@@ -156,7 +156,7 @@ fun PantallaDatos(ctx: Contexto) {
                 var c2 by remember { mutableStateOf("") }
                 var msg by remember { mutableStateOf("") }
                 Column(Modifier.padding(top = Medidas.e3)) {
-                    Pista("Sin la contraseña no hay forma de abrir la copia: tampoco para quien la olvidó.", Modifier.padding(bottom = Medidas.e2))
+                    Pista("Sin la contraseña nadie puede abrir la copia, ni tú.", Modifier.padding(bottom = Medidas.e2))
                     Campo("Contraseña (8 o más caracteres)", c1, { c1 = it })
                     Spacer(Modifier.height(Medidas.e2))
                     Campo("Repite la contraseña", c2, { c2 = it })
@@ -170,41 +170,41 @@ fun PantallaDatos(ctx: Contexto) {
                     }, Modifier.padding(top = 10.dp))
                 }
             }
-            Pista("La copia tiene nombres y DNI. Si la mandas por WhatsApp o correo, ponle contraseña.", Modifier.padding(top = Medidas.e3))
+            Pista("Tiene nombres y DNI. Si la mandas por WhatsApp, ponle contraseña.", Modifier.padding(top = Medidas.e3))
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Qué va en la copia")
-            ParaLeer("Sí va: el padrón, la asistencia, el formato B-1 y las entregas. No va: tu perfil (quién usa este teléfono), la letra y el modo.")
-            Text("Sí va: el padrón, la asistencia, el formato B-1 y las entregas.", style = tipos.texto, color = c.tinta)
-            Text("No va: tu perfil (quién usa este teléfono), la letra y el modo. Son de este teléfono: en otro, se ponen de nuevo en Ajustes.", style = tipos.texto, color = c.tinta, modifier = Modifier.padding(top = Medidas.e2))
+            ParaLeer("Sí va: el padrón, la asistencia, el B-1 y las entregas. No va: tu perfil, la letra y el modo.")
+            Text("Sí va: el padrón, la asistencia, el B-1 y las entregas.", style = tipos.texto, color = c.tinta)
+            Text("No va: tu perfil, la letra y el modo. Son de este teléfono.", style = tipos.texto, color = c.tinta, modifier = Modifier.padding(top = Medidas.e2))
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Pasar a otro teléfono")
-            Pista("Sin internet: este teléfono muestra un código QR y el otro lo lee con la cámara. Antes de guardar, el otro teléfono muestra qué cambia.", Modifier.padding(bottom = Medidas.e3))
+            Pista("Sin internet: un teléfono muestra un QR y el otro lo lee. Antes de guardar, se ve qué cambia.", Modifier.padding(bottom = Medidas.e3))
             Acciones {
                 Boton("Pasar el padrón", { enviarPorQr(ctx, "padron") })
                 Boton("Pasar la asistencia", { elegirDiasYEnviar(ctx) })
                 Boton("Pasar las entregas", { enviarPorQr(ctx, "entregas") })
             }
             Spacer(Modifier.height(Medidas.e3))
-            Boton("Recibir por QR", { recibirPorQr(ctx) }, tipo = TipoBoton.PRINCIPAL, icono = "camara")
-            Pista("Para todo de una vez (también el B-1), guarda una copia aquí y recupérala en el otro teléfono.", Modifier.padding(top = Medidas.e3))
+            Boton("Recibir por QR", { recibirPorQr(ctx) }, icono = "camara")
+            Pista("Para pasar todo, también el B-1, usa «Guardar una copia».", Modifier.padding(top = Medidas.e3))
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Dónde se guardan")
             Lugar("escudo", "En este teléfono, dentro de la app", listOf(
-                "El padrón, la asistencia, el B-1 y las entregas no se mandan a internet. Funciona sin señal.",
-                "Si desinstalas la app o cambias de teléfono, pueden perderse."
+                "No se mandan a internet. Funciona sin señal.",
+                "Si desinstalas la app o cambias de teléfono, se pueden perder."
             ))
             Lugar("nube", "En la copia de seguridad de Google, si está activada", listOf(
-                "Android puede guardar los datos de esta app en la copia de seguridad de la cuenta Google del teléfono. Se prende o se apaga en los ajustes del teléfono: Google → Copia de seguridad.",
-                "El equipo del proyecto no la ve. No siempre se recupera: no te fíes solo de ella."
+                "Android puede guardarlos en tu cuenta Google. Se activa en los ajustes del teléfono: Google → Copia de seguridad.",
+                "El equipo del proyecto no la ve. No te fíes solo de ella."
             ))
-            Lugar("archivo", "En las copias que guardas tú", listOf("Solo cuando tocas «Guardar una copia»: un archivo que queda donde tú lo guardes."))
+            Lugar("archivo", "En las copias que guardas tú", listOf("Solo cuando tocas «Guardar una copia». Queda donde la guardes."))
 
             Spacer(Modifier.height(Medidas.e5))
             Text("Borrar todo", style = tipos.seccion, color = c.error, modifier = Modifier.padding(bottom = Medidas.e3))
-            Pista("Borra de este equipo el padrón, la asistencia, el formato B-1 y las entregas. No se puede deshacer: guarda una copia antes.", Modifier.padding(bottom = Medidas.e3))
+            Pista("Borra de este teléfono el padrón, la asistencia, el B-1 y las entregas. No se puede deshacer.", Modifier.padding(bottom = Medidas.e3))
             Boton("Borrar todo", { confirmandoBorrar = true }, tipo = TipoBoton.PELIGRO)
         }
     }
@@ -223,7 +223,7 @@ fun PantallaDatos(ctx: Contexto) {
                 Boton("Abrir copia", {
                     alcance.launch {
                         val r = withContext(Dispatchers.Default) { runCatching { leerRespaldo(descifrarRespaldo(sobre, clave)) }.getOrNull() }
-                        if (r == null) msg = "Esa contraseña no abre la copia. Revisa mayúsculas y vuelve a intentar."
+                        if (r == null) msg = "Esa contraseña no abre la copia. Revisa las mayúsculas."
                         else { pidiendoContrasena = null; recibirLectura(r) }
                     }
                 }, tipo = TipoBoton.PRINCIPAL)

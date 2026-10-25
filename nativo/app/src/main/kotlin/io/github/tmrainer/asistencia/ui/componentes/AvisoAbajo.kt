@@ -65,7 +65,8 @@ fun AvisoAbajo(avisador: Avisador, modifier: Modifier = Modifier) {
     val aviso = avisador.actual
     LaunchedEffect(aviso?.n) {
         if (aviso == null) return@LaunchedEffect
-        delay(if (aviso.deshacer != null) 7000 else 4000)
+        // Con «Deshacer», 10 s (el largo de Compose): da tiempo a leer y a tocar.
+        delay(if (aviso.deshacer != null) 10000 else 4000)
         if (avisador.actual?.n == aviso.n) avisador.cerrar()
     }
     val c = colores
@@ -96,7 +97,7 @@ fun AvisoAbajo(avisador: Avisador, modifier: Modifier = Modifier) {
                         modifier = Modifier
                             .clip(RoundedCornerShape(Medidas.rS))
                             .clickable { avisador.cerrar(); a.deshacer.invoke() }
-                            .defaultMinSize(minHeight = 44.dp)
+                            .defaultMinSize(minHeight = 48.dp)
                             .padding(horizontal = Medidas.e3, vertical = Medidas.e3)
                     )
                 }

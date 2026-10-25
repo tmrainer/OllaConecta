@@ -3,6 +3,8 @@
 // copia de los datos y «Más». También la bienvenida de la primera vez.
 package io.github.tmrainer.asistencia.ui.pantallas
 
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -139,12 +141,12 @@ fun PantallaInicio(ctx: Contexto) {
                 Text("Pasar lista hoy", style = tipos.titulo, color = Color.White)
             }
             Spacer(Modifier.height(Medidas.e3))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                 Tarea("personaMas", "Inscribir a una persona", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.INSCRIBIR) }
                 Tarea("boleta", "Anotar una compra", c.avisoFondo, c.aviso, Modifier.weight(1f)) { ctx.ir(Ruta.B1, "compras") }
             }
             Spacer(Modifier.height(Medidas.e3))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                 Tarea("calendario", "Ver entregas", c.azulFondo, c.azul, Modifier.weight(1f)) { ctx.ir(Ruta.ENTREGAS) }
                 Tarea("archivo", "Reportes del día y del mes", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.REPORTES) }
             }
@@ -201,7 +203,8 @@ fun PantallaInicio(ctx: Contexto) {
 private fun Tarea(icono: String, texto: String, fondoIcono: Color, colorIcono: Color, modifier: Modifier, onClick: () -> Unit) {
     val c = colores
     Column(
-        modifier.shadow(1.dp, RoundedCornerShape(Medidas.rL)).clip(RoundedCornerShape(Medidas.rL)).background(c.superficie)
+        // Llena la altura de la fila: las dos tarjetas de una fila miden lo mismo.
+        modifier.fillMaxHeight().shadow(1.dp, RoundedCornerShape(Medidas.rL)).clip(RoundedCornerShape(Medidas.rL)).background(c.superficie)
             .clickable(role = Role.Button, onClick = onClick).defaultMinSize(minHeight = 128.dp).padding(Medidas.e4),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -230,11 +233,11 @@ fun EnlaceMas(icono: String, titulo: String, detalle: String, onClick: () -> Uni
 }
 
 private val PASOS_BIENVENIDA = listOf(
-    Triple("Inscribe a las personas", "En Padrón inscribes a quien llega; después la llevas a la Municipalidad. Cuando te den la hoja, la cargas y la app la confirma.", "personas"),
-    Triple("Toca a quien vino", "Cada día, en Asistencia, tocas el nombre de quien llegó. La app cuenta las raciones sola.", "lista"),
-    Triple("Anota tus compras", "En el Formato B-1 anotas cada boleta. La app suma y te dice qué falta antes de entregar.", "boleta"),
-    Triple("Te avisa las entregas", "En Entregas pones cada cuánto entregas el B-1, y la app te avisa unos días antes.", "calendario"),
-    Triple("Guarda una copia", "Tus datos están solo en este teléfono. Guarda una copia cada dos semanas, en Tus datos (menú ⋮).", "escudo")
+    Triple("Inscribe a las personas", "Inscribe a quien llega y llévala a la Municipalidad. Cuando te den la hoja, cárgala.", "personas"),
+    Triple("Toca a quien vino", "Cada día, en Asistencia, toca a quien llegó. Las raciones se cuentan solas.", "lista"),
+    Triple("Anota tus compras", "En el B-1 anota cada boleta. La app suma y te dice qué falta.", "boleta"),
+    Triple("Te avisa las entregas", "En Entregas pon cada cuánto entregas. La app te avisa antes.", "calendario"),
+    Triple("Guarda una copia", "Tus datos están solo en este teléfono. Guarda una copia cada dos semanas.", "escudo")
 )
 
 /** Primer uso: ¿cómo se usa? Cinco pasos, «Saltar» y «Siguiente». */

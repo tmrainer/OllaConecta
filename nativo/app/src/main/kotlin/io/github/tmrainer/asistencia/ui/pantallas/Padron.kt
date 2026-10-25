@@ -202,6 +202,8 @@ fun PantallaPadron(ctx: Contexto) {
                         CampoFecha("Edades a la fecha", fechaRef, { if (it.isNotEmpty()) fechaRef = it })
                         Spacer(Modifier.height(10.dp))
                         val pendientes = padron.afiliados.count { it.activo && it.registroMunicipal == "pendiente" }
+                        // Sin pendientes, el filtro desaparece: no se queda elegido y escondido.
+                        if (filtro == "pendientes" && pendientes == 0) filtro = "activos"
                         Opciones(FILTROS.filter { it.first != "pendientes" || pendientes > 0 }.map { (v, t) ->
                             v to when { v == "incompletas" && incompletas > 0 -> "$t ($incompletas)"; v == "pendientes" -> "$t ($pendientes)"; else -> t }
                         }, { it == filtro }, { filtro = it })
@@ -224,7 +226,7 @@ fun PantallaPadron(ctx: Contexto) {
                 if (visibles.isEmpty()) {
                     item {
                         Text(
-                            if (padron.afiliados.isEmpty()) "Todavía no hay nadie en el padrón. Toca «Inscribir», abajo, o carga la hoja que te dio la Municipalidad." else "Nadie coincide con la búsqueda o el filtro.",
+                            if (padron.afiliados.isEmpty()) "Aún no hay nadie. Toca «Inscribir» o carga la hoja de la Municipalidad." else "Nadie coincide con la búsqueda o el filtro.",
                             style = tipos.pista, color = c.tintaSuave,
                             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(c.superficie2).padding(Medidas.e4, Medidas.e6),
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -252,7 +254,7 @@ fun PantallaPadron(ctx: Contexto) {
                 item {
                     Spacer(Modifier.height(Medidas.e5))
                     TituloSeccion("Exportar el padrón", apoyo = true)
-                    Pista("Las personas activas a la fecha de arriba, numeradas y por apellido, con los días que vinieron entre estas fechas.", Modifier.padding(bottom = Medidas.e3))
+                    Pista("Las personas activas, con los días que vinieron entre estas fechas.", Modifier.padding(bottom = Medidas.e3))
                     Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                         CampoFecha("Días asistidos, desde", repInicio, { if (it.isNotEmpty()) repInicio = it }, Modifier.weight(1f))
                         CampoFecha("Hasta", repFin, { if (it.isNotEmpty()) repFin = it }, Modifier.weight(1f))
@@ -261,21 +263,21 @@ fun PantallaPadron(ctx: Contexto) {
                     val centro = estado.config.value.ultimoCentro?.nombreCentro?.trim().orEmpty()
                     fun vacio(): Boolean {
                         if (estado.padron.value.afiliados.isNotEmpty()) return false
-                        avisos.mostrar("El padrón está vacío: carga primero la hoja de la Municipalidad.")
+                        avisos.mostrar("El padrón está vacío: inscribe a alguien o carga la hoja.")
                         return true
                     }
                     BotonesExportar(
                         pdf = { if (vacio()) null else Documento(pdfDelPadron(estado.padron.value, fechaRef, repInicio, repFin, centro, selloAhora()), "Padron ${hoyIso()}", "Padrón (copia de referencia)") },
                         excel = { if (vacio()) null else Documento(excelDelPadron(estado.padron.value, fechaRef, repInicio, repFin, centro), "Padron ${hoyIso()}", "Padrón") }
                     )
-                    Pista("El Excel se puede volver a cargar en otro teléfono, en «Cargar un padrón desde Excel».", Modifier.padding(top = Medidas.e2))
+                    Pista("El Excel se puede cargar en otro teléfono con «Cargar la hoja».", Modifier.padding(top = Medidas.e2))
 
                     // Las inscritas aquí que falta llevar a la Municipalidad: la lista para el trámite.
                     val porRegistrar = padron.afiliados.count { it.activo && it.registroMunicipal == "pendiente" }
                     if (porRegistrar > 0) {
                         Spacer(Modifier.height(Medidas.e5))
                         TituloSeccion("Para llevar a la Municipalidad", apoyo = true)
-                        Pista("${if (porRegistrar == 1) "1 persona inscrita aquí falta" else "$porRegistrar personas inscritas aquí faltan"} en la Municipalidad. Lleva esta lista al trámite, con su DNI.", Modifier.padding(bottom = Medidas.e3))
+                        Pista("${if (porRegistrar == 1) "1 persona inscrita aquí falta" else "$porRegistrar personas inscritas aquí faltan"} en la Municipalidad. Lleva esta lista al trámite.", Modifier.padding(bottom = Medidas.e3))
                         BotonesExportar(
                             pdf = { Documento(pdfDePendientes(estado.padron.value, centro, ctx.preferencias.perfil.value.nombre, selloAhora()), "Para registrar ${hoyIso()}", "Para registrar en la Municipalidad") },
                             excel = { Documento(excelDePendientes(estado.padron.value, centro), "Para registrar ${hoyIso()}", "Para registrar en la Municipalidad") }
@@ -287,16 +289,16 @@ fun PantallaPadron(ctx: Contexto) {
                     val hoy = hoyIso()
                     BloqueEnvio(
                         ctx, "padron", hoy,
-                        "El 15 y el último día del mes, el padrón va en Excel a UNACEM: las personas activas hoy, con los días que vinieron en esta quincena.",
-                        siNoHay = "No hay personas activas en el padrón: no hay nada que mandar.",
+                        "El 15 y a fin de mes, envía el padrón en Excel a UNACEM.",
+                        siNoHay = "No hay personas activas: no hay nada que enviar.",
                         armar = { if (estado.padron.value.afiliados.none { it.activo }) null else correoDelPadron(estado.padron.value, hoy, centro, horaAhora(), ctx.preferencias.perfil.value.nombre) }
                     )
 
                     Spacer(Modifier.height(Medidas.e5))
                     TituloSeccion("La hoja de la Municipalidad", apoyo = true)
-                    Pista("La Municipalidad registra a las personas y te entrega la hoja. Cada hoja nueva actualiza el padrón: confirma a las que inscribiste aquí y dice quién entra y quién sale, antes de guardar.", Modifier.padding(bottom = Medidas.e3))
+                    Pista("Cada hoja nueva actualiza el padrón. Antes de guardar verás qué cambia.", Modifier.padding(bottom = Medidas.e3))
                     Boton("Cargar la hoja (Excel)", { ctx.ir(Ruta.IMPORTAR) }, icono = "archivo")
-                    Pista("¿Te dieron la hoja en papel? Usa «Inscribir» y elige «Ya está en la hoja de la Municipalidad».", Modifier.padding(top = Medidas.e2))
+                    Pista("¿Hoja en papel? En «Inscribir», elige «Ya está en la hoja de la Municipalidad».", Modifier.padding(top = Medidas.e2))
                     HistorialHojas(padron)
                     EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
                 }
@@ -408,7 +410,7 @@ private fun EditorPersona(a: Afiliado, cambiar: ((Afiliado) -> Afiliado) -> Unit
             title = { Text("Dar de baja a ${nombreCompleto(a)}", style = tipos.seccion, color = c.titulo) },
             text = {
                 Column {
-                    Pista("Queda en el historial: antes de la baja sigue contando.", Modifier.padding(bottom = Medidas.e3))
+                    Pista("Su asistencia anterior sigue contando.", Modifier.padding(bottom = Medidas.e3))
                     Opciones(listOf(true to "No figura en la hoja nueva", false to "Otro motivo"), { it == porLaHoja }, { porLaHoja = it })
                     Spacer(Modifier.height(Medidas.e3))
                     if (porLaHoja) CampoFecha("Fecha de la hoja nueva", fechaHoja, { if (it.isNotEmpty()) fechaHoja = it })
@@ -429,7 +431,7 @@ private fun EditorPersona(a: Afiliado, cambiar: ((Afiliado) -> Afiliado) -> Unit
             onDismissRequest = { confirmandoBorrar = false },
             containerColor = c.superficie,
             title = { Text("¿Borrar a ${nombreCompleto(a).ifEmpty { "esta persona" }}?", style = tipos.seccion, color = c.titulo) },
-            text = { Text("Se borrará definitivamente del padrón. Si solo dejó de asistir, usa «Dar de baja»: así queda el historial.", style = tipos.texto, color = c.tinta) },
+            text = { Text("Se borra del padrón para siempre. Si dejó de venir, usa «Dar de baja».", style = tipos.texto, color = c.tinta) },
             confirmButton = { Boton("Borrar de todas formas", { confirmandoBorrar = false; borrar() }, tipo = TipoBoton.PELIGRO) },
             dismissButton = { Boton("Cancelar", { confirmandoBorrar = false }) }
         )
@@ -518,10 +520,10 @@ fun PantallaInscribir(ctx: Contexto) {
     fun inscribirDeVerdad(a: Afiliado) {
         if (deLaHoja) {
             estado.cambiarPadron { agregarDeLaHoja(it, a, fechaHoja) }
-            avisar("${nombreCompleto(a)} quedó en el padrón, como en la hoja del ${aDdMmAa(fechaHoja)}. Puedes copiar a otra persona.", ok = true)
+            avisar("${nombreCompleto(a)} quedó en el padrón. Puedes copiar a otra persona.", ok = true)
         } else {
             estado.cambiarPadron { inscribirEnLaOlla(it, a) }
-            avisar("${nombreCompleto(a)} quedó inscrita. Falta registrarla en la Municipalidad: cuando aparezca en la hoja, la app la confirma sola.", ok = true)
+            avisar("${nombreCompleto(a)} quedó inscrita. Llévala a la Municipalidad para registrarla.", ok = true)
         }
         paterno = ""; materno = ""; nombres = ""; doc = ""; nacimiento = ""; grupo = null; tipo = ""
         escaneo = null; notaDni = emptyList(); dudas = emptyList(); avisoDni = ""
@@ -563,12 +565,12 @@ fun PantallaInscribir(ctx: Contexto) {
             Leyenda("¿De dónde viene?", obligatorio = true)
             Opciones(listOf(false to "Llegó a la olla", true to "Ya está en la hoja de la Municipalidad"), { it == deLaHoja }, { deLaHoja = it })
             if (deLaHoja) {
-                Pista("Cópiala tal como figura en la hoja que entregó la Municipalidad.", Modifier.padding(top = Medidas.e2, bottom = Medidas.e2))
+                Pista("Cópiala tal como está en la hoja.", Modifier.padding(top = Medidas.e2, bottom = Medidas.e2))
                 CampoFecha("Fecha de la hoja", fechaHoja, { if (it.isNotEmpty()) fechaHoja = it }, obligatorio = true)
             } else {
-                Pista("Queda inscrita en la olla y pendiente: después hay que llevarla a la Municipalidad para que la registren.", Modifier.padding(top = Medidas.e2, bottom = Medidas.e3))
+                Pista("Queda pendiente hasta que la registren en la Municipalidad.", Modifier.padding(top = Medidas.e2, bottom = Medidas.e3))
                 // ---- leer el DNI (en prueba) ----
-                Pista("En prueba: lee las tres líneas con «<» y los nombres del lado de la foto (en el DNI azul están en la misma cara). Revisa todo antes de inscribir.", Modifier.padding(bottom = Medidas.e2))
+                Pista("En prueba. Revisa todo antes de inscribir.", Modifier.padding(bottom = Medidas.e2))
                 Boton("Leer el DNI con la cámara", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeer = ::llenarConDni) } }, icono = "camara")
                 if (avisoDni.isNotEmpty()) Text(avisoDni, style = tipos.chicoFuerte, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
                 if (escaneo != null) {
@@ -584,9 +586,6 @@ fun PantallaInscribir(ctx: Contexto) {
                     Spacer(Modifier.height(Medidas.e3))
                     Campo("Quién revisó los datos con el DNI", verifica, { verifica = it }, obligatorio = true, capitalizar = true)
                 }
-                Spacer(Modifier.height(Medidas.e4))
-                Separador()
-                Spacer(Modifier.height(Medidas.e4))
             }
             Spacer(Modifier.height(Medidas.e4))
             Separador()
@@ -602,7 +601,7 @@ fun PantallaInscribir(ctx: Contexto) {
             Spacer(Modifier.height(Medidas.e3))
             Campo("Número", doc, { doc = it }, obligatorio = true, soloDigitos = tipoDoc == "dni", maxLargo = 12)
             Spacer(Modifier.height(Medidas.e4))
-            CampoFecha("Fecha de nacimiento (opcional)", nacimiento, { nacimiento = it }, pista = "Si la pones, el grupo de edad se calcula solo y se actualiza con los años.")
+            CampoFecha("Fecha de nacimiento (opcional)", nacimiento, { nacimiento = it }, pista = "Con la fecha, el grupo de edad se calcula solo.")
             Spacer(Modifier.height(Medidas.e4))
             Leyenda("Grupo de edad", obligatorio = true)
             Opciones(TRAMOS_ETARIOS.map { it.clave to "${it.etiqueta} (${it.detalle})" }, { it == grupo }, { grupo = it }, habilitado = !tieneFecha)
@@ -646,7 +645,7 @@ fun PantallaInscribir(ctx: Contexto) {
             onDismissRequest = { confirmarNombre = null },
             containerColor = c.superficie,
             title = { Text("Ya hay alguien con ese nombre", style = tipos.seccion, color = c.titulo) },
-            text = { Text("Ya hay alguien con el nombre ${nombreCompleto(pendiente)} en el padrón. ¿Inscribir igual? Pueden ser dos personas distintas.", style = tipos.texto, color = c.tinta) },
+            text = { Text("Ya hay alguien con el nombre ${nombreCompleto(pendiente)} en el padrón. ¿Inscribir igual? Pueden ser dos personas.", style = tipos.texto, color = c.tinta) },
             confirmButton = { Boton("Inscribir igual", { inscribirDeVerdad(pendiente); confirmarNombre = null }, tipo = TipoBoton.PRINCIPAL) },
             dismissButton = { Boton("Cancelar", { confirmarNombre = null }) }
         )

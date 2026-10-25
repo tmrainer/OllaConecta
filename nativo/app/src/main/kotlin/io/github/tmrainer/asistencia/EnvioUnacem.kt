@@ -96,11 +96,11 @@ class Envios(private val context: Context) {
         val raciones = if (delDia != null) desgloseDelDia(delDia).total else 0
         if (raciones > 0 && ultimo("asistencia", hoy) == null) {
             AvisosTelefono.mostrar(app, ID_ASISTENCIA, "Falta enviar la asistencia de hoy",
-                "Hoy hubo ${cuantos(raciones, "ración", "raciones")}. Toca para mandarla a UNACEM desde tu correo.", abrir = "asistencia")
+                "Hoy hubo ${cuantos(raciones, "ración", "raciones")}. Toca para enviarla a UNACEM.", abrir = "asistencia")
         }
         if (esDiaDePadron(hoy) && padron.afiliados.any { it.activo } && ultimo("padron", hoy) == null) {
             AvisosTelefono.mostrar(app, ID_PADRON, "Hoy toca mandar el padrón",
-                "El 15 y el último día del mes, el padrón va a UNACEM. Toca para mandarlo desde tu correo.", abrir = "padron")
+                "Toca para enviarlo a UNACEM desde tu correo.", abrir = "padron")
         }
     }
 

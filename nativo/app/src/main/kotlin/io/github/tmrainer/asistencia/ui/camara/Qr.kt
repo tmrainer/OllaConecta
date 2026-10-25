@@ -88,8 +88,8 @@ fun MostrarQr(partes: List<String>, titulo: String, detalle: String, alCerrar: (
     ) {
         Text(titulo, style = tipos.titulo, color = c.titulo, modifier = Modifier.fillMaxWidth())
         Text(
-            if (deAUno) "$detalle Son ${partes.size} códigos: pasa al siguiente cuando el otro teléfono vibre."
-            else "$detalle Apunta la otra cámara a este código${if (varias) " y espera: cambia solo hasta que el otro teléfono vibre" else ""}.",
+            if (deAUno) "$detalle Pasa al siguiente cuando el otro teléfono vibre."
+            else "$detalle${if (varias) " El código cambia solo: espera a que el otro teléfono vibre." else ""}",
             style = tipos.texto, color = c.tinta, modifier = Modifier.fillMaxWidth()
         )
         // Siempre blanco con negro, también en modo oscuro: así lo lee la cámara.
@@ -169,7 +169,7 @@ fun LeerQr(alRecibir: (Paquete) -> Unit, alCerrar: () -> Unit) {
     fun analizar(imagen: android.graphics.Bitmap) {
         if (busqueda.cerrado) return
         val textos = try { lector.leer(imagen) } catch (e: LectorNoDisponible) {
-            principal.execute { falla = "El lector de códigos todavía no está listo en este teléfono: lo instalan los servicios de Google Play. Prueba en unos minutos, con internet, o usa «Guardar una copia»." }
+            principal.execute { falla = "El lector aún no está listo. Prueba en unos minutos, con internet." }
             busqueda.cerrado = true
             return
         } catch (e: Exception) { return }
@@ -205,7 +205,7 @@ fun LeerQr(alRecibir: (Paquete) -> Unit, alCerrar: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(Medidas.e3)
     ) {
         Text("Recibir de otro teléfono", style = tipos.titulo, color = Color.White)
-        Text("En el otro teléfono muestra el código y apunta la cámara a su pantalla. Antes de guardar verás qué cambia.", style = tipos.texto, color = Color.White.copy(alpha = .85f))
+        Text("Apunta a la pantalla del otro teléfono. Antes de guardar verás qué cambia.", style = tipos.texto, color = Color.White.copy(alpha = .85f))
         Box(Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(Medidas.rM)).background(Color(0xFF111111)), contentAlignment = Alignment.Center) {
             val mensajeFalla = falla
             when {

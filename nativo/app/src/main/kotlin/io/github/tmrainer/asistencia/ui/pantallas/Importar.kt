@@ -128,7 +128,7 @@ fun PantallaImportar(ctx: Contexto) {
                 .onFailure { e ->
                     revision = null
                     aviso = (e as? ErrorXlsx)?.message?.let { m -> if (m.startsWith("Ese es")) m else "No se pudo leer el archivo: $m." }
-                        ?: "No se pudo leer el archivo. Prueba abriéndolo y copiando las filas aquí."
+                        ?: "No se pudo leer el archivo. Copia sus filas y pégalas aquí."
                 }
         }
     }
@@ -139,7 +139,7 @@ fun PantallaImportar(ctx: Contexto) {
             Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, Medidas.e5)
         ) {
-            Pista("Carga la hoja que te entregó la Municipalidad (en Excel o CSV, o copia sus filas). Antes de guardar verás quién entra, quién sale y a quiénes de las que inscribiste aquí ya registraron.", Modifier.padding(bottom = Medidas.e3))
+            Pista("Carga la hoja que te dio la Municipalidad. Antes de guardar verás qué cambia.", Modifier.padding(bottom = Medidas.e3))
             CampoFecha("Fecha de la hoja", fechaHoja, { if (it.isNotEmpty()) fechaHoja = it }, pista = "La que dice la hoja, o el día que te la dieron.")
             Spacer(Modifier.height(Medidas.e4))
             Acciones {
@@ -157,7 +157,7 @@ fun PantallaImportar(ctx: Contexto) {
             )
             Spacer(Modifier.height(Medidas.e2))
             Boton("Revisar", ::revisar, diminuto = true, habilitado = texto.isNotBlank())
-            Pista("¿Te dieron la hoja en papel? En «Inscribir», elige «Ya está en la hoja de la Municipalidad».", Modifier.padding(top = Medidas.e3))
+            Pista("¿Hoja en papel? En «Inscribir», elige «Ya está en la hoja de la Municipalidad».", Modifier.padding(top = Medidas.e3))
 
             if (aviso.isNotEmpty()) AvisoSistema(aviso, Modifier.padding(top = Medidas.e3))
             val r = revision
@@ -246,7 +246,7 @@ private fun VistaComparacion(lectura: Importacion, k: ComparacionHoja, elegido: 
         Text("Ya las registró la Municipalidad: ${k.confirman.joinToString(", ") { nombreCompleto(it) }}.", style = tipos.textoFuerte, color = c.ok, modifier = Modifier.padding(top = Medidas.e3))
     }
     if (k.pendientes.isNotEmpty()) {
-        Text("Inscritas aquí que la hoja todavía no trae (siguen pendientes, no salen): ${k.pendientes.joinToString(", ") { nombreCompleto(it) }}.", style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
+        Text("Inscritas aquí que la hoja aún no trae (siguen pendientes): ${k.pendientes.joinToString(", ") { nombreCompleto(it) }}.", style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
     }
     if (!k.hayCambios) {
         Text("El padrón ya está igual a esta hoja: no hay nada que cambiar.", style = tipos.textoFuerte, color = c.ok, modifier = Modifier.padding(top = Medidas.e3))
@@ -262,7 +262,7 @@ private fun VistaComparacion(lectura: Importacion, k: ComparacionHoja, elegido: 
         ).joinToString(" · ")
     }
     if (k.entran.isNotEmpty()) {
-        Grupo("Entran (${k.entran.size})", "Están en la hoja y no en el padrón. Se agregan las marcadas.") {
+        Grupo("Entran (${k.entran.size})", "No están en el padrón. Se agregan las marcadas.") {
             k.entran.forEachIndexed { i, f ->
                 Casilla(elegido["e$i"] == true, { elegido["e$i"] = it }, f.nombreCompleto.ifEmpty { "—" }, "Fila ${f.linea} · ${datos(f)}", f.avisos.joinToString("; ").ifEmpty { null })
                 if (i < k.entran.size - 1) Separador()
@@ -270,7 +270,7 @@ private fun VistaComparacion(lectura: Importacion, k: ComparacionHoja, elegido: 
         }
     }
     if (k.vuelven.isNotEmpty()) {
-        Grupo("Vuelven (${k.vuelven.size})", "Estaban de baja y la hoja las trae otra vez. Se reactivan las marcadas.") {
+        Grupo("Vuelven (${k.vuelven.size})", "Estaban de baja. Se reactivan las marcadas.") {
             k.vuelven.forEachIndexed { i, a ->
                 Casilla(elegido["v${a.id}"] == true, { elegido["v${a.id}"] = it }, nombreCompleto(a), "DNI ${a.numeroDocumento}" + if (a.motivoBaja.isNotEmpty()) " · baja: ${a.motivoBaja}" else "")
                 if (i < k.vuelven.size - 1) Separador()
@@ -278,7 +278,7 @@ private fun VistaComparacion(lectura: Importacion, k: ComparacionHoja, elegido: 
         }
     }
     if (k.salen.isNotEmpty()) {
-        Grupo("Salen (${k.salen.size})", "Están en el padrón y no en esta hoja. Las marcadas quedan de baja desde el ${aDdMmAa(fechaHoja)}: no se borran y su asistencia anterior sigue contando.") {
+        Grupo("Salen (${k.salen.size})", "No están en esta hoja. Las marcadas quedan de baja desde el ${aDdMmAa(fechaHoja)}. No se borran.") {
             k.salen.forEachIndexed { i, a ->
                 Casilla(elegido["s${a.id}"] == true, { elegido["s${a.id}"] = it }, nombreCompleto(a), if (a.numeroDocumento.isNotEmpty()) "DNI ${a.numeroDocumento}" else "sin documento")
                 if (i < k.salen.size - 1) Separador()
@@ -286,7 +286,7 @@ private fun VistaComparacion(lectura: Importacion, k: ComparacionHoja, elegido: 
         }
     }
     if (k.nombreDistinto.isNotEmpty()) {
-        Grupo("Mismo DNI, otro nombre (${k.nombreDistinto.size})", "Puede ser un nombre mal escrito en uno de los dos lados. Mira la hoja antes de elegir.") {
+        Grupo("Mismo DNI, otro nombre (${k.nombreDistinto.size})", "Puede ser un error de escritura. Mira la hoja y elige.") {
             k.nombreDistinto.forEachIndexed { i, d ->
                 Column(Modifier.fillMaxWidth().padding(Medidas.e4, Medidas.e3)) {
                     Text("DNI ${d.mia.numeroDocumento}", style = tipos.textoNegrita, color = c.titulo)

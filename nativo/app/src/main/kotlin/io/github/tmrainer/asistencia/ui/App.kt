@@ -4,6 +4,7 @@
 // anota lo que se lee en voz alta (Lectura); el menú ⋮ o el botón 🔊 lo leen.
 package io.github.tmrainer.asistencia.ui
 
+import androidx.compose.ui.semantics.heading
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -229,7 +230,7 @@ fun Cabecera(ctx: Contexto, titulo: String, subtitulo: String? = null, conVolver
                 }
             }
             Column(Modifier.weight(1f)) {
-                Text(titulo, style = tipos.titulo, color = Color.White)
+                Text(titulo, style = tipos.titulo, color = Color.White, modifier = Modifier.semantics { heading() })
                 if (subtitulo != null) Text(subtitulo, style = tipos.chico, color = c.marcaSuave)
             }
             // 🔊 si se pidió en Ajustes: leer la pantalla con un toque.

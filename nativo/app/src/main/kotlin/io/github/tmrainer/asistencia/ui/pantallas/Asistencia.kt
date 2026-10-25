@@ -206,7 +206,7 @@ fun PantallaAsistencia(ctx: Contexto) {
         val persona = afiliadosActivos(p, hoy).firstOrNull { it.numeroDocumento.trim() == dni }
         if (persona == null) {
             val deBaja = p.afiliados.any { it.numeroDocumento.trim() == dni }
-            return if (deBaja) "Ese DNI está de baja en el padrón." else "Ese DNI no está en el padrón. Puedes inscribir a la persona en Padrón."
+            return if (deBaja) "Ese DNI está de baja en el padrón." else "Ese DNI no está en el padrón. Inscríbelo en Padrón."
         }
         val nombre = nombreCompleto(persona)
         val cfg = estado.config.value
@@ -232,20 +232,13 @@ fun PantallaAsistencia(ctx: Contexto) {
             if (avisosAlmacen.isNotEmpty()) item { AvisoSistema(avisosAlmacen.joinToString(" "), Modifier.padding(bottom = Medidas.e4)) }
 
             item { Pista("Toca a quien vino. Las raciones se cuentan solas.", Modifier.padding(bottom = Medidas.e3)) }
-            // Lo que se cocinó y cuántas raciones se prepararon.
-            item {
-                TituloSeccion("Hoy se cocinó")
-                RegistroDelDia(atHoy) { cambio -> cambiarDia(atHoy, cambio) }
-                Spacer(Modifier.height(Medidas.e5))
-                TituloSeccion("Quién recibió ración")
-            }
             if (activos.isNotEmpty()) item {
                 Boton("Pasar lista leyendo el DNI", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeerDni = ::marcarPorDni) } }, Modifier.padding(bottom = Medidas.e3), icono = "camara")
             }
 
             if (activos.isEmpty()) {
                 item {
-                    EstadoVacio("personas", "Todavía no hay personas", "Para pasar lista, primero inscribe a quienes vienen o carga la hoja que te dio la Municipalidad.",
+                    EstadoVacio("personas", "Todavía no hay personas", "Primero inscribe a las personas o carga la hoja de la Municipalidad.",
                         "Inscribir a la primera persona" to { ctx.ir(Ruta.INSCRIBIR) })
                 }
             } else {
@@ -291,14 +284,21 @@ fun PantallaAsistencia(ctx: Contexto) {
                         Boton("Quitar a todos", { marcarTodos(atHoy, activos, false) }, diminuto = true)
                     }
                 }
+                // Lo que se cocinó y cuántas raciones se prepararon, después de
+                // la lista: pasar lista es lo primero y la primera persona se ve al abrir.
+                item {
+                    Spacer(Modifier.height(Medidas.e5))
+                    TituloSeccion("Hoy se cocinó")
+                    RegistroDelDia(atHoy) { cambio -> cambiarDia(atHoy, cambio) }
+                }
                 // A UNACEM va la asistencia de HOY (el periodo del resumen es para exportar).
                 item {
                     Spacer(Modifier.height(Medidas.e5))
                     TituloSeccion("Enviar a UNACEM")
                     BloqueEnvio(
                         ctx, "asistencia", hoy,
-                        "Manda la asistencia de hoy en Excel al correo de UNACEM, desde tu propio correo.",
-                        siNoHay = "Todavía no marcaste a nadie hoy: no hay asistencia que mandar.",
+                        "Envía la asistencia de hoy en Excel, desde tu correo.",
+                        siNoHay = "Hoy no marcaste a nadie: no hay nada que enviar.",
                         armar = {
                             val p = estado.padron.value
                             val delDia = p.atenciones.firstOrNull { it.fecha == hoy }
@@ -351,7 +351,7 @@ fun PantallaAsistencia(ctx: Contexto) {
             item {
                 Spacer(Modifier.height(Medidas.e5))
                 TituloSeccion("Precio del menú", apoyo = true)
-                Pista("Vale para hoy y los días nuevos. Los días anteriores guardan el precio que tenían; si uno fue distinto, se cambia en ese día.", Modifier.padding(bottom = Medidas.e3))
+                Pista("Vale para hoy y los días nuevos. Cada día anterior guarda su precio.", Modifier.padding(bottom = Medidas.e3))
                 CampoSoles("Menú normal (S/)", config.precioMenuNormalCent, { v -> estado.cambiarConfig { it.copy(precioMenuNormalCent = v) } })
                 Spacer(Modifier.height(Medidas.e3))
                 CampoSoles("Menú de ayuda social (S/)", config.precioMenuAyudaSocialCent, { v -> estado.cambiarConfig { it.copy(precioMenuAyudaSocialCent = v) } }, pista = "Si es gratuito, escribe 0.00.")
@@ -379,7 +379,7 @@ fun PantallaAsistencia(ctx: Contexto) {
                 // Solo se explica lo que no se ve en las cifras: cuando falta algo.
                 val partes = ArrayList<String>()
                 if (r.racionesTotales == 0) partes.add("Nadie marcado en estas fechas.")
-                else if (r.recaudacionCent == null) partes.add("Falta el precio del menú: sin él no se calcula lo recaudado.")
+                else if (r.recaudacionCent == null) partes.add("Falta el precio del menú para calcular lo recaudado.")
                 else if (r.racionesConPrecio < r.racionesTotales) {
                     val sin = r.racionesTotales - r.racionesConPrecio
                     partes.add("${if (sin == 1) "1 ración no tiene" else "$sin raciones no tienen"} precio y no cuenta${if (sin == 1) "" else "n"} en el promedio.")
@@ -471,7 +471,7 @@ fun FilaToque(
                         .border(1.dp, if (social) c.acentoTexto else c.contorno, RoundedCornerShape(999.dp))
                         .clickable(role = Role.Button, onClick = alCambiarMenu)
                         .semantics { contentDescription = "Menú de $nombre: ${if (social) "ayuda social" else "normal"}. Tocar para cambiarlo." }
-                        .defaultMinSize(minHeight = 32.dp).padding(horizontal = Medidas.e3),
+                        .defaultMinSize(minHeight = 48.dp).padding(horizontal = Medidas.e3),
                     contentAlignment = Alignment.Center
                 ) { Text(if (social) "Social" else "Normal", style = tipos.chicoFuerte, color = if (social) c.titulo else c.tintaSuave) }
             }
@@ -556,7 +556,7 @@ private fun FichaDia(
                     Chip("Recaudado", if (rec == null) "—" else "S/ ${formatearSoles(rec)}")
                 }
                 if (d.origen == Origen.LEGADO) {
-                    Text("Estas ${d.total} raciones vienen anotadas a mano de la versión anterior. Si marcas la asistencia, pasarán a contarse de la lista.",
+                    Text("Estas ${d.total} raciones vienen de la versión anterior. Si marcas la lista, se cuentan de la lista.",
                         style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
                 }
                 val activos = remember(padron.afiliados, at.fecha) {
@@ -588,7 +588,7 @@ private fun FichaDia(
                 var precioAbierto by remember { mutableStateOf(false) }
                 Enlace(if (precioAbierto) "Ocultar el precio del menú de este día" else "Precio del menú de este día", { precioAbierto = !precioAbierto }, Modifier.padding(top = 10.dp))
                 if (precioAbierto) {
-                    Pista(if (at.precioTomadoDeConfig) "Se copió del precio de arriba el día que se creó. Cámbialo solo si ese día fue distinto." else "Precio propio de este día.", Modifier.padding(bottom = Medidas.e2))
+                    Pista(if (at.precioTomadoDeConfig) "Copiado del precio de arriba. Cámbialo solo si ese día fue distinto." else "Precio propio de este día.", Modifier.padding(bottom = Medidas.e2))
                     CampoSoles("Menú normal (S/)", at.precioMenuNormalCent, { v -> cambiar { it.copy(precioMenuNormalCent = v, precioTomadoDeConfig = false) } })
                     Spacer(Modifier.height(Medidas.e3))
                     CampoSoles("Menú de ayuda social (S/)", at.precioMenuAyudaSocialCent, { v -> cambiar { it.copy(precioMenuAyudaSocialCent = v, precioTomadoDeConfig = false) } })
@@ -614,7 +614,7 @@ private fun RegistroDelDia(at: Atencion, cambiar: ((Atencion) -> Atencion) -> Un
     Campo(
         "Raciones preparadas", at.racionesPreparadas?.toString() ?: "",
         { v -> cambiar { it.copy(racionesPreparadas = v.toIntOrNull()) } }, soloDigitos = true, maxLargo = 4,
-        pista = "Las que se cocinaron. Las servidas se cuentan solas de la lista."
+        pista = "Las servidas se cuentan solas de la lista."
     )
     val preparadas = at.racionesPreparadas
     val texto = "Servidas: ${cuantos(servidas, "ración", "raciones")}" + if (preparadas != null) " de ${cuantos(preparadas, "preparada")}." else "."

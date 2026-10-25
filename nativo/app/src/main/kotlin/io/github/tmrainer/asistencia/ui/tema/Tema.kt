@@ -79,7 +79,8 @@ class Tipos(private val factor: Float) {
     val texto = TextStyle(fontFamily = ATKINSON, fontWeight = FontWeight.Normal, fontSize = t(1f), lineHeight = t(1.5f))
     val textoFuerte = texto.copy(fontWeight = FontWeight.SemiBold)
     val textoNegrita = texto.copy(fontWeight = FontWeight.Bold)
-    val chico = TextStyle(fontFamily = ATKINSON, fontWeight = FontWeight.Normal, fontSize = t(0.84f), lineHeight = t(1.2f))
+    // 14 sp: lo más chico para leer (el cuerpo es de 16 sp, como en Material 3).
+    val chico = TextStyle(fontFamily = ATKINSON, fontWeight = FontWeight.Normal, fontSize = t(0.875f), lineHeight = t(1.25f))
     val chicoFuerte = chico.copy(fontWeight = FontWeight.SemiBold)
     val chicoNegrita = chico.copy(fontWeight = FontWeight.Bold)
     val pista = TextStyle(fontFamily = ATKINSON, fontWeight = FontWeight.Normal, fontSize = t(0.88f), lineHeight = t(1.3f))

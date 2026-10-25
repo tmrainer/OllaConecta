@@ -80,10 +80,10 @@ fun PantallaHojaB1(ctx: Contexto, rendicionId: String?) {
                 EstadoVacio("boleta", "Todavía no hay un B-1", "Empieza a llenarlo en B-1.")
                 return@Column
             }
-            val texto = "Así caen tus datos en la hoja oficial del B-1. Es una copia de referencia: lo que falta queda en blanco, como en el papel."
+            val texto = "Así quedan tus datos en la hoja del B-1. Lo que falta queda en blanco."
             ParaLeer(texto)
             Pista(texto, Modifier.padding(bottom = Medidas.e2))
-            Pista("Para guardarlo o mandarlo en PDF o Excel: en el B-1, paso «Revisar», «Exportar».", Modifier.padding(bottom = Medidas.e4))
+            Pista("El PDF y el Excel están en el B-1, paso «Revisar».", Modifier.padding(bottom = Medidas.e4))
             hojas.forEachIndexed { i, trazos ->
                 if (hojas.size > 1) Text("Hoja ${i + 1} de ${hojas.size}", style = tipos.chicoFuerte, color = c.tintaSuave, modifier = Modifier.padding(bottom = Medidas.e2))
                 // Siempre en papel blanco, también en modo oscuro: es la hoja.

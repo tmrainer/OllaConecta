@@ -172,7 +172,7 @@ fun PantallaEntregas(ctx: Contexto) {
                 )
             }
             if (!esIso(calendario.fechaLimiteBase)) {
-                EstadoVacio("calendario", "Todavía no hay fechas", "Pon abajo, en «Cada cuánto entregas», una fecha de entrega que conozcas. Aquí verás las próximas.")
+                EstadoVacio("calendario", "Todavía no hay fechas", "Pon abajo una fecha de entrega que conozcas. Aquí verás las próximas.")
             } else {
                 val agenda = agendaEntregas(calendario, hoy, 6)
                 Superficie {
@@ -194,7 +194,7 @@ fun PantallaEntregas(ctx: Contexto) {
                             )
                             var abierto by remember { mutableStateOf(false) }
                             Box {
-                                Ficha(ETIQUETA_ESTADO.first { it.first == estadoItem }.second, estadoItem != "pendiente", { abierto = true }, minAlto = 40.dp)
+                                Ficha(ETIQUETA_ESTADO.first { it.first == estadoItem }.second, estadoItem != "pendiente", { abierto = true })
                                 DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }, containerColor = c.superficie) {
                                     for ((v, t) in ETIQUETA_ESTADO) DropdownMenuItem(text = { Text(t, style = tipos.texto, color = c.tinta) }, onClick = {
                                         abierto = false
@@ -264,12 +264,12 @@ private fun AvisosDelTelefono(hayFechas: Boolean) {
     }
     val prefs = context.getSharedPreferences("avisos", Context.MODE_PRIVATE)
     if (permiso) {
-        Text("El teléfono te avisa a las ${AvisosTelefono.HORA_DEL_AVISO} de la mañana, aunque la aplicación esté cerrada.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
+        Text("El teléfono te avisa a las ${AvisosTelefono.HORA_DEL_AVISO} de la mañana, aunque la app esté cerrada.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
         if (hayFechas && programados == 0) Pista("No hay avisos pendientes.", Modifier.padding(top = 4.dp))
     } else {
-        Text("Por ahora, el aviso se ve solo al abrir la aplicación.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
+        Text("Sin permiso, el aviso solo se ve al abrir la app.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
         FranjaEstado(
-            "Activa los avisos para que el teléfono te recuerde la entrega aunque la aplicación esté cerrada.",
+            "Activa los avisos y el teléfono te recordará la entrega.",
             TonoPastilla.ADVERTENCIA, Modifier.padding(top = Medidas.e2),
             boton = "Activar los avisos" to {
                 val actividad = context as? Activity

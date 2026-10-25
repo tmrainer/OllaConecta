@@ -5,6 +5,7 @@
 // revisión. Ninguna calcula nada: reciben datos y dibujan.
 package io.github.tmrainer.asistencia.ui.componentes
 
+import androidx.compose.ui.semantics.heading
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -81,7 +82,7 @@ fun TituloSeccion(texto: String, apoyo: Boolean = false, modifier: Modifier = Mo
         texto,
         style = if (apoyo) tipos.textoNegrita else tipos.seccion,
         color = if (apoyo) colores.tintaSuave else colores.titulo,
-        modifier = modifier.padding(bottom = Medidas.e3)
+        modifier = modifier.padding(bottom = Medidas.e3).semantics { heading() }
     )
 }
 
@@ -131,7 +132,8 @@ fun Boton(
     Button(
         onClick = onClick,
         enabled = habilitado,
-        modifier = modifier.defaultMinSize(minHeight = if (diminuto) 36.dp else 48.dp),
+        // 48 dp como mínimo también en los chicos (Android: áreas táctiles de 48 × 48 dp).
+        modifier = modifier.defaultMinSize(minHeight = 48.dp),
         shape = RoundedCornerShape(999.dp),
         border = BorderStroke(1.5.dp, if (habilitado) bordeColor else bordeColor.copy(alpha = .45f)),
         colors = ButtonDefaults.buttonColors(
@@ -368,7 +370,7 @@ fun <T> Opciones(
 
 /** Una ficha: borde contorno, y rellena de «selección» cuando está elegida. */
 @Composable
-fun Ficha(texto: String, elegida: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, habilitado: Boolean = true, minAlto: Dp = 44.dp) {
+fun Ficha(texto: String, elegida: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, habilitado: Boolean = true, minAlto: Dp = 48.dp) {
     val c = colores
     Box(
         modifier

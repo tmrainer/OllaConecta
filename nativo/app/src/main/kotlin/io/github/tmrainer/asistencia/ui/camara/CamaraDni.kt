@@ -69,9 +69,9 @@ import io.github.tmrainer.asistencia.ui.tema.colores
 import io.github.tmrainer.asistencia.ui.tema.tipos
 import kotlinx.coroutines.delay
 
-private const val PISTA_REVERSO = "Pon dentro del recuadro el lado del DNI con tres líneas de «<», con buena luz, y mantén el teléfono quieto."
-private const val PISTA_ASISTENCIA = "Muestra el lado del DNI con tres líneas de «<». Puedes pasar uno tras otro."
-private const val PISTA_ANVERSO = "Ahora voltea el DNI: el lado de la foto, dentro del recuadro. De ahí salen las tildes, la ñ y el segundo apellido."
+private const val PISTA_REVERSO = "Pon en el recuadro el lado con tres líneas de «<». Usa buena luz."
+private const val PISTA_ASISTENCIA = "Muestra el lado con tres líneas de «<». Pasa uno tras otro."
+private const val PISTA_ANVERSO = "Ahora voltea el DNI: el lado de la foto."
 
 /** En el DNI azul los nombres están en la misma cara que la MRZ: unas vueltas antes de pedir voltear. */
 private const val VUELTAS_MISMA_CARA = 3
@@ -130,7 +130,7 @@ fun CamaraDni(
         val b = busqueda
         if (b.cerrado) return
         val fragmentos = try { lector.leer(imagen) } catch (e: LectorNoDisponible) {
-            principal.execute { falla = "El lector del DNI todavía no está listo en este teléfono: lo instalan los servicios de Google Play. Prueba en unos minutos, con internet, o escribe los datos a mano." }
+            principal.execute { falla = "El lector aún no está listo. Prueba en unos minutos, con internet." }
             b.cerrado = true
             return
         } catch (e: Exception) { return }    // un fotograma que no se pudo leer: se prueba con el siguiente
