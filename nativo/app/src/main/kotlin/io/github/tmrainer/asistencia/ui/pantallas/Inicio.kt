@@ -140,11 +140,14 @@ fun PantallaInicio(ctx: Contexto) {
             }
             Spacer(Modifier.height(Medidas.e3))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                Tarea("personaMas", "Inscribir a una persona", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.INSCRIBIR) }
+                Tarea("personas", "Padrón de la Municipalidad", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.PADRON) }
                 Tarea("boleta", "Anotar una compra", c.avisoFondo, c.aviso, Modifier.weight(1f)) { ctx.ir(Ruta.B1, "compras") }
             }
             Spacer(Modifier.height(Medidas.e3))
-            Tarea("calendario", "Ver entregas", c.azulFondo, c.azul, Modifier.fillMaxWidth()) { ctx.ir(Ruta.ENTREGAS) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+                Tarea("calendario", "Ver entregas", c.azulFondo, c.azul, Modifier.weight(1f)) { ctx.ir(Ruta.ENTREGAS) }
+                Tarea("archivo", "Reportes del día y del mes", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.REPORTES) }
+            }
 
             // ---- la copia de los datos ----
             val dias = ctx.estado.diasDesdeUltimaCopia()
@@ -227,7 +230,7 @@ fun EnlaceMas(icono: String, titulo: String, detalle: String, onClick: () -> Uni
 }
 
 private val PASOS_BIENVENIDA = listOf(
-    Triple("Inscribe a las personas", "En Padrón anotas a cada persona una sola vez: nombre, DNI y su grupo de edad.", "personas"),
+    Triple("Carga el padrón", "La Municipalidad registra a las personas y te da una hoja. En Padrón la cargas, y cada hoja nueva lo actualiza.", "personas"),
     Triple("Toca a quien vino", "Cada día, en Asistencia, tocas el nombre de quien llegó. La app cuenta las raciones sola.", "lista"),
     Triple("Anota tus compras", "En el Formato B-1 anotas cada boleta. La app suma y te dice qué falta antes de entregar.", "boleta"),
     Triple("Te avisa las entregas", "En Entregas pones cada cuánto entregas el B-1, y la app te avisa unos días antes.", "calendario"),

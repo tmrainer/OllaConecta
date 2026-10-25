@@ -72,7 +72,19 @@ data class Rendicion(
     val dniPresidentaFirma: String = "",
     val nombreTesorera: String = "",
     val dniTesorera: String = "",
-    val generaciones: List<Generacion> = emptyList()
+    val generaciones: List<Generacion> = emptyList(),
+    /** Lo comprado con dinero de las señoras: NO va en el B-1 ni en sus totales. */
+    val gastosPropios: List<GastoPropio> = emptyList()
+)
+
+/** Una compra con dinero propio, fuera del B-1. Opcional: se anota si quieren. */
+@Serializable
+data class GastoPropio(
+    val id: String = "",
+    val fecha: String = "",
+    val descripcion: String = "",
+    val montoCent: Long? = null,
+    val nota: String = ""
 )
 
 // ----------------------------------------------------------------- Padrón
@@ -133,14 +145,34 @@ data class Atencion(
     val precioTomadoDeConfig: Boolean = false,
     val legado: Legado? = null,
     val nota: String = "",
-    val sinInscribir: SinInscribir? = null
+    val sinInscribir: SinInscribir? = null,
+    /** Qué se cocinó ese día. Lo escribe la encargada. */
+    val menuDelDia: String = "",
+    /** Cuántas raciones se prepararon. Lo escribe la encargada; las servidas se cuentan de la asistencia. */
+    val racionesPreparadas: Int? = null
 )
 
 @Serializable
 data class Padron(
     val version: Int = VERSION_PADRON,
     val afiliados: List<Afiliado> = emptyList(),
-    val atenciones: List<Atencion> = emptyList()
+    val atenciones: List<Atencion> = emptyList(),
+    /** Cada hoja de la Municipalidad que se cargó, y a quién agregó o retiró. */
+    val hojasMunicipales: List<HojaMunicipal> = emptyList()
+)
+
+/**
+ * Una actualización del padrón con la hoja que entrega la Municipalidad:
+ * de qué fecha es la hoja, cuándo se cargó,
+ * cuántas personas traía, y los ids de quienes entraron y salieron con ella.
+ */
+@Serializable
+data class HojaMunicipal(
+    val fecha: String = "",
+    val cargadaEn: String = "",
+    val personas: Int = 0,
+    val agregados: List<String> = emptyList(),
+    val retirados: List<String> = emptyList()
 )
 
 // ------------------------------------------------------------- Calendario

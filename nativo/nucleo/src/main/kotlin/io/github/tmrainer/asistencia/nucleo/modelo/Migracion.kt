@@ -62,7 +62,9 @@ fun migrarPadron(datos: JsonElement?): Padron {
             precioMenuNormalCent = at.entero("precioMenuNormalCent"),
             precioMenuAyudaSocialCent = at.entero("precioMenuAyudaSocialCent"),
             precioTomadoDeConfig = false,
-            sinInscribir = (at["sinInscribir"] as? JsonObject)?.decodificar<SinInscribir>()
+            sinInscribir = (at["sinInscribir"] as? JsonObject)?.decodificar<SinInscribir>(),
+            menuDelDia = at.texto("menuDelDia") ?: "",
+            racionesPreparadas = at.entero("racionesPreparadas")?.takeIf { it >= 0 }?.toInt()
         )
         val legado = at["legado"]
         if (legado is JsonObject) {
@@ -87,7 +89,9 @@ fun migrarPadron(datos: JsonElement?): Padron {
         }
         atenciones.add(base)
     }
-    return Padron(version = VERSION_PADRON, afiliados = afiliados, atenciones = atenciones)
+    val hojas = (obj["hojasMunicipales"] as? JsonArray ?: JsonArray(emptyList()))
+        .mapNotNull { (it as? JsonObject)?.decodificar<HojaMunicipal>() }
+    return Padron(version = VERSION_PADRON, afiliados = afiliados, atenciones = atenciones, hojasMunicipales = hojas)
 }
 
 /** Atajo para pasar un padrón ya tipado por la migración (idempotente). */

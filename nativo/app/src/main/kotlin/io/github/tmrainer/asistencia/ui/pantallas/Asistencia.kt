@@ -1,6 +1,6 @@
 // Asistencia.kt — pasar lista (pagina-asistencia.js + ui-asistencia.js).
 //
-// Marcar a alguien es UN toque en su fila. El menú sale de cómo se inscribió
+// Marcar a alguien es UN toque en su fila. El menú sale de cómo figura en el padrón
 // (habitual → normal, ayuda social → menú de ayuda social) y solo hace falta
 // tocarlo cuando ese día come otro. Sin desplegables.
 //
@@ -197,7 +197,7 @@ fun PantallaAsistencia(ctx: Contexto) {
     }
 
     // Pasar lista mostrando el DNI: la zona de texto del reverso (el número lleva
-    // dígito de control). Marca a quien está en el padrón; no inscribe ni guarda
+    // dígito de control). Marca a quien está en el padrón; no agrega ni guarda
     // nada más del DNI.
 
     /** Marca a la persona de ese DNI y devuelve qué pasó, para el visor. Lee el padrón de ahora, no el de cuando se abrió la cámara. */
@@ -206,7 +206,7 @@ fun PantallaAsistencia(ctx: Contexto) {
         val persona = afiliadosActivos(p, hoy).firstOrNull { it.numeroDocumento.trim() == dni }
         if (persona == null) {
             val deBaja = p.afiliados.any { it.numeroDocumento.trim() == dni }
-            return if (deBaja) "Ese DNI está de baja en el padrón." else "Ese DNI no está en el padrón. Puedes inscribir a la persona en Padrón."
+            return if (deBaja) "Ese DNI está de baja en el padrón." else "Ese DNI no está en el padrón: no figura en la hoja de la Municipalidad."
         }
         val nombre = nombreCompleto(persona)
         val cfg = estado.config.value
@@ -232,14 +232,21 @@ fun PantallaAsistencia(ctx: Contexto) {
             if (avisosAlmacen.isNotEmpty()) item { AvisoSistema(avisosAlmacen.joinToString(" "), Modifier.padding(bottom = Medidas.e4)) }
 
             item { Pista("Toca a quien vino. Las raciones se cuentan solas.", Modifier.padding(bottom = Medidas.e3)) }
+            // Lo que se cocinó y cuántas raciones se prepararon.
+            item {
+                TituloSeccion("Hoy se cocinó")
+                RegistroDelDia(atHoy) { cambio -> cambiarDia(atHoy, cambio) }
+                Spacer(Modifier.height(Medidas.e5))
+                TituloSeccion("Quién recibió ración")
+            }
             if (activos.isNotEmpty()) item {
                 Boton("Pasar lista leyendo el DNI", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeerDni = ::marcarPorDni) } }, Modifier.padding(bottom = Medidas.e3), icono = "camara")
             }
 
             if (activos.isEmpty()) {
                 item {
-                    EstadoVacio("personas", "Todavía no hay personas", "Para pasar lista, primero inscribe a quienes vienen a la olla.",
-                        "Inscribir a la primera persona" to { ctx.ir(Ruta.INSCRIBIR) })
+                    EstadoVacio("personas", "Todavía no hay personas", "Para pasar lista, primero carga el padrón: la hoja que te dio la Municipalidad.",
+                        "Cargar la hoja" to { ctx.ir(Ruta.IMPORTAR) })
                 }
             } else {
                 // Lo que se usa mientras se pasa lista: el conteo, el buscador y «los que faltan».
@@ -354,6 +361,7 @@ fun PantallaAsistencia(ctx: Contexto) {
             item {
                 Spacer(Modifier.height(Medidas.e5))
                 TituloSeccion("Resumen", apoyo = true)
+                Boton("Reporte del día y del mes", { ctx.ir(Ruta.REPORTES) }, Modifier.padding(bottom = Medidas.e3), icono = "archivo")
                 Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                     CampoFecha("Desde", inicio, { if (it.isNotEmpty()) inicio = it }, Modifier.weight(1f))
                     CampoFecha("Hasta", fin, { if (it.isNotEmpty()) fin = it }, Modifier.weight(1f))
@@ -540,6 +548,8 @@ private fun FichaDia(
             Column(Modifier.padding(Medidas.e4, Medidas.e3, Medidas.e4, Medidas.e4)) {
                 CampoFecha("Fecha", at.fecha, { f -> cambiar { it.copy(fecha = f) } })
                 Spacer(Modifier.height(Medidas.e3))
+                RegistroDelDia(at, cambiar)
+                Spacer(Modifier.height(Medidas.e3))
                 Campo("Nota", at.nota, { n -> cambiar { it.copy(nota = n) } })
                 Chips(Modifier.padding(top = Medidas.e3)) {
                     Chip("Raciones", "${d.total}"); Chip("Normal", "${d.normal}"); Chip("Ayuda social", "${d.ayudaSocial}")
@@ -589,3 +599,25 @@ private fun FichaDia(
     }
 }
 
+
+/**
+ * El registro del día: qué se cocinó y cuántas raciones se prepararon. Los
+ * escribe la encargada; las servidas se cuentan de la lista y se muestran al
+ * lado, sin corregir ninguna de las dos.
+ */
+@Composable
+private fun RegistroDelDia(at: Atencion, cambiar: ((Atencion) -> Atencion) -> Unit) {
+    val c = colores
+    val servidas = desgloseDelDia(at).total
+    Campo("Qué se cocinó", at.menuDelDia, { v -> cambiar { it.copy(menuDelDia = v) } }, placeholder = "Por ejemplo: arroz con pollo y ensalada", unaLinea = false)
+    Spacer(Modifier.height(Medidas.e3))
+    Campo(
+        "Raciones preparadas", at.racionesPreparadas?.toString() ?: "",
+        { v -> cambiar { it.copy(racionesPreparadas = v.toIntOrNull()) } }, soloDigitos = true, maxLargo = 4,
+        pista = "Las que se cocinaron. Las servidas se cuentan solas de la lista."
+    )
+    val preparadas = at.racionesPreparadas
+    val texto = "Servidas: ${cuantos(servidas, "ración", "raciones")}" + if (preparadas != null) " de ${cuantos(preparadas, "preparada")}." else "."
+    ParaLeer(texto)
+    Text(texto, style = tipos.textoFuerte, color = c.titulo, modifier = Modifier.padding(top = Medidas.e2))
+}

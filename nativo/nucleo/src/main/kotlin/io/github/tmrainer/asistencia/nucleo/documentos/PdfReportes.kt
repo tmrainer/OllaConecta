@@ -27,10 +27,10 @@ import kotlin.math.min
 private val DIAS = listOf("Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado")
 private val INICIAL = listOf("D", "L", "M", "M", "J", "V", "S")
 private fun diaDeSemana(iso: String) = diaDeSemanaJs(iso)
-private const val MARGEN = 14.0
+internal const val MARGEN = 14.0
 
 /** Un texto dentro de su celda: más chico hasta 5 pt y, si igual no entra, cortado con «…». */
-private fun celda(l: Lienzo, texto: Any?, x: Double, y: Double, w: Double, h: Double, pt: Double,
+internal fun celda(l: Lienzo, texto: Any?, x: Double, y: Double, w: Double, h: Double, pt: Double,
                   align: String = "left", negrita: Boolean = false) {
     if (texto == null || texto == "") return
     var t = if (texto is Number) numeroJs(texto) else texto.toString()
@@ -47,14 +47,14 @@ private fun celda(l: Lienzo, texto: Any?, x: Double, y: Double, w: Double, h: Do
 }
 
 /** Una columna de tabla. `align`: "left" | "center" | "right". */
-private class ColumnaTabla(val titulo: String, val ancho: Double, val align: String)
+internal class ColumnaTabla(val titulo: String, val ancho: Double, val align: String)
 
 /**
  * Una tabla: fila de títulos (gris) y filas de datos alternando un fondo muy
  * claro, para seguir la fila con el dedo.
  * @return dónde termina (mm)
  */
-private fun tabla(l: Lienzo, x: Double, y: Double, columnas: List<ColumnaTabla>, filas: List<List<Any?>>,
+internal fun tabla(l: Lienzo, x: Double, y: Double, columnas: List<ColumnaTabla>, filas: List<List<Any?>>,
                   altoTitulo: Double = 8.0, altoFila: Double = 6.0, pt: Double = 8.0, ultimaNegrita: Boolean = false): Double {
     val ancho = columnas.fold(0.0) { s, c -> s + c.ancho }
     l.gris(0.88); l.relleno(x, y, ancho, altoTitulo)
@@ -76,11 +76,11 @@ private fun tabla(l: Lienzo, x: Double, y: Double, columnas: List<ColumnaTabla>,
     return fy
 }
 
-private class HojaDoc(val l: LienzoPdf, val apaisada: Boolean, val ancho: Double)
-private class Nueva(val l: LienzoPdf, val ancho: Double, val alto: Double, val arriba: Double)
+internal class HojaDoc(val l: LienzoPdf, val apaisada: Boolean, val ancho: Double)
+internal class Nueva(val l: LienzoPdf, val ancho: Double, val alto: Double, val arriba: Double)
 
 /** Hojas con encabezado (título, centro, periodo) y, al final, el pie con «Hoja i de n». */
-private class Documento(val titulo: String, val subtitulo: String, val generado: String) {
+internal class Documento(val titulo: String, val subtitulo: String, val generado: String) {
     private val hojas = mutableListOf<HojaDoc>()
 
     fun nueva(apaisada: Boolean = false): Nueva {

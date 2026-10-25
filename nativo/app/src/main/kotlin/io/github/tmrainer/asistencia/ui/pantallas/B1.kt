@@ -6,6 +6,8 @@
 // Ver cómo queda en la hoja y exportar llegan en una fase siguiente.
 package io.github.tmrainer.asistencia.ui.pantallas
 
+import io.github.tmrainer.asistencia.nucleo.modelo.uuid
+import io.github.tmrainer.asistencia.nucleo.modelo.GastoPropio
 import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
 import io.github.tmrainer.asistencia.nucleo.documentos.hojasDelB1
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDelB1
@@ -506,7 +508,9 @@ private fun PasoCompras(
                     Ficha("La boleta dice «varios» en la cantidad", f.cantidadVarios, { cambiarEgreso(f.id) { it.copy(cantidadVarios = !it.cantidadVarios, cantidad = if (!it.cantidadVarios) null else it.cantidad) } })
                     Spacer(Modifier.height(10.dp))
                     Leyenda("Origen del dinero")
-                    Opciones(ORIGENES, { it == f.origenFondo }, { v -> cambiarEgreso(f.id) { it.copy(origenFondo = v) } })
+                    // Lo comprado con dinero propio no va en el B-1: va abajo, en «Gasto propio».
+                    // Una compra que ya lo tenía lo sigue mostrando, para poder cambiarlo.
+                    Opciones(ORIGENES.filter { it.first != "aporte_propio" || f.origenFondo == "aporte_propio" }, { it == f.origenFondo }, { v -> cambiarEgreso(f.id) { it.copy(origenFondo = v) } })
                     Pista("No va al formato. El subsidio municipal es solo para alimentos.", Modifier.padding(top = 4.dp))
                     Spacer(Modifier.height(10.dp))
                     Campo("RUC del proveedor", f.rucProveedor, { v -> cambiarEgreso(f.id) { it.copy(rucProveedor = v) } }, pista = "11 cifras; está arriba en la boleta.", soloDigitos = true, maxLargo = 11)
@@ -554,6 +558,36 @@ private fun PasoCompras(
             for (m in hs.filter { it.campo == "totales" }) Text(m.mensaje, style = tipos.chico, color = if (m.severidad == Severidad.ERROR) c.error else c.aviso, modifier = Modifier.padding(top = Medidas.e2))
         }
     }
+
+    // ---- gasto propio: fuera del B-1 ----
+    Spacer(Modifier.height(Medidas.e5))
+    TituloSeccion("Gasto propio (no va en el B-1)", apoyo = true)
+    Pista("Lo que compraron con su propio dinero, por ejemplo el azúcar que faltó. Es opcional: no se suma al B-1 ni sale en la hoja; se ve en el reporte del mes.", Modifier.padding(bottom = Medidas.e3))
+    if (r.gastosPropios.isNotEmpty()) {
+        Superficie {
+            r.gastosPropios.forEachIndexed { i, g ->
+                Column(Modifier.fillMaxWidth().padding(Medidas.e4, Medidas.e3)) {
+                    fun cambiarGasto(cambio: (GastoPropio) -> GastoPropio) = cambiar { x -> x.copy(gastosPropios = x.gastosPropios.map { if (it.id == g.id) cambio(it) else it }) }
+                    CampoFecha("Fecha", g.fecha, { v -> cambiarGasto { it.copy(fecha = v) } })
+                    Spacer(Modifier.height(Medidas.e2))
+                    Campo("Qué compraron", g.descripcion, { v -> cambiarGasto { it.copy(descripcion = v) } })
+                    Spacer(Modifier.height(Medidas.e2))
+                    CampoSoles("Cuánto (S/)", g.montoCent, { v -> cambiarGasto { it.copy(montoCent = v) } })
+                    Boton("Quitar este gasto", {
+                        val antes = r.gastosPropios
+                        cambiar { x -> x.copy(gastosPropios = x.gastosPropios.filter { it.id != g.id }) }
+                        avisos.mostrar("Quitaste el gasto propio") { cambiar { x -> x.copy(gastosPropios = antes) } }
+                    }, Modifier.padding(top = Medidas.e2), diminuto = true, tipo = TipoBoton.PELIGRO)
+                }
+                if (i < r.gastosPropios.size - 1) Separador()
+            }
+        }
+        val suma = r.gastosPropios.mapNotNull { it.montoCent }.sum()
+        Text("Gasto propio: S/ ${formatearSoles(suma)}. No cuenta en el B-1.", style = tipos.chicoFuerte, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
+    }
+    Boton("Anotar un gasto propio", {
+        cambiar { x -> x.copy(gastosPropios = x.gastosPropios + GastoPropio(id = uuid(), fecha = hoyIso())) }
+    }, Modifier.padding(top = Medidas.e3), diminuto = true, icono = "mas")
 }
 
 @Composable
