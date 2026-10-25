@@ -37,10 +37,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OllaConecta">
 
+        <!-- Siempre de pie: al acomodar el DNI frente a la cámara el teléfono se inclina y
+             la app no debe girar. Donde Android no deja fijarla (tablets, plegables), un
+             giro o un cambio de tamaño no reinicia la pantalla: no se pierde la cámara
+             abierta ni lo que se estaba escribiendo. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
             android:theme="@style/Theme.OllaConecta.Inicio"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
