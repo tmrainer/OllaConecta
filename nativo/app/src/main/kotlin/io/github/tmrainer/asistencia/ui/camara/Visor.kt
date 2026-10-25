@@ -21,6 +21,7 @@ import androidx.camera.core.Camera
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
@@ -170,16 +171,17 @@ fun VisorCamara(
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
                 .build()
+            val lienzo = Lienzo()
             analisis.setAnalyzer(hilo) { cuadro ->
                 val giro = cuadro.imageInfo.rotationDegrees
-                val fuente = try { cuadro.toBitmap() } catch (e: Exception) { null } finally { cuadro.close() }
+                val fuente = try { lienzo.copiar(cuadro) } catch (e: Exception) { null } finally { cuadro.close() }
                 if (fuente != null) {
                     val visor = tamVisor.get()
                     mirarActual?.let { m -> try { vistazo(fuente, giro, visor)?.let(m) } catch (e: Exception) { } }
                     val imagen = try { recortar(fuente, giro, visor, recorteActual.get()) } catch (e: Exception) { null }
-                    if (imagen !== fuente) fuente.recycle()
+                    if (imagen !== fuente && !lienzo.esPropio(fuente)) fuente.recycle()
                     if (imagen != null) {
-                        try { analizarActual(imagen) } finally { imagen.recycle() }
+                        try { analizarActual(imagen) } finally { if (!lienzo.esPropio(imagen)) imagen.recycle() }
                     }
                 }
             }
@@ -201,6 +203,30 @@ fun VisorCamara(
     }
     LaunchedEffect(linterna, camara) { camara?.cameraControl?.enableTorch(linterna) }
     AndroidView({ vista }, modifier.onSizeChanged { tamVisor.set(it) })
+}
+
+/**
+ * Un solo lienzo para todos los fotogramas: convertir cada uno a una imagen
+ * nueva eran unos 8 MB por fotograma (unos 10 por segundo) para el recolector
+ * de memoria, que en un teléfono de gama baja se nota. Solo lo usa el hilo
+ * del visor; no se recicla a mano (lo libera el recolector al cerrar).
+ */
+private class Lienzo {
+    private var bitmap: Bitmap? = null
+
+    /** El fotograma (RGBA_8888) como imagen: en el lienzo si sus filas vienen sin relleno. */
+    fun copiar(cuadro: ImageProxy): Bitmap {
+        val plano = cuadro.planes[0]
+        // Con relleno al final de las filas, CameraX lo convierte (en una imagen nueva).
+        if (plano.pixelStride != 4 || plano.rowStride != cuadro.width * 4) return cuadro.toBitmap()
+        val destino = bitmap?.takeIf { it.width == cuadro.width && it.height == cuadro.height }
+            ?: Bitmap.createBitmap(cuadro.width, cuadro.height, Bitmap.Config.ARGB_8888).also { bitmap = it }
+        plano.buffer.rewind()
+        destino.copyPixelsFromBuffer(plano.buffer)
+        return destino
+    }
+
+    fun esPropio(b: Bitmap) = b === bitmap
 }
 
 /**

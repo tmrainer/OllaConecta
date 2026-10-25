@@ -78,6 +78,9 @@ class EncuadreTest {
         val brillo = Caja(0.4f, 0.4f, 0.6f, 0.55f)
         igual(evaluar(fotograma(reflejo = brillo), GUIA, true, true).consejo, Consejo.REFLEJO)
         igual(evaluar(fotograma(fondo = 255, tarjeta = null), GUIA, true, true).consejo, Consejo.FUERA, "un fondo blanco no es un reflejo")
+        // El plástico del DNI ya quema un 2–3 % sin reflejo (medido en un moto g77): eso no es un reflejo.
+        val brillito = Caja(0.45f, 0.45f, 0.45f + 20f / ANCHO, 0.45f + 15f / ALTO)
+        igual(evaluar(fotograma(reflejo = brillito), GUIA, true, true).consejo, Consejo.BIEN, "un 2,5 % quemado")
     }
 
     @Test

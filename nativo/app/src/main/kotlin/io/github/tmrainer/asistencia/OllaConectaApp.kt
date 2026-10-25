@@ -15,6 +15,8 @@ import io.github.tmrainer.asistencia.nucleo.modelo.ahoraIso
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.io.File
@@ -49,7 +51,8 @@ class OllaConectaApp : Application() {
         // Consolida una migración o una reparación de lo leído (como guardarYa() al abrir una página).
         estado.guardarYa()
         preferencias = Preferencias(this)
-        fondo.launch { estado.calendario.collect { AvisosTelefono.reprogramar(this@OllaConectaApp, it) } }
+        // Varios cambios seguidos del calendario reprograman los avisos una sola vez.
+        fondo.launch { estado.calendario.collectLatest { delay(1_000); AvisosTelefono.reprogramar(this@OllaConectaApp, it) } }
         envios.programarRecordatorio()
     }
 
