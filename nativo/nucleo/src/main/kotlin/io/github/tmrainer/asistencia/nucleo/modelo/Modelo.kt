@@ -241,7 +241,8 @@ data class Perfil(
     val nombre: String = "",
     val rol: String = "",        // "presidenta" | "tesorera" | "apoyo"
     val dni: String = "",
-    val celular: String = ""
+    val celular: String = "",
+    val olla: String = ""          // la olla a la que pertenece quien usa el teléfono
 )
 
 // ----------------------------------------------------------- Respaldo

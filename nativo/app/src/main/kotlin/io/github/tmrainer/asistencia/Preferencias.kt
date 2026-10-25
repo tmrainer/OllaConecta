@@ -24,6 +24,10 @@ enum class Letra(val clave: String, val etiqueta: String, val factor: Float) {
 
 val ROLES = listOf("presidenta" to "Presidenta", "tesorera" to "Tesorera", "apoyo" to "Apoyo")
 
+/** Rol, nombre, DNI de 8 números y olla: lo que la app pide antes de usarse. */
+fun perfilListo(p: Perfil): Boolean =
+    ROLES.any { it.first == p.rol } && p.nombre.isNotBlank() && p.dni.length == 8 && p.dni.all { it.isDigit() } && p.olla.isNotBlank()
+
 class Preferencias(context: Context) {
     private val prefs = context.getSharedPreferences("pi3", Context.MODE_PRIVATE)
 
@@ -33,7 +37,8 @@ class Preferencias(context: Context) {
         nombre = prefs.getString("perfil.nombre", "") ?: "",
         rol = prefs.getString("perfil.rol", "") ?: "",
         dni = prefs.getString("perfil.dni", "") ?: "",
-        celular = prefs.getString("perfil.celular", "") ?: ""
+        celular = prefs.getString("perfil.celular", "") ?: "",
+        olla = prefs.getString("perfil.olla", "") ?: ""
     ))
     private val _perfilOmitido = MutableStateFlow(prefs.getBoolean("perfil.omitido", false))
     private val _bienvenidaVista = MutableStateFlow(prefs.getBoolean("bienvenidaVista", false))
@@ -59,15 +64,12 @@ class Preferencias(context: Context) {
         _perfil.value = p
         prefs.edit()
             .putString("perfil.nombre", p.nombre).putString("perfil.rol", p.rol)
-            .putString("perfil.dni", p.dni).putString("perfil.celular", p.celular)
+            .putString("perfil.dni", p.dni).putString("perfil.celular", p.celular).putString("perfil.olla", p.olla)
             .apply()
     }
 
-    /** ¿Ya dijo quién es? Con nombre y rol alcanza. */
-    fun perfilCompleto(): Boolean {
-        val p = _perfil.value
-        return p.nombre.trim().isNotEmpty() && ROLES.any { it.first == p.rol }
-    }
+    /** ¿Ya dijo quién es y de qué olla? Mientras no, la app lo pide al abrir (PrimerUso). */
+    fun perfilCompleto(): Boolean = perfilListo(_perfil.value)
 
     /** «Ahora no» en el Inicio: no volver a preguntar. */
     fun omitirPerfil() { _perfilOmitido.value = true; prefs.edit().putBoolean("perfil.omitido", true).apply() }

@@ -76,7 +76,9 @@ fun PantallaAjustes(ctx: Contexto) {
             Leyenda("Tu rol en la olla")
             Opciones(ROLES, { it == perfil.rol }, { prefs.guardarPerfil(perfil.copy(rol = it)) })
             Spacer(Modifier.height(10.dp))
-            Campo("Tu DNI (opcional)", perfil.dni, { prefs.guardarPerfil(perfil.copy(dni = it)) }, soloDigitos = true, maxLargo = 8)
+            Campo("Tu DNI", perfil.dni, { prefs.guardarPerfil(perfil.copy(dni = it)) }, soloDigitos = true, maxLargo = 8)
+            Spacer(Modifier.height(10.dp))
+            Campo("Tu olla", perfil.olla, { prefs.guardarPerfil(perfil.copy(olla = it)) }, capitalizar = true)
             Spacer(Modifier.height(10.dp))
             Campo("Tu celular (opcional)", perfil.celular, { prefs.guardarPerfil(perfil.copy(celular = it)) }, soloDigitos = true, maxLargo = 9)
 
@@ -96,8 +98,8 @@ fun PantallaAjustes(ctx: Contexto) {
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Leer en voz alta")
-            Pista("La app lee la pantalla en voz alta, sin internet. Está en el menú de los tres puntos, arriba a la derecha.", Modifier.padding(bottom = Medidas.e3))
-            Leyenda("Botón de la voz en cada pantalla")
+            Pista("La app lee la pantalla en voz alta, sin internet, con el botón «Escuchar» de arriba.", Modifier.padding(bottom = Medidas.e3))
+            Leyenda("Botón «Escuchar» en cada pantalla")
             Opciones(listOf(false to "No", true to "Sí, arriba a la derecha"), { it == vozBoton }, { prefs.cambiarVozBoton(it) })
             Spacer(Modifier.height(Medidas.e3))
             Leyenda("Velocidad de la voz")
