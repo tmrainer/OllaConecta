@@ -206,7 +206,7 @@ fun PantallaAsistencia(ctx: Contexto) {
         val persona = afiliadosActivos(p, hoy).firstOrNull { it.numeroDocumento.trim() == dni }
         if (persona == null) {
             val deBaja = p.afiliados.any { it.numeroDocumento.trim() == dni }
-            return if (deBaja) "Ese DNI está de baja en el padrón." else "Ese DNI no está en el padrón: no figura en la hoja de la Municipalidad."
+            return if (deBaja) "Ese DNI está de baja en el padrón." else "Ese DNI no está en el padrón. Puedes inscribir a la persona en Padrón."
         }
         val nombre = nombreCompleto(persona)
         val cfg = estado.config.value
@@ -245,8 +245,8 @@ fun PantallaAsistencia(ctx: Contexto) {
 
             if (activos.isEmpty()) {
                 item {
-                    EstadoVacio("personas", "Todavía no hay personas", "Para pasar lista, primero carga el padrón: la hoja que te dio la Municipalidad.",
-                        "Cargar la hoja" to { ctx.ir(Ruta.IMPORTAR) })
+                    EstadoVacio("personas", "Todavía no hay personas", "Para pasar lista, primero inscribe a quienes vienen o carga la hoja que te dio la Municipalidad.",
+                        "Inscribir a la primera persona" to { ctx.ir(Ruta.INSCRIBIR) })
                 }
             } else {
                 // Lo que se usa mientras se pasa lista: el conteo, el buscador y «los que faltan».

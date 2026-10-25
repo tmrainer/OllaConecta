@@ -323,3 +323,43 @@ fun excelDelMes(padron: Padron, rendiciones: List<Rendicion>, mes: String, centr
         HojaXlsx("Gasto propio", gastos, listOf(12, 40, 12))
     ))
 }
+
+// ------------------------------------- las pendientes, para llevar a la Municipalidad
+
+/**
+ * Quienes la olla inscribió y falta registrar en la Municipalidad, para
+ * llevar la lista al trámite: nombre, documento, fecha de nacimiento si se
+ * sabe y desde cuándo vienen a la olla.
+ */
+private fun filasPendientes(padron: Padron): List<List<Any?>> =
+    padron.afiliados.filter { it.activo && it.registroMunicipal == "pendiente" }
+        .sortedWith { a, b -> ORDEN_NOMBRES.compare(nombreCompleto(a), nombreCompleto(b)) }
+        .mapIndexed { i, a ->
+            listOf(i + 1, nombreCompleto(a), listOf(if (a.tipoDocumento == "ce") "CE" else "DNI", a.numeroDocumento).joinToString(" ").trim(),
+                if (esIso(a.fechaNacimiento)) aDdMmAa(a.fechaNacimiento) else "—", if (esIso(a.altaEn)) aDdMmAa(a.altaEn) else "—")
+        }
+
+fun pdfDePendientes(padron: Padron, centro: String = "", responsable: String = "", generado: String = selloAhora()): ByteArray {
+    val filas = filasPendientes(padron)
+    val doc = Documento("Para registrar en la Municipalidad", encabezado(centro, cuantosTexto(filas.size)), generado)
+    var hoja = doc.nueva()
+    val columnas = listOf(ColumnaTabla("N°", 10.0, "right"), ColumnaTabla("Apellidos y nombres", 86.0, "left"), ColumnaTabla("Documento", 32.0, "center"),
+        ColumnaTabla("Nacimiento", 26.0, "center"), ColumnaTabla("En la olla desde", 28.0, "center"))
+    var fin = hoja.arriba + 10
+    if (filas.isEmpty()) hoja.l.texto("No hay personas pendientes de registrar.", MARGEN, hoja.arriba + 8, 10.0)
+    for (i in filas.indices step 38) {
+        if (i > 0) hoja = doc.nueva()
+        fin = tabla(hoja.l, MARGEN, hoja.arriba + 3, columnas, filas.subList(i, min(i + 38, filas.size)))
+    }
+    if (fin + 18 + 12 > 285) { hoja = doc.nueva(); fin = hoja.arriba }
+    firma(hoja, fin + 18, responsable)
+    return doc.bytes("Para registrar en la Municipalidad")
+}
+
+fun excelDePendientes(padron: Padron, centro: String = ""): ByteArray {
+    val filas = listOf(listOf(n("Para registrar en la Municipalidad")), listOf(centro.trim()), emptyList(),
+        listOf(n("N°"), n("Apellidos y nombres"), n("Documento"), n("Nacimiento"), n("En la olla desde"))) + filasPendientes(padron)
+    return armarXlsx(listOf(HojaXlsx("Pendientes", filas, listOf(6, 40, 16, 12, 16))))
+}
+
+private fun cuantosTexto(n: Int) = if (n == 1) "1 persona" else "$n personas"

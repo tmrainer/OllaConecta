@@ -1,12 +1,20 @@
-// Padron.kt — el padrón de la Municipalidad: listar y corregir personas
-// (pagina-padron.js + ui-personas.js). La olla no inscribe:
-// el padrón sale de la hoja municipal (Importar.kt) o se copia a mano de la
-// hoja en papel, en una pantalla propia que se queda abierta para copiar a
+// Padron.kt — inscribir, listar y corregir personas (pagina-padron.js +
+// ui-personas.js). La olla inscribe a quien llega y queda pendiente hasta que
+// la Municipalidad la registre; la hoja municipal (Importar.kt) confirma a las
+// pendientes y actualiza el resto. Inscribir es una
+// pantalla propia que se queda abierta para inscribir a
 // varias seguidas. La lista queda para consultar; cada fila se despliega para editar.
 //
 // Cargar un padrón desde Excel y exportarlo llegan en una fase siguiente.
 package io.github.tmrainer.asistencia.ui.pantallas
 
+import io.github.tmrainer.asistencia.nucleo.documentos.excelDePendientes
+import io.github.tmrainer.asistencia.nucleo.documentos.pdfDePendientes
+import io.github.tmrainer.asistencia.nucleo.padron.inscribirEnLaOlla
+import io.github.tmrainer.asistencia.nucleo.dni.EstadoCampo
+import io.github.tmrainer.asistencia.nucleo.dni.CampoCruzado
+import io.github.tmrainer.asistencia.ui.camara.LecturaDni
+import io.github.tmrainer.asistencia.ui.camara.CamaraDni
 import io.github.tmrainer.asistencia.ui.componentes.Superficie
 import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
 import io.github.tmrainer.asistencia.nucleo.padron.retirarPorLaHoja
@@ -119,7 +127,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private val FILTROS = listOf("activos" to "Activas", "incompletas" to "Les faltan datos", "ayuda_social" to "Ayuda social", "bajas" to "De baja", "todas" to "Todas")
+private val FILTROS = listOf("activos" to "Activas", "pendientes" to "Faltan en la Municipalidad", "incompletas" to "Les faltan datos", "ayuda_social" to "Ayuda social", "bajas" to "De baja", "todas" to "Todas")
 
 @Composable
 fun PantallaPadron(ctx: Contexto) {
@@ -158,6 +166,7 @@ fun PantallaPadron(ctx: Contexto) {
                 "bajas" -> !a.activo
                 "ayuda_social" -> a.activo && a.tipoAfiliado == "caso_social"
                 "incompletas" -> (erroresPor[a.id] ?: 0) > 0
+                "pendientes" -> a.activo && a.registroMunicipal == "pendiente"
                 else -> true
             }
         }.sortedWith { a, b -> ORDEN_NOMBRES.compare(nombreCompleto(a), nombreCompleto(b)) }
@@ -192,7 +201,10 @@ fun PantallaPadron(ctx: Contexto) {
                         Spacer(Modifier.height(Medidas.e3))
                         CampoFecha("Edades a la fecha", fechaRef, { if (it.isNotEmpty()) fechaRef = it })
                         Spacer(Modifier.height(10.dp))
-                        Opciones(FILTROS.map { (v, t) -> v to if (v == "incompletas" && incompletas > 0) "$t ($incompletas)" else t }, { it == filtro }, { filtro = it })
+                        val pendientes = padron.afiliados.count { it.activo && it.registroMunicipal == "pendiente" }
+                        Opciones(FILTROS.filter { it.first != "pendientes" || pendientes > 0 }.map { (v, t) ->
+                            v to when { v == "incompletas" && incompletas > 0 -> "$t ($incompletas)"; v == "pendientes" -> "$t ($pendientes)"; else -> t }
+                        }, { it == filtro }, { filtro = it })
                         val conteo = resumenEtario(padron, fechaRef)
                         Chips(Modifier.padding(top = Medidas.e3)) {
                             Chip("Activas", "${afiliadosActivos(padron, fechaRef).size}")
@@ -212,7 +224,7 @@ fun PantallaPadron(ctx: Contexto) {
                 if (visibles.isEmpty()) {
                     item {
                         Text(
-                            if (padron.afiliados.isEmpty()) "Todavía no hay nadie en el padrón. Carga la hoja que te dio la Municipalidad: «Cargar la hoja», abajo." else "Nadie coincide con la búsqueda o el filtro.",
+                            if (padron.afiliados.isEmpty()) "Todavía no hay nadie en el padrón. Toca «Inscribir», abajo, o carga la hoja que te dio la Municipalidad." else "Nadie coincide con la búsqueda o el filtro.",
                             style = tipos.pista, color = c.tintaSuave,
                             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(c.superficie2).padding(Medidas.e4, Medidas.e6),
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -258,6 +270,18 @@ fun PantallaPadron(ctx: Contexto) {
                     )
                     Pista("El Excel se puede volver a cargar en otro teléfono, en «Cargar un padrón desde Excel».", Modifier.padding(top = Medidas.e2))
 
+                    // Las inscritas aquí que falta llevar a la Municipalidad: la lista para el trámite.
+                    val porRegistrar = padron.afiliados.count { it.activo && it.registroMunicipal == "pendiente" }
+                    if (porRegistrar > 0) {
+                        Spacer(Modifier.height(Medidas.e5))
+                        TituloSeccion("Para llevar a la Municipalidad", apoyo = true)
+                        Pista("${if (porRegistrar == 1) "1 persona inscrita aquí falta" else "$porRegistrar personas inscritas aquí faltan"} en la Municipalidad. Lleva esta lista al trámite, con su DNI.", Modifier.padding(bottom = Medidas.e3))
+                        BotonesExportar(
+                            pdf = { Documento(pdfDePendientes(estado.padron.value, centro, ctx.preferencias.perfil.value.nombre, selloAhora()), "Para registrar ${hoyIso()}", "Para registrar en la Municipalidad") },
+                            excel = { Documento(excelDePendientes(estado.padron.value, centro), "Para registrar ${hoyIso()}", "Para registrar en la Municipalidad") }
+                        )
+                    }
+
                     Spacer(Modifier.height(Medidas.e5))
                     TituloSeccion("Enviar el padrón a UNACEM", apoyo = true)
                     val hoy = hoyIso()
@@ -270,17 +294,15 @@ fun PantallaPadron(ctx: Contexto) {
 
                     Spacer(Modifier.height(Medidas.e5))
                     TituloSeccion("La hoja de la Municipalidad", apoyo = true)
-                    Pista("La Municipalidad registra a las personas y te entrega la hoja. Cada hoja nueva actualiza el padrón: verás quién entra y quién sale antes de guardar.", Modifier.padding(bottom = Medidas.e3))
-                    Acciones {
-                        Boton("Cargar la hoja (Excel)", { ctx.ir(Ruta.IMPORTAR) }, icono = "archivo")
-                        Boton("Copiar de la hoja en papel", { ctx.ir(Ruta.INSCRIBIR) }, icono = "personaMas")
-                    }
+                    Pista("La Municipalidad registra a las personas y te entrega la hoja. Cada hoja nueva actualiza el padrón: confirma a las que inscribiste aquí y dice quién entra y quién sale, antes de guardar.", Modifier.padding(bottom = Medidas.e3))
+                    Boton("Cargar la hoja (Excel)", { ctx.ir(Ruta.IMPORTAR) }, icono = "archivo")
+                    Pista("¿Te dieron la hoja en papel? Usa «Inscribir» y elige «Ya está en la hoja de la Municipalidad».", Modifier.padding(top = Medidas.e2))
                     HistorialHojas(padron)
                     EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
                 }
             }
         }
-        BotonFlotante("Cargar la hoja", { ctx.ir(Ruta.IMPORTAR) }, Modifier.align(Alignment.BottomEnd).padding(end = Medidas.e4, bottom = Medidas.e4))
+        BotonFlotante("Inscribir", { ctx.ir(Ruta.INSCRIBIR) }, Modifier.align(Alignment.BottomEnd).padding(end = Medidas.e4, bottom = Medidas.e4))
     }
 }
 
@@ -316,6 +338,7 @@ private fun FilaPersona(
                 Text(meta.joinToString(" · "), style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 2.dp))
             }
             if (errores > 0) { Spacer(Modifier.width(Medidas.e2)); Pastilla("faltan datos", TonoPastilla.ADVERTENCIA) }
+            else if (a.activo && a.registroMunicipal == "pendiente") { Spacer(Modifier.width(Medidas.e2)); Pastilla("falta la Municipalidad", TonoPastilla.ADVERTENCIA) }
             Spacer(Modifier.width(Medidas.e2))
             Icono("flecha", 18.dp, if (abierta) c.acentoTexto else c.tintaSuave, Modifier.rotate(if (abierta) 90f else 0f))
         }
@@ -335,6 +358,9 @@ private fun EditorPersona(a: Afiliado, cambiar: ((Afiliado) -> Afiliado) -> Unit
     val tieneFecha = esIso(a.fechaNacimiento)
     Column(Modifier.padding(Medidas.e4, Medidas.e1, Medidas.e4, Medidas.e4)) {
         Acciones(Modifier.padding(vertical = 10.dp)) {
+            if (a.activo && a.registroMunicipal == "pendiente") {
+                Boton("Ya la registraron en la Municipalidad", { cambiar { it.copy(registroMunicipal = "registrada", registroMunicipalEn = hoyIso()) } }, diminuto = true)
+            }
             Boton(if (a.activo) "Dar de baja" else "Reactivar", {
                 if (a.activo) pidiendoBaja = true else cambiar { it.copy(activo = true, bajaEn = "", motivoBaja = "") }
             }, diminuto = true)
@@ -432,12 +458,20 @@ fun PantallaInscribir(ctx: Contexto) {
     var mensajeOk by remember { mutableStateOf(false) }
     var confirmarNombre by remember { mutableStateOf<Afiliado?>(null) }
     var saliendo by remember { mutableStateOf(false) }
-    // La hoja de la Municipalidad de donde se copia: por defecto, la última cargada.
+    // De dónde viene: llegó a la olla (queda pendiente de la
+    // Municipalidad) o ya figura en la hoja municipal (se copia con su fecha).
+    var deLaHoja by remember { mutableStateOf(false) }
     var fechaHoja by remember { mutableStateOf(ultimaHoja(estado.padron.value)?.fecha ?: hoyIso()) }
+    // Leído del DNI y todavía sin inscribir: el sexo, quién revisó y qué revisar.
+    var escaneo by remember { mutableStateOf<String?>(null) }
+    var verifica by remember { mutableStateOf("") }
+    var notaDni by remember { mutableStateOf<List<String>>(emptyList()) }
+    var avisoDni by remember { mutableStateOf("") }
+    var dudas by remember { mutableStateOf<List<Triple<String, List<String>, (String) -> Unit>>>(emptyList()) }
     val desplazamiento = rememberScrollState()
     val alcance = rememberCoroutineScope()
     val tieneFecha = esIso(nacimiento)
-    val hayDatos = listOf(paterno, materno, nombres, doc, nacimiento, tipo).any { it.isNotBlank() } || grupo != null
+    val hayDatos = listOf(paterno, materno, nombres, doc, nacimiento, tipo).any { it.isNotBlank() } || grupo != null || escaneo != null
 
     fun salir() { if (hayDatos) saliendo = true else ctx.volver() }
     BackHandler(enabled = hayDatos) { saliendo = true }
@@ -448,12 +482,49 @@ fun PantallaInscribir(ctx: Contexto) {
         apellidoPaterno = paterno.trim(), apellidoMaterno = materno.trim(), nombres = nombres.trim(),
         tipoDocumento = tipoDoc, numeroDocumento = doc.trim(), fechaNacimiento = nacimiento,
         grupoEtarioManual = if (tieneFecha) null else grupo, tipoAfiliado = tipo
-    )
+    ).let { a -> escaneo?.let { sexo -> a.copy(origenDato = "escaneo_dni", sexo = sexo, verificadoPor = verifica.trim()) } ?: a }
+
+    /**
+     * Llena el formulario con lo leído del DNI (llenarConDni de ui-personas.js).
+     * No inscribe: una letra dudosa queda vacía con sus opciones, y se dice qué revisar.
+     */
+    fun llenarConDni(l: LecturaDni) {
+        val m = l.mrz.campos
+        notaDni = emptyList(); dudas = emptyList(); avisoDni = ""
+        if (m.pais != "PER") { avisoDni = "No parece un DNI peruano. Escribe los datos a mano."; return }
+        tipoDoc = "dni"; doc = m.numeroDocumento; nacimiento = m.fechaNacimiento
+        val revisar = ArrayList<String>()
+        val ds = ArrayList<Triple<String, List<String>, (String) -> Unit>>()
+        fun nombre(etiqueta: String, cruce: CampoCruzado?, deMrz: String, poner: (String) -> Unit) {
+            when {
+                cruce == null -> { poner(deMrz); if (deMrz.isNotEmpty()) revisar.add("$etiqueta: viene sin tildes ni ñ.") }
+                cruce.estado == EstadoCampo.DUDOSO -> { poner(""); ds.add(Triple(etiqueta, cruce.opciones, poner)) }
+                else -> {
+                    poner(cruce.valor)
+                    if (cruce.estado == EstadoCampo.SIN_CONFIRMAR && cruce.valor.isNotEmpty()) revisar.add("$etiqueta: compáralo con el DNI.")
+                }
+            }
+        }
+        nombre("Apellido paterno", l.anverso?.apellidoPaterno, m.apellidos.joinToString(" ")) { paterno = it }
+        nombre("Apellido materno", l.anverso?.apellidoMaterno, "") { materno = it }
+        nombre("Nombres", l.anverso?.nombres, m.nombres) { nombres = it }
+        if (materno.isEmpty()) revisar.add("Apellido materno: escríbelo (no se leyó).")
+        escaneo = m.sexo
+        // Quien usa el teléfono es quien revisa: su nombre del perfil, editable.
+        if (verifica.isBlank()) verifica = ctx.preferencias.perfil.value.nombre
+        notaDni = revisar; dudas = ds
+    }
 
     fun inscribirDeVerdad(a: Afiliado) {
-        estado.cambiarPadron { agregarDeLaHoja(it, a, fechaHoja) }
-        avisar("${nombreCompleto(a)} quedó en el padrón. Puedes copiar a otra persona de la hoja.", ok = true)
+        if (deLaHoja) {
+            estado.cambiarPadron { agregarDeLaHoja(it, a, fechaHoja) }
+            avisar("${nombreCompleto(a)} quedó en el padrón, como en la hoja del ${aDdMmAa(fechaHoja)}. Puedes copiar a otra persona.", ok = true)
+        } else {
+            estado.cambiarPadron { inscribirEnLaOlla(it, a) }
+            avisar("${nombreCompleto(a)} quedó inscrita. Falta registrarla en la Municipalidad: cuando aparezca en la hoja, la app la confirma sola.", ok = true)
+        }
         paterno = ""; materno = ""; nombres = ""; doc = ""; nacimiento = ""; grupo = null; tipo = ""
+        escaneo = null; notaDni = emptyList(); dudas = emptyList(); avisoDni = ""
         alcance.launch { desplazamiento.animateScrollTo(0) }
     }
 
@@ -466,10 +537,11 @@ fun PantallaInscribir(ctx: Contexto) {
         if (a.numeroDocumento.isEmpty()) faltan.add("número de documento")
         if (grupoEtario(a, hoyIso()) == null) faltan.add("grupo de edad")
         if (a.tipoAfiliado.isEmpty()) faltan.add("tipo")
+        if (escaneo != null && a.verificadoPor.isEmpty()) faltan.add("quién revisó los datos con el DNI")
         if (faltan.isNotEmpty()) { avisar("Falta: ${faltan.joinToString(", ")}."); return }
         // Lleno no es lo mismo que bien escrito: las mismas reglas que «Les faltan datos».
         val malEscritos = validarAfiliado(a, padron).filter { it.severidad == Severidad.ERROR }
-        if (!esIso(fechaHoja)) { avisar("Falta la fecha de la hoja."); return }
+        if (deLaHoja && !esIso(fechaHoja)) { avisar("Falta la fecha de la hoja."); return }
         if (malEscritos.isNotEmpty()) {
             avisar("Revisa: ${malEscritos.take(3).joinToString("; ") { it.mensaje.removeSuffix(".") }}. No se agregó a nadie.")
             return
@@ -483,13 +555,39 @@ fun PantallaInscribir(ctx: Contexto) {
     }
 
     Column(Modifier.fillMaxSize().background(c.fondo)) {
-        Cabecera(ctx, "Copiar de la hoja", "Tal como figura en la hoja de la Municipalidad", alVolver = ::salir)
+        Cabecera(ctx, "Inscribir a una persona", "Los campos con * son obligatorios", alVolver = ::salir)
         Column(
             Modifier.weight(1f).fillMaxWidth().verticalScroll(desplazamiento).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, Medidas.e5)
         ) {
-            Pista("La Municipalidad registra a las personas y te da la hoja. Aquí copias a cada una tal como figura en esa hoja. Los campos con * son obligatorios.", Modifier.padding(bottom = Medidas.e3))
-            CampoFecha("Fecha de la hoja", fechaHoja, { if (it.isNotEmpty()) fechaHoja = it }, obligatorio = true)
+            Leyenda("¿De dónde viene?", obligatorio = true)
+            Opciones(listOf(false to "Llegó a la olla", true to "Ya está en la hoja de la Municipalidad"), { it == deLaHoja }, { deLaHoja = it })
+            if (deLaHoja) {
+                Pista("Cópiala tal como figura en la hoja que entregó la Municipalidad.", Modifier.padding(top = Medidas.e2, bottom = Medidas.e2))
+                CampoFecha("Fecha de la hoja", fechaHoja, { if (it.isNotEmpty()) fechaHoja = it }, obligatorio = true)
+            } else {
+                Pista("Queda inscrita en la olla y pendiente: después hay que llevarla a la Municipalidad para que la registren.", Modifier.padding(top = Medidas.e2, bottom = Medidas.e3))
+                // ---- leer el DNI (en prueba) ----
+                Pista("En prueba: lee las tres líneas con «<» y los nombres del lado de la foto (en el DNI azul están en la misma cara). Revisa todo antes de inscribir.", Modifier.padding(bottom = Medidas.e2))
+                Boton("Leer el DNI con la cámara", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeer = ::llenarConDni) } }, icono = "camara")
+                if (avisoDni.isNotEmpty()) Text(avisoDni, style = tipos.chicoFuerte, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
+                if (escaneo != null) {
+                    Text("Listo. Revisa los datos con el DNI en la mano.", style = tipos.textoFuerte, color = c.ok, modifier = Modifier.padding(top = Medidas.e3))
+                    for ((etiqueta, opciones, poner) in dudas) {
+                        // No se elige sola: la persona toca la que coincide con el DNI.
+                        Text("$etiqueta: ¿cuál dice el DNI?", style = tipos.chicoFuerte, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
+                        Acciones {
+                            for (o in opciones) Boton(o, { poner(o); dudas = dudas.filter { it.first != etiqueta } }, diminuto = true)
+                        }
+                    }
+                    for (t in notaDni) Text("• $t", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 2.dp))
+                    Spacer(Modifier.height(Medidas.e3))
+                    Campo("Quién revisó los datos con el DNI", verifica, { verifica = it }, obligatorio = true, capitalizar = true)
+                }
+                Spacer(Modifier.height(Medidas.e4))
+                Separador()
+                Spacer(Modifier.height(Medidas.e4))
+            }
             Spacer(Modifier.height(Medidas.e4))
             Separador()
             Spacer(Modifier.height(Medidas.e4))
@@ -526,7 +624,7 @@ fun PantallaInscribir(ctx: Contexto) {
                         modifier = Modifier.padding(bottom = Medidas.e2).semantics { liveRegion = LiveRegionMode.Polite }
                     )
                 }
-                Boton("Agregar al padrón", ::inscribir, Modifier.fillMaxWidth(), tipo = TipoBoton.PRINCIPAL, icono = "personaMas")
+                Boton("Inscribir", ::inscribir, Modifier.fillMaxWidth(), tipo = TipoBoton.PRINCIPAL, icono = "personaMas")
             }
         }
     }
@@ -536,9 +634,9 @@ fun PantallaInscribir(ctx: Contexto) {
         AlertDialog(
             onDismissRequest = { saliendo = false },
             containerColor = c.superficie,
-            title = { Text("¿Salir sin agregar?", style = tipos.seccion, color = c.titulo) },
+            title = { Text("¿Salir sin inscribir?", style = tipos.seccion, color = c.titulo) },
             text = { Text("Lo que escribiste de esta persona se perderá.", style = tipos.texto, color = c.tinta) },
-            confirmButton = { Boton("Salir sin agregar", { saliendo = false; ctx.volver() }, tipo = TipoBoton.PELIGRO) },
+            confirmButton = { Boton("Salir sin inscribir", { saliendo = false; ctx.volver() }, tipo = TipoBoton.PELIGRO) },
             dismissButton = { Boton("Seguir aquí", { saliendo = false }) }
         )
     }
@@ -548,8 +646,8 @@ fun PantallaInscribir(ctx: Contexto) {
             onDismissRequest = { confirmarNombre = null },
             containerColor = c.superficie,
             title = { Text("Ya hay alguien con ese nombre", style = tipos.seccion, color = c.titulo) },
-            text = { Text("Ya hay alguien con el nombre ${nombreCompleto(pendiente)} en el padrón. ¿Agregar igual? Pueden ser dos personas distintas.", style = tipos.texto, color = c.tinta) },
-            confirmButton = { Boton("Agregar igual", { inscribirDeVerdad(pendiente); confirmarNombre = null }, tipo = TipoBoton.PRINCIPAL) },
+            text = { Text("Ya hay alguien con el nombre ${nombreCompleto(pendiente)} en el padrón. ¿Inscribir igual? Pueden ser dos personas distintas.", style = tipos.texto, color = c.tinta) },
+            confirmButton = { Boton("Inscribir igual", { inscribirDeVerdad(pendiente); confirmarNombre = null }, tipo = TipoBoton.PRINCIPAL) },
             dismissButton = { Boton("Cancelar", { confirmarNombre = null }) }
         )
     }

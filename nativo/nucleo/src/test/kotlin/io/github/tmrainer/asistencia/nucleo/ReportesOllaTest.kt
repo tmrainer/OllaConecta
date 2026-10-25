@@ -9,6 +9,7 @@ import io.github.tmrainer.asistencia.nucleo.calculos.resumenEconomicoRaciones
 import io.github.tmrainer.asistencia.nucleo.documentos.diasDelMes
 import io.github.tmrainer.asistencia.nucleo.documentos.etiquetaMes
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDelDia
+import io.github.tmrainer.asistencia.nucleo.documentos.excelDePendientes
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDelMes
 import io.github.tmrainer.asistencia.nucleo.documentos.leerXlsx
 import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelDia
@@ -81,5 +82,18 @@ class ReportesOllaTest {
         igual(despues.insumosCent, antes.insumosCent)
         igual(despues.gastoPropioCent, 1250L)
         igual(despues.gastosPropios.single().descripcion, "Azúcar extra")
+    }
+
+    @Test
+    fun `La lista para la Municipalidad trae solo a las pendientes activas`() {
+        val ids = padron.afiliados.filter { it.activo }.take(2).map { it.id }
+        val baja = padron.afiliados.first { !it.activo || it.id !in ids }.id
+        val p = padron.copy(afiliados = padron.afiliados.map {
+            when (it.id) { in ids -> it.copy(registroMunicipal = "pendiente"); baja -> it.copy(registroMunicipal = "pendiente", activo = false); else -> it }
+        })
+        val texto = leerXlsx(excelDePendientes(p, "Olla ficticia"))
+        val nombres = p.afiliados.filter { it.id in ids }.map { io.github.tmrainer.asistencia.nucleo.modelo.nombreCompleto(it) }
+        ok(nombres.all { it in texto }, texto)
+        igual(texto.lines().count { Regex("^\\d+\t").containsMatchIn(it) }, 2, "solo las dos pendientes activas")
     }
 }

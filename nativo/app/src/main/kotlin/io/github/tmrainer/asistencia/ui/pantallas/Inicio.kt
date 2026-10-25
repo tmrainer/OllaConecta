@@ -140,7 +140,7 @@ fun PantallaInicio(ctx: Contexto) {
             }
             Spacer(Modifier.height(Medidas.e3))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                Tarea("personas", "Padrón de la Municipalidad", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.PADRON) }
+                Tarea("personaMas", "Inscribir a una persona", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.INSCRIBIR) }
                 Tarea("boleta", "Anotar una compra", c.avisoFondo, c.aviso, Modifier.weight(1f)) { ctx.ir(Ruta.B1, "compras") }
             }
             Spacer(Modifier.height(Medidas.e3))
@@ -230,7 +230,7 @@ fun EnlaceMas(icono: String, titulo: String, detalle: String, onClick: () -> Uni
 }
 
 private val PASOS_BIENVENIDA = listOf(
-    Triple("Carga el padrón", "La Municipalidad registra a las personas y te da una hoja. En Padrón la cargas, y cada hoja nueva lo actualiza.", "personas"),
+    Triple("Inscribe a las personas", "En Padrón inscribes a quien llega; después la llevas a la Municipalidad. Cuando te den la hoja, la cargas y la app la confirma.", "personas"),
     Triple("Toca a quien vino", "Cada día, en Asistencia, tocas el nombre de quien llegó. La app cuenta las raciones sola.", "lista"),
     Triple("Anota tus compras", "En el Formato B-1 anotas cada boleta. La app suma y te dice qué falta antes de entregar.", "boleta"),
     Triple("Te avisa las entregas", "En Entregas pones cada cuánto entregas el B-1, y la app te avisa unos días antes.", "calendario"),

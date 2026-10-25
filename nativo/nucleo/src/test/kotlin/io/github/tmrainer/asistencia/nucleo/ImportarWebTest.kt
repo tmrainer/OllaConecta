@@ -105,7 +105,8 @@ class ImportarWebTest {
 
     private fun columnas(mapa: Map<String, Int>) = JsonObject(mapa.mapValues { JsonPrimitive(it.value) })
 
-    private fun sinId(a: Afiliado) = JsonObject(JSON.encodeToJsonElement(Afiliado.serializer(), a).jsonObject - "id")
+    // Sin el id (al azar) ni el registro en la Municipalidad, que la web no tiene.
+    private fun sinId(a: Afiliado) = JsonObject(JSON.encodeToJsonElement(Afiliado.serializer(), a).jsonObject - "id" - "registroMunicipal" - "registroMunicipalEn")
 
     private fun comoJson(r: Importacion) = JsonObject(mapOf(
         "columnas" to columnas(r.columnas),

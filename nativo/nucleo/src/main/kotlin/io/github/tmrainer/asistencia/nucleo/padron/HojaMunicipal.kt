@@ -1,6 +1,10 @@
-// HojaMunicipal.kt — el padrón es el de la Municipalidad: la olla no inscribe, carga la hoja que le entregan. Cada hoja
-// nueva es una actualización: se compara con el padrón de este teléfono por
-// DNI y se ve quién entra, quién vuelve, quién sigue y quién sale.
+// HojaMunicipal.kt — el padrón de la olla y la hoja de la Municipalidad.
+// La olla puede inscribir a quien llega: queda «pendiente»
+// hasta que la lleven a la Municipalidad y aparezca en la hoja. Cada hoja que
+// entrega la Municipalidad es una actualización: se compara por DNI y se ve
+// quién entra, quién vuelve, quién sigue, a quién confirma la hoja (las
+// pendientes que ya figuran) y quién sale. Una pendiente que todavía no
+// figura no sale: sigue pendiente.
 //
 // Nada se aplica solo: compararConHoja() arma la comparación; aplicarHoja()
 // hace lo que la persona eligió. Quien sale queda de baja con el motivo «no
@@ -37,14 +41,18 @@ data class ComparacionHoja(
     val siguen: List<Afiliado>,
     /** De las que siguen, las que en la hoja tienen otro nombre: la persona elige. */
     val nombreDistinto: List<NombreDistinto>,
+    /** De las que siguen, las que la olla inscribió y la hoja ya trae: quedan registradas. */
+    val confirman: List<Afiliado>,
     /** Activas aquí y no en la hoja: salen (se dan de baja, no se borran). */
     val salen: List<Afiliado>,
+    /** Inscritas por la olla que la hoja todavía no trae: no salen, siguen pendientes. */
+    val pendientes: List<Afiliado>,
     /** Filas repetidas dentro de la misma hoja: no se usan. */
     val repetidas: List<FilaImportada>,
     /** Cuántas personas trae la hoja (sin filas vacías ni repetidas). */
     val enLaHoja: Int
 ) {
-    val hayCambios: Boolean get() = entran.isNotEmpty() || vuelven.isNotEmpty() || salen.isNotEmpty() || nombreDistinto.isNotEmpty()
+    val hayCambios: Boolean get() = entran.isNotEmpty() || vuelven.isNotEmpty() || salen.isNotEmpty() || nombreDistinto.isNotEmpty() || confirman.isNotEmpty()
 }
 
 private fun clave(a: Afiliado) = a.numeroDocumento.trim()
@@ -85,8 +93,14 @@ fun compararConHoja(padron: Padron, hoja: Importacion): ComparacionHoja {
             }
         }
     }
-    val salen = padron.afiliados.filter { it.activo && it.id !in enLaHoja }
-    return ComparacionHoja(entran, vuelven, siguen, nombreDistinto, salen, repetidas, validas.size)
+    val fuera = padron.afiliados.filter { it.activo && it.id !in enLaHoja }
+    val confirman = siguen.filter { it.registroMunicipal == "pendiente" }
+    return ComparacionHoja(
+        entran, vuelven, siguen, nombreDistinto, confirman,
+        salen = fuera.filter { it.registroMunicipal != "pendiente" },
+        pendientes = fuera.filter { it.registroMunicipal == "pendiente" },
+        repetidas = repetidas, enLaHoja = validas.size
+    )
 }
 
 /** Lo que eligió la persona: quiénes entran, quiénes salen y a quién se le pone el nombre de la hoja. */
@@ -94,15 +108,19 @@ data class EleccionHoja(
     val entran: List<FilaImportada>,
     val vuelven: List<Afiliado>,
     val salen: List<Afiliado>,
-    val usarNombreDeLaHoja: List<NombreDistinto> = emptyList()
+    val usarNombreDeLaHoja: List<NombreDistinto> = emptyList(),
+    /** Los que siguen (figuran en la hoja): quedan registradas con su fecha. */
+    val siguen: List<Afiliado> = emptyList()
 )
 
 /**
  * Aplica lo elegido y anota la hoja. Quien entra queda con `altaEn` = fecha de
  * la hoja; quien sale, de baja desde esa fecha con su motivo; quien vuelve,
- * activo otra vez. Lo demás no se toca.
+ * activo otra vez. Quienes figuran en la hoja quedan registradas con esa
+ * fecha. Lo demás no se toca.
  */
 fun aplicarHoja(padron: Padron, fechaHoja: String, eleccion: EleccionHoja, enLaHoja: Int, cargadaEn: String = ahoraIso()): Padron {
+    val figuran = eleccion.siguen.map { it.id }.toSet()
     val salen = eleccion.salen.map { it.id }.toSet()
     val vuelven = eleccion.vuelven.map { it.id }.toSet()
     val nombres = eleccion.usarNombreDeLaHoja.associate { it.mia.id to it.deLaHoja.afiliado }
@@ -112,9 +130,10 @@ fun aplicarHoja(padron: Padron, fechaHoja: String, eleccion: EleccionHoja, enLaH
         if (a.id in salen) x = x.copy(activo = false, bajaEn = fechaHoja, motivoBaja = motivo)
         if (a.id in vuelven) x = x.copy(activo = true, bajaEn = "", motivoBaja = "")
         nombres[a.id]?.let { h -> x = x.copy(apellidoPaterno = h.apellidoPaterno, apellidoMaterno = h.apellidoMaterno, nombres = h.nombres) }
+        if (a.id in figuran || a.id in vuelven) x = x.copy(registroMunicipal = "registrada", registroMunicipalEn = fechaHoja)
         x
     }
-    val nuevos = eleccion.entran.map { it.afiliado.copy(altaEn = fechaHoja, origenDato = "importado") }
+    val nuevos = eleccion.entran.map { it.afiliado.copy(altaEn = fechaHoja, origenDato = "importado", registroMunicipal = "registrada", registroMunicipalEn = fechaHoja) }
     val anotada = HojaMunicipal(
         fecha = fechaHoja, cargadaEn = cargadaEn, personas = enLaHoja,
         agregados = nuevos.map { it.id } + vuelven.toList(), retirados = salen.toList()
@@ -127,7 +146,7 @@ fun aplicarHoja(padron: Padron, fechaHoja: String, eleccion: EleccionHoja, enLaH
  * hoja y se anota en esa misma hoja (si ya había una de esa fecha, se suma).
  */
 fun agregarDeLaHoja(padron: Padron, a: Afiliado, fechaHoja: String, cargadaEn: String = ahoraIso()): Padron {
-    val nuevo = a.copy(altaEn = fechaHoja)
+    val nuevo = a.copy(altaEn = fechaHoja, registroMunicipal = "registrada", registroMunicipalEn = fechaHoja)
     return padron.copy(afiliados = padron.afiliados + nuevo, hojasMunicipales = anotarEn(padron.hojasMunicipales, fechaHoja, cargadaEn) {
         it.copy(agregados = it.agregados + nuevo.id)
     })
@@ -148,3 +167,14 @@ private fun anotarEn(hojas: List<HojaMunicipal>, fecha: String, cargadaEn: Strin
 
 /** La última hoja cargada (la de fecha más nueva), o null si todavía no se cargó ninguna. */
 fun ultimaHoja(padron: Padron): HojaMunicipal? = padron.hojasMunicipales.maxByOrNull { it.fecha }
+
+/** Inscribir en la olla a quien llegó: queda pendiente de registrar en la Municipalidad. */
+fun inscribirEnLaOlla(padron: Padron, a: Afiliado): Padron =
+    padron.copy(afiliados = padron.afiliados + a.copy(registroMunicipal = "pendiente", registroMunicipalEn = ""))
+
+/** Marcar a mano que ya está registrada en la Municipalidad (por ejemplo, con la constancia en la mano). */
+fun marcarRegistrada(padron: Padron, afiliadoId: String, fecha: String): Padron =
+    padron.copy(afiliados = padron.afiliados.map { if (it.id == afiliadoId) it.copy(registroMunicipal = "registrada", registroMunicipalEn = fecha) else it })
+
+/** Quienes la olla inscribió y falta llevar a la Municipalidad (activas). */
+fun pendientesDeRegistro(padron: Padron): List<Afiliado> = padron.afiliados.filter { it.activo && it.registroMunicipal == "pendiente" }

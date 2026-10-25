@@ -107,7 +107,15 @@ data class Afiliado(
     val motivoBaja: String = "",
     val origenDato: String = "manual",     // "manual" | "escaneo_dni" | "importado"
     val verificadoPor: String = "",
-    val nota: String = ""
+    val nota: String = "",
+    /**
+     * El registro en la Municipalidad: "pendiente" si la olla
+     * la inscribió y falta llevarla; "registrada" si figura en la hoja
+     * municipal; "" si no se sabe (datos de antes).
+     */
+    val registroMunicipal: String = "",
+    /** Fecha de la hoja municipal donde figura (si está registrada). */
+    val registroMunicipalEn: String = ""
 )
 
 @Serializable

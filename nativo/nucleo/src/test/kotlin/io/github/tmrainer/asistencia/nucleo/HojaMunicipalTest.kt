@@ -12,6 +12,8 @@ import io.github.tmrainer.asistencia.nucleo.padron.EleccionHoja
 import io.github.tmrainer.asistencia.nucleo.padron.agregarDeLaHoja
 import io.github.tmrainer.asistencia.nucleo.padron.aplicarHoja
 import io.github.tmrainer.asistencia.nucleo.padron.compararConHoja
+import io.github.tmrainer.asistencia.nucleo.padron.inscribirEnLaOlla
+import io.github.tmrainer.asistencia.nucleo.padron.pendientesDeRegistro
 import io.github.tmrainer.asistencia.nucleo.padron.motivoNoFigura
 import io.github.tmrainer.asistencia.nucleo.padron.retirarPorLaHoja
 import io.github.tmrainer.asistencia.nucleo.padron.ultimaHoja
@@ -26,7 +28,7 @@ class HojaMunicipalTest {
     /** Carga una hoja aceptando todo lo que propone. */
     private fun cargar(padron: Padron, fecha: String, vararg filas: String): Padron {
         val c = compararConHoja(padron, hoja(*filas))
-        return aplicarHoja(padron, fecha, EleccionHoja(c.entran, c.vuelven, c.salen), c.enLaHoja, "2026-10-20T10:00:00.000Z")
+        return aplicarHoja(padron, fecha, EleccionHoja(c.entran, c.vuelven, c.salen, siguen = c.siguen), c.enLaHoja, "2026-10-20T10:00:00.000Z")
     }
 
     @Test
@@ -123,5 +125,28 @@ class HojaMunicipalTest {
         val ana = p3.afiliados.first { it.id == a.id }
         ok(!ana.activo); igual(ana.bajaEn, "2026-11-01")
         igual(nombreCompleto(ana), "Ficticia Ana")
+    }
+
+    @Test
+    fun `Quien la olla inscribió sigue pendiente hasta que la hoja la trae`() {
+        val p1 = cargar(Padron(), "2026-10-01", "Ficticia;Uno;Ana;00000011;adulto;habitual")
+        ok(p1.afiliados.all { it.registroMunicipal == "registrada" && it.registroMunicipalEn == "2026-10-01" })
+        // Llega Bea a la olla: se inscribe aquí, falta la Municipalidad.
+        val bea = nuevoAfiliado("2026-10-10").copy(apellidoPaterno = "Ficticia", nombres = "Bea", numeroDocumento = "00000012", grupoEtarioManual = "adulto", tipoAfiliado = "habitual")
+        val p2 = inscribirEnLaOlla(p1, bea)
+        igual(pendientesDeRegistro(p2).map { it.nombres }, listOf("Bea"))
+        // Una hoja que todavía no la trae: Bea no sale, sigue pendiente.
+        val c = compararConHoja(p2, hoja("Ficticia;Uno;Ana;00000011;adulto;habitual"))
+        igual(c.salen.size, 0); igual(c.pendientes.map { it.nombres }, listOf("Bea"))
+        val p3 = cargar(p2, "2026-11-01", "Ficticia;Uno;Ana;00000011;adulto;habitual")
+        ok(p3.afiliados.first { it.nombres == "Bea" }.activo)
+        igual(pendientesDeRegistro(p3).size, 1)
+        // La hoja siguiente ya la trae: queda registrada con esa fecha.
+        val c2 = compararConHoja(p3, hoja("Ficticia;Uno;Ana;00000011;adulto;habitual", "Ficticia;Dos;Bea;00000012;adulto;habitual"))
+        igual(c2.confirman.map { it.nombres }, listOf("Bea")); igual(c2.entran.size, 0)
+        val p4 = cargar(p3, "2026-12-01", "Ficticia;Uno;Ana;00000011;adulto;habitual", "Ficticia;Dos;Bea;00000012;adulto;habitual")
+        val b = p4.afiliados.first { it.nombres == "Bea" }
+        igual(b.registroMunicipal, "registrada"); igual(b.registroMunicipalEn, "2026-12-01")
+        igual(pendientesDeRegistro(p4).size, 0)
     }
 }

@@ -91,7 +91,7 @@ enum class Ruta(val ruta: String, val texto: String, val icono: String) {
     INICIO("inicio", "Inicio", "casa"),
     ASISTENCIA("asistencia", "Asistencia", "lista"),
     PADRON("padron", "Padrón", "personas"),
-    INSCRIBIR("inscribir", "Copiar de la hoja", "personaMas"),
+    INSCRIBIR("inscribir", "Inscribir", "personaMas"),
     IMPORTAR("importar", "Hoja de la Municipalidad", "archivo"),
     HOJA("hoja", "Vista previa del B-1", "boleta"),
     REPORTES("reportes", "Reportes", "archivo"),

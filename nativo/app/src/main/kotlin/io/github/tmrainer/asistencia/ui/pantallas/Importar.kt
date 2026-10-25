@@ -134,12 +134,12 @@ fun PantallaImportar(ctx: Contexto) {
     }
 
     Column(Modifier.fillMaxSize().background(c.fondo)) {
-        Cabecera(ctx, "Hoja de la Municipalidad", "Cargar o actualizar el padrón")
+        Cabecera(ctx, "Hoja de la Municipalidad", "Actualizar el padrón")
         Column(
             Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, Medidas.e5)
         ) {
-            Pista("El padrón es el que registra la Municipalidad. Carga la hoja que te entregaron (en Excel o CSV, o copia sus filas). Antes de guardar verás quién entra y quién sale.", Modifier.padding(bottom = Medidas.e3))
+            Pista("Carga la hoja que te entregó la Municipalidad (en Excel o CSV, o copia sus filas). Antes de guardar verás quién entra, quién sale y a quiénes de las que inscribiste aquí ya registraron.", Modifier.padding(bottom = Medidas.e3))
             CampoFecha("Fecha de la hoja", fechaHoja, { if (it.isNotEmpty()) fechaHoja = it }, pista = "La que dice la hoja, o el día que te la dieron.")
             Spacer(Modifier.height(Medidas.e4))
             Acciones {
@@ -157,7 +157,7 @@ fun PantallaImportar(ctx: Contexto) {
             )
             Spacer(Modifier.height(Medidas.e2))
             Boton("Revisar", ::revisar, diminuto = true, habilitado = texto.isNotBlank())
-            Pista("¿Te dieron la hoja en papel? Copia a cada persona en Padrón, «Copiar de la hoja en papel».", Modifier.padding(top = Medidas.e3))
+            Pista("¿Te dieron la hoja en papel? En «Inscribir», elige «Ya está en la hoja de la Municipalidad».", Modifier.padding(top = Medidas.e3))
 
             if (aviso.isNotEmpty()) AvisoSistema(aviso, Modifier.padding(top = Medidas.e3))
             val r = revision
@@ -207,7 +207,7 @@ fun PantallaImportar(ctx: Contexto) {
                     confirmar = false
                     val antes = estado.padron.value
                     // Sobre el mismo padrón que se comparó: la comparación guarda sus personas.
-                    val nuevo = aplicarHoja(r.padron, fechaHoja, EleccionHoja(entran, vuelven, salen, nombres), k.enLaHoja)
+                    val nuevo = aplicarHoja(r.padron, fechaHoja, EleccionHoja(entran, vuelven, salen, nombres, siguen = k.siguen), k.enLaHoja)
                     estado.cambiarPadron { nuevo }
                     estado.guardarYa()
                     ctx.avisos.mostrar("Padrón actualizado con la hoja del ${aDdMmAa(fechaHoja)}.") {
@@ -231,14 +231,22 @@ private fun VistaComparacion(lectura: Importacion, k: ComparacionHoja, elegido: 
         Chip("En la hoja", "${k.enLaHoja}")
         Chip("Entran", "${k.entran.size}")
         if (k.vuelven.isNotEmpty()) Chip("Vuelven", "${k.vuelven.size}")
+        if (k.confirman.isNotEmpty()) Chip("Ya registradas", "${k.confirman.size}")
         Chip("Siguen", "${k.siguen.size}")
         Chip("Salen", "${k.salen.size}")
+        if (k.pendientes.isNotEmpty()) Chip("Siguen pendientes", "${k.pendientes.size}")
         if (k.repetidas.isNotEmpty()) Chip("Repetidas en la hoja", "${k.repetidas.size}")
         if (lectura.resumen.conCero > 0) Chip("DNI con el 0 agregado", "${lectura.resumen.conCero}")
         if (lectura.resumen.vacia > 0) Chip("Filas vacías", "${lectura.resumen.vacia}")
     }
     if (lectura.sinReconocer.isNotEmpty()) {
         Pista("Columnas que no se reconocieron y se ignoran: ${lectura.sinReconocer.joinToString(", ")}.", Modifier.padding(top = Medidas.e2))
+    }
+    if (k.confirman.isNotEmpty()) {
+        Text("Ya las registró la Municipalidad: ${k.confirman.joinToString(", ") { nombreCompleto(it) }}.", style = tipos.textoFuerte, color = c.ok, modifier = Modifier.padding(top = Medidas.e3))
+    }
+    if (k.pendientes.isNotEmpty()) {
+        Text("Inscritas aquí que la hoja todavía no trae (siguen pendientes, no salen): ${k.pendientes.joinToString(", ") { nombreCompleto(it) }}.", style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
     }
     if (!k.hayCambios) {
         Text("El padrón ya está igual a esta hoja: no hay nada que cambiar.", style = tipos.textoFuerte, color = c.ok, modifier = Modifier.padding(top = Medidas.e3))
