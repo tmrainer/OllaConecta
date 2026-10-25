@@ -1,6 +1,7 @@
 // perfil: genera el perfil de arranque de :app (baseline profile). Recorre la
 // app en un teléfono conectado y anota qué código se usa al abrirla, para que
 // Android lo compile por adelantado. Cómo generarlo: GenerarPerfil.kt.
+// También revisa la accesibilidad de la app instalada: Revisor.kt.
 plugins {
     id("com.android.test")
     id("org.jetbrains.kotlin.android")
@@ -38,6 +39,9 @@ dependencies {
     implementation("androidx.test.ext:junit:1.2.1")
     implementation("androidx.test.uiautomator:uiautomator:2.3.0")
     implementation("androidx.benchmark:benchmark-macro-junit4:1.4.1")
+    // Los chequeos del Accessibility Scanner de Google, para Revisor.kt.
+    implementation("com.google.android.apps.common.testing.accessibility.framework:accessibility-test-framework:4.1.1")
+    implementation("com.google.guava:guava:33.3.1-android")   // la usa su API y no la expone
 }
 
 // La prueba abre la app por su applicationId (el de la app aparte, …generarperfil).
