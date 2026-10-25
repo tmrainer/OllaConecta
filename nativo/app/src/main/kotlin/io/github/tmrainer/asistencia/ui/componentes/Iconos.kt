@@ -3,9 +3,12 @@
 // Trazo de 2,2 con puntas redondas sobre una caja de 24.
 package io.github.tmrainer.asistencia.ui.componentes
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -13,6 +16,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -43,21 +47,67 @@ private val TRAZOS = mapOf(
     "lapiz" to "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"
 )
 
+// La sección en la que estás lleva el ícono RELLENO (RELLENOS en ui.js): la
+// silueta en el color del ícono y los detalles calados en el color de la píldora.
+//   lleno: relleno y borde · mancha: solo relleno · linea: solo borde
+//   calado / hueco: borde / relleno del color de la píldora · fino: calado delgado
+private val RELLENOS = mapOf(
+    "casa" to listOf("M3 11l9-7 9 7zM5 10v10h14V10z" to "lleno", "M10.2 14h3.6v7.2h-3.6z" to "hueco"),
+    "lista" to listOf(
+        "M9.2 6.5a3.2 3.2 0 1 1-6.4 0 3.2 3.2 0 0 1 6.4 0zM9.2 13.5a3.2 3.2 0 1 1-6.4 0 3.2 3.2 0 0 1 6.4 0zM7 20a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" to "mancha",
+        "M4.5 6.6l1.1 1.1 2-2.2M4.5 13.6l1.1 1.1 2-2.2" to "fino",
+        "M12 7h8M12 14h8M12 20h8" to "linea"
+    ),
+    "personas" to listOf(
+        "M12.5 8a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0zM2.5 20c.5-3.5 3-5.5 6.5-5.5s6 2 6.5 5.5zM19.5 9a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z" to "lleno",
+        "M17 14c2.5 0 4 1.5 4.5 4" to "linea"
+    ),
+    "boleta" to listOf("M6 3h12v18l-3-2-3 2-3-2-3 2z" to "lleno", "M9 8h6M9 12h6M9 16h3" to "calado"),
+    "calendario" to listOf(
+        "M5.5 5h13a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" to "lleno",
+        "M8 3v4M16 3v4" to "linea",
+        "M7.5 12.5h2M11 12.5h2M14.5 12.5h2M7.5 16h2M11 16h2" to "calado"
+    )
+)
+
 private val vectores = HashMap<String, ImageVector>()
 
 /** El vector de un ícono por nombre; uno desconocido da el de «aviso», como en la web. */
-fun vectorIcono(nombre: String): ImageVector = vectores.getOrPut(nombre) {
+fun vectorIcono(nombre: String, trazo: Float = 2.2f): ImageVector = vectores.getOrPut("$nombre $trazo") {
     val d = TRAZOS[nombre] ?: TRAZOS.getValue("aviso")
     ImageVector.Builder(name = nombre, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
         .addPath(
             pathData = PathParser().parsePathString(d).toNodes(),
-            fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = 2.2f,
+            fill = null, stroke = SolidColor(Color.Black), strokeLineWidth = trazo,
             strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round
         )
         .build()
 }
 
+/** Sin color, toma el del texto de alrededor (currentColor en la web). */
 @Composable
-fun Icono(nombre: String, tam: Dp = 16.dp, color: Color = Color.Unspecified, modifier: Modifier = Modifier) {
-    Icon(imageVector = vectorIcono(nombre), contentDescription = null, tint = color, modifier = modifier.size(tam))
+fun Icono(nombre: String, tam: Dp = 16.dp, color: Color = LocalContentColor.current, modifier: Modifier = Modifier, trazo: Float = 2.2f) {
+    Icon(imageVector = vectorIcono(nombre, trazo), contentDescription = null, tint = color, modifier = modifier.size(tam))
+}
+
+/** El ícono relleno de la sección activa; si no tiene versión rellena, el de siempre. */
+@Composable
+fun IconoRelleno(nombre: String, tam: Dp, color: Color, pildora: Color, modifier: Modifier = Modifier) {
+    val piezas = RELLENOS[nombre]
+    if (piezas == null) { Icono(nombre, tam, color, modifier); return }
+    val vector = remember(nombre, color, pildora) {
+        val b = ImageVector.Builder(name = "$nombre-lleno", defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
+        for ((d, como) in piezas) {
+            val relleno = when (como) { "lleno", "mancha" -> color; "hueco" -> pildora; else -> null }
+            val borde = when (como) { "lleno", "linea" -> color; "calado", "fino" -> pildora; else -> null }
+            b.addPath(
+                pathData = PathParser().parsePathString(d).toNodes(),
+                fill = relleno?.let { SolidColor(it) }, stroke = borde?.let { SolidColor(it) },
+                strokeLineWidth = if (como == "fino") 1.6f else 2.2f,
+                strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round
+            )
+        }
+        b.build()
+    }
+    Image(rememberVectorPainter(vector), contentDescription = null, modifier = modifier.size(tam))
 }

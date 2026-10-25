@@ -17,6 +17,13 @@ import io.github.tmrainer.asistencia.ui.componentes.Documento
 import io.github.tmrainer.asistencia.ui.componentes.BloqueEnvio
 import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
 import io.github.tmrainer.asistencia.ui.camara.CamaraDni
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -116,6 +123,10 @@ import kotlinx.coroutines.withContext
 
 /** Lo que se busca de una persona: nombre sin tildes ni mayúsculas, y su DNI. */
 private fun claveBusqueda(p: Afiliado) = "${normalizarNombre(nombreCompleto(p))} ${p.numeroDocumento}"
+
+// Las curvas de .toque-marca en estilos.css: ease-out y la enfatizada de Material.
+private val SALIDA = CubicBezierEasing(0f, 0f, .58f, 1f)
+private val ENFATIZADA = CubicBezierEasing(.2f, 0f, 0f, 1f)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -451,11 +462,21 @@ fun FilaToque(
                     Text((if (grupo != null) etiquetaGrupoEtario(grupo) else "Sin grupo") + if (menu == "ayuda_social") " · Ayuda social" else "", style = tipos.chico, color = c.tintaSuave)
                 }
                 Spacer(Modifier.width(Medidas.e3))
+                // Como .toque-marca en la web: el círculo se llena y el ✓ crece en 150 ms.
+                val fondoMarca by animateColorAsState(if (presente) c.acento else Color.Transparent, tween(150, easing = SALIDA), label = "fondo")
+                val bordeMarca by animateColorAsState(if (presente) c.acento else c.contorno, tween(150, easing = SALIDA), label = "borde")
                 Box(
-                    Modifier.size(32.dp).clip(CircleShape).background(if (presente) c.acento else Color.Transparent)
-                        .border(2.dp, if (presente) c.acento else c.contorno, CircleShape),
+                    Modifier.size(32.dp).clip(CircleShape).background(fondoMarca)
+                        .border(2.dp, bordeMarca, CircleShape),
                     contentAlignment = Alignment.Center
-                ) { if (presente) Icono("ok", 18.dp, Color.White) }
+                ) {
+                    // Con el nombre completo: dentro de una fila tomaría el de RowScope.
+                    androidx.compose.animation.AnimatedVisibility(
+                        presente,
+                        enter = scaleIn(tween(150, easing = ENFATIZADA), initialScale = .25f) + fadeIn(tween(150, easing = SALIDA)),
+                        exit = scaleOut(tween(150, easing = ENFATIZADA), targetScale = .25f) + fadeOut(tween(150, easing = SALIDA))
+                    ) { Icono("ok", 18.dp, Color.White) }
+                }
             }
         }
         if (!ultima) Separador()

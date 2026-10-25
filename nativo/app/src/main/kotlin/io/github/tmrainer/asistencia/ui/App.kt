@@ -66,6 +66,7 @@ import io.github.tmrainer.asistencia.nucleo.estado.Estado
 import io.github.tmrainer.asistencia.ui.componentes.AvisoAbajo
 import io.github.tmrainer.asistencia.ui.componentes.Avisador
 import io.github.tmrainer.asistencia.ui.componentes.Icono
+import io.github.tmrainer.asistencia.ui.componentes.IconoRelleno
 import io.github.tmrainer.asistencia.ui.componentes.Lectura
 import io.github.tmrainer.asistencia.ui.componentes.LocalAvisos
 import io.github.tmrainer.asistencia.ui.componentes.LocalLectura
@@ -280,7 +281,7 @@ fun BarraAbajo(rutaActual: String, alIr: (Ruta) -> Unit) {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Box(Modifier.width(60.dp).height(32.dp).clip(RoundedCornerShape(999.dp)).background(if (activa) c.seleccion else Color.Transparent), contentAlignment = Alignment.Center) {
-                        Icono(s.icono, 24.dp, if (activa) c.navActivo else c.tintaSuave)
+                        if (activa) IconoRelleno(s.icono, 24.dp, c.navActivo, c.seleccion) else Icono(s.icono, 24.dp, c.tintaSuave)
                     }
                     Spacer(Modifier.height(Medidas.e1))
                     Text(s.texto, style = if (activa) tipos.diminuto.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) else tipos.diminuto, color = if (activa) c.titulo else c.tintaSuave, textAlign = TextAlign.Center, maxLines = 1)

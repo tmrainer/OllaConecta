@@ -45,7 +45,7 @@ val COLORES_CLARO = Colores(
     borde = Color(0xFFDFE5D8), bordeFuerte = Color(0xFFB7C4AC), contorno = Color(0xFF6E9161),
     error = Color(0xFF8F2A1C), errorFondo = Color(0xFFFBECEA), aviso = Color(0xFF7D5300), avisoFondo = Color(0xFFFDF3DF),
     ok = Color(0xFF3F6B33), okFondo = Color(0xFFE7F1E1), azul = Color(0xFF2F6672), azulFondo = Color(0xFFE6F0F2),
-    pendiente = Color(0xFFE0B25E),
+    pendiente = Color(0xFFA87A22),
     gNino = Color(0xFF9C4A14), gAdolescente = Color(0xFF6A4C96), gAdulto = Color(0xFF2F6672), gMayor = Color(0xFF7A4A36), gSin = Color(0xFF5B6657),
     esOscuro = false
 )
@@ -55,7 +55,7 @@ val COLORES_OSCURO = Colores(
     seleccion = Color(0xFF2F4834), navActivo = Color(0xFFFFFFFF),
     tinta = Color(0xFFE4EADF), tintaSuave = Color(0xFFA9B4A3), titulo = Color(0xFFE8F1E0),
     marca = Color(0xFF152219), marcaTexto = Color(0xFFEEF2E9), marcaSuave = Color(0xFFA9BD9C),
-    acento = Color(0xFF46703C), acentoTexto = Color(0xFFA7CF94),
+    acento = Color(0xFF4E7C43), acentoTexto = Color(0xFFA7CF94),
     borde = Color(0xFF2A362C), bordeFuerte = Color(0xFF3D4C40), contorno = Color(0xFF7A9D6C),
     error = Color(0xFFF29B8C), errorFondo = Color(0xFF3A1D19), aviso = Color(0xFFF0C26C), avisoFondo = Color(0xFF33290F),
     ok = Color(0xFF9FCF8A), okFondo = Color(0xFF1B2E1C), azul = Color(0xFF8FC5D1), azulFondo = Color(0xFF16292D),
@@ -112,11 +112,12 @@ fun TemaOlla(tema: Tema, letra: Letra, contenido: @Composable () -> Unit) {
     val t = Tipos(letra.factor)
     // Los componentes de Material (campos, casillas, diálogos) toman los
     // mismos colores, para que nada se vea de otro sistema.
+    // En oscuro secondary y error son claros: lo que va encima es oscuro.
     val esquema = if (oscuro) darkColorScheme(
         primary = c.acento, onPrimary = Color.White, primaryContainer = c.seleccion, onPrimaryContainer = c.titulo,
-        secondary = c.acentoTexto, onSecondary = Color.White, background = c.fondo, onBackground = c.tinta,
+        secondary = c.acentoTexto, onSecondary = c.fondo, background = c.fondo, onBackground = c.tinta,
         surface = c.superficie, onSurface = c.tinta, surfaceVariant = c.superficie2, onSurfaceVariant = c.tintaSuave,
-        outline = c.contorno, outlineVariant = c.borde, error = c.error, onError = Color.White, errorContainer = c.errorFondo, onErrorContainer = c.error,
+        outline = c.contorno, outlineVariant = c.borde, error = c.error, onError = c.fondo, errorContainer = c.errorFondo, onErrorContainer = c.error,
         surfaceContainer = c.superficie, surfaceContainerHigh = c.superficie2, surfaceContainerHighest = c.superficie2
     ) else lightColorScheme(
         primary = c.acento, onPrimary = Color.White, primaryContainer = c.seleccion, onPrimaryContainer = c.titulo,
