@@ -1,5 +1,5 @@
-// Grupo «Migración» de web/js/casos-prueba.js. Las entradas son JSON crudo,
-// como los padrones viejos que llegan en un respaldo.
+// Las entradas son JSON crudo, como los padrones viejos que llegan en un
+// respaldo.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.calculos.Origen
@@ -75,7 +75,6 @@ class MigracionTest {
 
     @Test
     fun `Quienes comieron sin estar en el padrón sobreviven a la migración`() {
-        // Diferencia con la web, a propósito: allí migrarPadron() perdía sinInscribir.
         val at = migrarPadron(json("""{
             "version": 3,
             "atenciones": [{ "id": "at1", "fecha": "2026-09-10", "asistencias": [], "sinInscribir": { "normal": 2, "ayudaSocial": 1 } }]

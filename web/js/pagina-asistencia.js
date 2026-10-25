@@ -92,8 +92,6 @@ function repintar() {
   refrescar();
 }
 
-// ------------------------------------------------------------------- arranque
-
 montarCabecera('asistencia', fechaLarga(hoyIso()));
 pintarAvisosAlmacenamiento(buscar('#avisos-sistema'));
 pantallaEncendidaMientrasSeUsa();

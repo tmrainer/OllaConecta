@@ -1,23 +1,10 @@
-// Importar.kt — porte de web/js/importar.js: lectura de un padrón pegado desde
-// Excel o de un CSV. Funciones PURAS: sin Android, sin estado, sin red.
+// Lectura de un padrón pegado desde Excel o de un CSV (un .xlsx entra como el
+// texto con tabuladores que devuelve leerXlsx()). Funciones PURAS: sin
+// Android, sin estado, sin red.
 //
-// Interpreta lo que la usuaria pega, pero NO completa lo que falte: cada fila
-// sale con sus avisos y es ella quien confirma la importación.
-//
-// Un .xlsx no se lee aquí: la app lo pasa por leerXlsx() (porte de xlsx.js),
-// que devuelve la primera hoja como texto con tabuladores, y ese texto entra a
-// prepararImportacion() igual que uno pegado o un CSV.
-//
-// Diferencias con la web, a propósito (no inventar datos):
-// - Una fecha que no existe o no se entiende entera («31/02/1990», «1/2/199»)
-//   queda vacía con su aviso; la web la guardaba tal cual.
-// - Una edad sin ninguna cifra («s/d», «—») queda sin grupo con «no se entendió
-//   la edad»; la web la leía como 0 años y le ponía «niño».
-// - Sexo «Mujer» es F y «Hombre» es M; la web miraba solo la primera letra y
-//   ponía M a «Mujer». Las letras sueltas siguen como en la web (F, M).
-// - `hoy` se recibe como parámetro (por defecto, hoy), para probar con una
-//   fecha fija: es el alta de cada persona y el pivote de los años de dos cifras.
-// - Con error, `resumen` viene en ceros (la web no lo trae).
+// Interpreta lo que la usuaria pega, pero NO completa ni inventa lo que falte:
+// una fecha que no existe («31/02/1990») o una edad sin cifras («s/d») quedan
+// vacías con su aviso, y es ella quien confirma la importación.
 package io.github.tmrainer.asistencia.nucleo.importar
 
 import io.github.tmrainer.asistencia.nucleo.calculos.grupoPorEdad
@@ -41,8 +28,6 @@ private fun esEspacio(c: Char) = ESPACIO.matches(c.toString())
 
 /** trim() de JavaScript. */
 private fun recortar(t: String) = t.trim(::esEspacio)
-
-// --------------------------------------------------------------- lectura CSV
 
 /** Detecta el separador mirando la primera línea fuera de comillas. */
 fun detectarSeparador(texto: String?): Char {
@@ -102,8 +87,6 @@ fun parsearTabla(texto: String?, separador: Char? = null): List<FilaTabla> {
         .filter { f -> f.celdas.any { it.isNotEmpty() } }
 }
 
-// ------------------------------------------- celdas de un CSV de versiones anteriores
-
 private val FORMULA = Regex("=\"(.*)\"")
 
 /**
@@ -119,9 +102,7 @@ fun desarmarCelda(texto: String?): String {
     return t
 }
 
-// ------------------------------------------------- reconocimiento de columnas
-
-// El orden importa: gana el primer campo que coincide (como Object.entries).
+// El orden importa: gana el primer campo que coincide.
 private val SINONIMOS: Map<String, List<String>> = linkedMapOf(
     "apellidoPaterno" to listOf("apellido paterno", "ap paterno", "ap. paterno", "apaterno",
         "paterno", "primer apellido"),
@@ -164,13 +145,11 @@ fun detectarColumnas(cabecera: List<String>?): Columnas {
 
 fun pareceCabecera(fila: List<String>): Boolean = detectarColumnas(fila).mapa.size >= 2
 
-// ------------------------------------------------- interpretación de valores
-
 private val FECHA_DMA = Regex("(\\d{1,2})[/\\-.](\\d{1,2})[/\\-.](\\d{2,4})")
 
 /**
  * 'DD/MM/AAAA', 'DD-MM-AA', 'DD.MM.AAAA' o ISO, a ISO. Lo que no se entiende
- * o no existe devuelve '' (la web dejaba pasar una fecha imposible).
+ * o no existe devuelve ''.
  * @param hoy fija el pivote de los años de dos cifras
  */
 fun parsearFechaFlexible(texto: String?, hoy: String = hoyIso()): String {
@@ -229,8 +208,6 @@ private fun partirApellidos(texto: String): Pair<String, String> {
     }
 }
 
-// ------------------------------------------------------ preparar importación
-
 /** Lo que pasaría con una fila del archivo. `estado`: ver prepararImportacion(). */
 data class FilaImportada(
     val linea: Int,
@@ -274,8 +251,7 @@ private val DNI_SIN_CERO = Regex("^\\d{5,7}$")
  * ceroAgregado: un DNI de 5 a 7 cifras es uno que empezaba con 0 y que Excel
  * guardó como número (01234567 → 1234567). Se completa con ceros adelante y se
  * dice en la fila; `resumen.conCero` los cuenta. Es la única corrección que
- * hace la importación (decisión del equipo): pedírsela a la usuaria fila por
- * fila era un paso más que casi siempre se respondía igual.
+ * hace la importación.
  *
  * @param hoy el alta de cada persona y el pivote de los años de dos cifras
  */
@@ -332,7 +308,7 @@ fun prepararImportacion(texto: String?, padron: Padron?, hoy: String = hoyIso())
 
         var grupo = parsearGrupoEtario(valor("grupoEtario"))
         if (grupo == null && valor("edad").isNotEmpty()) {
-            // Sin ninguna cifra no hay edad (la web la tomaba como 0 años).
+            // Sin ninguna cifra no hay edad.
             val cifras = valor("edad").filter { it in '0'..'9' }
             grupo = if (cifras.isEmpty()) null else grupoPorEdad(cifras.toIntOrNull() ?: Int.MAX_VALUE)
             if (grupo == null) avisos.add("no se entendió la edad")

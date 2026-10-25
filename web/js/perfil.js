@@ -1,10 +1,5 @@
-// perfil.js — quién usa este teléfono: nombre, rol en la olla y, si quiere,
-// DNI y celular.
-//
-// No es un inicio de sesión: no hay contraseña (sin servidor no protegería
-// nada) y se puede no llenar. Sirve para no volver a escribir lo mismo: el
-// B-1 propone el nombre y DNI de la presidenta o la tesorera (sugerencias.js,
-// sin aplicarlos solos) e inscribir con el DNI llena «quién revisó».
+// Quién usa este teléfono: nombre, rol y, si quiere, DNI y celular. No es un
+// inicio de sesión: sin servidor, una contraseña no protegería nada.
 // Es de este teléfono: vive en «pi3.perfil» y no va en las copias.
 
 const CLAVE = 'pi3.perfil';

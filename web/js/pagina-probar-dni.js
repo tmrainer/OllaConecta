@@ -1,11 +1,7 @@
-// pagina-probar-dni.js — controlador de probar-dni.html: el modo de prueba del
-// lector de DNI, para el equipo del proyecto.
-//
-// Escanea un DNI y muestra cómo se separaron los datos, para compararlos con
-// el documento. Lo único que se ofrece copiar es la plantilla anónima (letras
-// a «A», cifras a «9») y si cada dato salió bien: con eso se escriben los
-// casos de prueba sin que el repositorio guarde los datos de nadie.
-// Nada de lo leído va a localStorage, ni a una copia, ni a un registro.
+// Controlador de probar-dni.html: modo de prueba del lector de DNI para el equipo.
+// Solo se ofrece copiar la plantilla anónima (letras a «A», cifras a «9») y si
+// cada dato salió bien. Nada de lo leído va a localStorage, ni a una copia, ni a
+// un registro.
 
 import { crearElemento, montarCabecera, buscar, avisoAbajo } from './ui.js';
 import { lectoresDni, abrirCamaraDni } from './camara-dni.js';

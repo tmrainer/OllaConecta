@@ -1,14 +1,6 @@
-// envio.js — pedir el envío a UNACEM y saber si salió.
-//
-// La app no manda el correo: deja una solicitud en la nube
-// (ollas/{olla}/envios) y el script de nube/apps-script/ la toma en unos
-// minutos, arma el Excel con el mismo código de excel-reportes.js y lo manda
-// al correo que puso quien coordina (ajustes/envio). Sin señal, la solicitud
-// espera en el teléfono y sale cuando vuelve. De noche, el script manda solo
-// la asistencia que nadie pidió, y el padrón el 15 y a fin de mes.
-//
-// La solicitud nace «pendiente» y firmada; lo que pase después (enviado,
-// fallo, a quién, cuándo) lo anota el script.
+// envio.js — pedir el envío a UNACEM y saber si salió. La app no manda el correo:
+// deja una solicitud en ollas/{olla}/envios y el script de nube/apps-script/ la
+// procesa y anota el resultado.
 
 import { firebase, quien } from './cuenta.js';
 import { ollaVinculada } from './modelo.js';

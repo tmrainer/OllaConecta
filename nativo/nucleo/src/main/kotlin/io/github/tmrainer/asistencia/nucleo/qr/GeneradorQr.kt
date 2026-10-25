@@ -1,13 +1,7 @@
-// GeneradorQr.kt — la matriz de módulos de un código QR, para que la pantalla
-// la dibuje (un Canvas de Compose). Porte a Kotlin de la parte de
-// qrcode-generator 2.0.4 (web/vendor/qrcode-generator.js) que usa la web en
-// dibujarQr() de camara-qr.js: qrcode(0, 'L'), modo numérico si el texto es
-// solo cifras y alfanumérico si no, make(), getModuleCount() e isDark().
-// No se portan el modo byte ni el kanji, ni lo que dibuja (tablas, SVG, GIF).
-//
-// La matriz sale idéntica, módulo por módulo, a la de la web: lo prueba
-// QrCruzadoTest con matrices generadas por la librería JS
-// (nativo/herramientas/qr-cruzado.mjs).
+// La matriz de módulos de un código QR, para que la pantalla la dibuje.
+// Basado en qrcode-generator 2.0.4 (licencia abajo): solo nivel L y modos
+// numérico y alfanumérico. La matriz sale idéntica, módulo por módulo, a la
+// de la librería JS que usa la web: lo prueba QrCruzadoTest.
 //
 // Licencia de la librería original (MIT), que se conserva aquí y en
 // nucleo/src/main/resources/licencias/LICENCIA-qrcode-generator.txt (viaja
@@ -93,8 +87,6 @@ fun matrizQr(texto: String): MatrizQr {
     val bytes = crearDatos(version, datos)
     return MatrizQr(version, armar(version, bytes, mejorMascara(version, bytes)).aBooleanos())
 }
-
-// ------------------------------------------------------------------- datos
 
 private const val MODO_NUMERICO = 1 shl 0
 private const val MODO_ALFANUMERICO = 1 shl 1
@@ -224,8 +216,6 @@ private fun crearBytes(buffer: BufferBits, bloques: List<BloqueRs>): IntArray {
     }
     return data
 }
-
-// ------------------------------------------------------------ la matriz
 
 /** Módulos en armado: -1 sin poner (null en la librería), 0 claro, 1 oscuro. */
 private class Modulos(val n: Int) {
@@ -417,8 +407,6 @@ private fun puntosPerdidos(q: Modulos): Double {
     return perdidos
 }
 
-// --------------------------------------------------------- BCH y Galois
-
 private const val G15 = (1 shl 10) or (1 shl 8) or (1 shl 5) or (1 shl 4) or (1 shl 2) or (1 shl 1) or (1 shl 0)
 private const val G18 = (1 shl 12) or (1 shl 11) or (1 shl 10) or (1 shl 9) or (1 shl 8) or (1 shl 5) or (1 shl 2) or (1 shl 0)
 private const val G15_MASK = (1 shl 14) or (1 shl 12) or (1 shl 10) or (1 shl 4) or (1 shl 1)
@@ -510,8 +498,6 @@ private fun polinomioCorrector(largo: Int): Polinomio = synchronized(CORRECTORES
         a
     }
 }
-
-// ----------------------------------------------------------------- tablas
 
 private class BloqueRs(val total: Int, val datos: Int)
 

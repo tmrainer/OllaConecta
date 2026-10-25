@@ -1,4 +1,4 @@
-// Casilla.kt — una casilla con su texto: toda la fila la marca o desmarca.
+// Una casilla con su texto: toda la fila la marca o desmarca.
 // Para elegir qué se aplica antes de guardar (la hoja municipal, lo recibido
 // por QR): un toque, sin desplegables.
 package io.github.tmrainer.asistencia.ui.componentes

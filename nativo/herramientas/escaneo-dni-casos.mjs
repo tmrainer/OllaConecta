@@ -1,16 +1,12 @@
-// escaneo-dni-casos.mjs — corre web/js/escaneo-dni.js (tal cual, sin tocarlo)
-// sobre entradas SINTÉTICAS y guarda entradas y salidas en
-// nucleo/src/test/resources/escaneo-dni.esperado.json. EscaneoDniWebTest.kt
-// las vuelve a calcular con EscaneoDni.kt y compara una por una.
+// Corre web/js/escaneo-dni.js (tal cual, sin tocarlo) sobre entradas SINTÉTICAS y
+// guarda entradas y salidas en nucleo/src/test/resources/escaneo-dni.esperado.json.
+// EscaneoDniWebTest.kt las vuelve a calcular con EscaneoDni.kt y compara una por una.
 //
 //   node nativo/herramientas/escaneo-dni-casos.mjs        (Node 22 o más nuevo)
 //
-// Todo es inventado: personas armadas de listas de nombres y apellidos
-// comunes, DNI 0000xxxx, nunca un DNI real. Las MRZ se arman
-// con sus dígitos de control según ICAO 9303 (calculados aquí, aparte del
-// módulo), y después se «ensucian» como las lee el reconocimiento de texto:
-// O por 0, B por 8, S por 5, «<» perdidos, espacios, líneas partidas, el DNI
-// inclinado. Es determinista: la misma semilla da el mismo archivo.
+// Todo es inventado: DNI 0000xxxx, nunca un DNI real. Las MRZ llevan sus dígitos de
+// control (calculados aquí, aparte del módulo) y después se «ensucian» como las lee
+// el reconocimiento de texto. Es determinista: la misma semilla da el mismo archivo.
 
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -28,8 +24,6 @@ let semilla = 20261024;
 const azar = () => (semilla = (semilla * 1664525 + 1013904223) % 4294967296) / 4294967296;
 const entre = (a, b) => a + Math.floor(azar() * (b - a + 1));
 const elegir = (lista) => lista[entre(0, lista.length - 1)];
-
-// ------------------------------------------------------- MRZ TD1 inventadas
 
 /** Dígito de control ICAO 9303-3 §4.9, escrito aparte del módulo que se prueba. */
 function dc(texto) {
@@ -72,8 +66,6 @@ function armarMrz({ pais, numero, nac, sexo, vence, apellidos, nombres }) {
   const l3 = rellenar(nombre(apellidos) + '<<' + nombre(nombres), 30);
   return [l1, l2, l3];
 }
-
-// ------------------------------------------------- lo que hace el OCR con ella
 
 const A_LETRA_OCR = { 0: ['O', 'Q', 'D'], 1: ['I', 'L'], 2: ['Z'], 5: ['S'], 6: ['G'], 8: ['B'] };
 const A_CIFRA_OCR = { O: '0', I: '1', Z: '2', S: '5', G: '6', B: '8' };
@@ -130,8 +122,6 @@ function aFragmentos(filas, { angulo = 0, partir = true, conCaja = true } = {}) 
   return fragmentos;
 }
 
-// --------------------------------------------------------- el anverso inventado
-
 const CONFUNDIR = { B: 'S', S: 'B', O: '0', N: 'M', M: 'N', E: 'F', C: 'G', V: 'Y', I: 'L', R: 'P' };
 
 function anverso(p, variante) {
@@ -159,8 +149,6 @@ function confundirUna(texto) {
   const i = elegir(posiciones);
   return texto.slice(0, i) + CONFUNDIR[texto[i]] + texto.slice(i + 1);
 }
-
-// --------------------------------------------------------------- los casos
 
 const casos = [];
 const caso = (funcion, entrada, salida) => casos.push({ funcion, entrada, salida: salida === undefined ? null : salida });

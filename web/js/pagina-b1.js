@@ -1,4 +1,4 @@
-// pagina-b1.js — controlador del Formato B-1 (fase 1).
+// pagina-b1.js — controlador del Formato B-1.
 // Enlaza el DOM con el modelo. No calcula ni valida: eso vive en sus módulos.
 
 import {
@@ -17,12 +17,9 @@ import {
   avisarAlSalirDelCampo, chip, mostrarGuardado, icono, avisoAbajo, vibrar
 } from './ui.js';
 
-// ------------------------------------------------------------------- estado
-
 // rendiciones[0] es el B-1 en curso; los demás, los de meses anteriores, del
-// más nuevo al más viejo. Antes había uno solo: empezar el mes siguiente era
-// escribir encima del anterior y perderlo. Uno anterior se abre con
-// ?ver=<id> (el formulario se monta una sola vez por carga de página).
+// más nuevo al más viejo. Uno anterior se abre con ?ver=<id> (el formulario se
+// monta una sola vez por carga de página).
 let rendiciones = leer(CLAVES.rendiciones, []);
 let config = leer(CLAVES.config, configVacia());
 if (!rendiciones.length) rendiciones = [nuevaRendicion()];
@@ -83,8 +80,6 @@ function cambio() {
   refrescarValidacion();
 }
 
-// ------------------------------------------------------- enlace de campos
-
 /** Texto simple: el modelo recibe exactamente lo escrito, sin transformar. */
 function enlazarTexto(idInput, leerValor, escribirValor, { soloDigitos = false } = {}) {
   const el = buscar('#' + idInput);
@@ -126,8 +121,6 @@ function aceptarSugerencia(id, valor) {
       crearElemento('span', { id: `marca-${id}`, clase: 'marca-propuesto', texto: 'Dato propuesto — revísalo' }));
   }
 }
-
-// ---------------------------------------------------------------- encabezado
 
 function montarEncabezado() {
   for (const radio of document.querySelectorAll('input[name="tipoCentro"]')) {
@@ -195,8 +188,6 @@ function montarSugerenciasEncabezado() {
   ]));
 }
 
-// -------------------------------------------------------------------- periodo
-
 function montarPeriodo() {
   const selTipo = buscar('#periodoTipo');
   selTipo.value = rendicion.periodo.tipo || 'mensual';
@@ -255,8 +246,6 @@ function mostrarPropuestaPeriodo() {
   }
   caja.append(etiquetas);
 }
-
-// -------------------------------------------------------------------- egresos
 
 const UNIDADES = ['Kg', 'g', 'L', 'ml', 'unid', 'saco', 'bolsa', 'caja', 'varios'];
 const ORIGENES = [
@@ -444,8 +433,6 @@ function pintarEgresos() {
     `${cuantos(rendicion.egresos.length, 'compra')}. La hoja del formato tiene 17 filas.`;
 }
 
-// ------------------------------------------------------------------- totales
-
 function refrescarTotales() {
   const t = totales(rendicion);
   const pon = (id, valor, ocultarCero) => {
@@ -468,8 +455,6 @@ function refrescarTotales() {
     caja.append(chip(`${etiqueta}`, `S/ ${formatearSoles(po[clave])}`));
   }
 }
-
-// ---------------------------------------------------------------- validación
 
 function refrescarValidacion() {
   const hallazgos = validarRendicion(rendicion);
@@ -503,10 +488,8 @@ function irACampo(campo) {
   if (control && !control.disabled) control.focus({ preventScroll: true });
 }
 
-// ----------------------------------------------------------- por pasos
-//
-// Una sección a la vez, con «Atrás / Siguiente» y una barra que dice dónde
-// estás y qué paso tiene algo pendiente. Los nombres son los del formato en
+// Por pasos: una sección a la vez, con «Atrás / Siguiente» y una barra que dice
+// dónde estás y qué paso tiene algo pendiente. Los nombres son los del formato en
 // papel (Ingresos, Egresos), con la palabra de todos los días al lado.
 
 const PASOS = ['Centro de atención', 'Periodo', 'Ingresos (dinero recibido)', 'Compras (egresos)', 'Firmas', 'Revisar'];
@@ -649,8 +632,6 @@ function pasoInicial() {
   return pend.length ? Math.min(...pend) : 6;
 }
 
-// ----------------------------------------------------- meses anteriores
-
 /** «Octubre», o las fechas del periodo, o «sin periodo». Solo para mostrar. */
 function nombreDelMes(r) {
   const p = (r && r.periodo) || {};
@@ -722,8 +703,6 @@ function empezarMesSiguiente() {
   location.href = './formato-b1.html';
 }
 
-// ------------------------------------------------------------------- arranque
-
 montarCabecera('b1', 'Rendición de cuentas');
 pintarAvisosAlmacenamiento(buscar('#avisos-sistema'));
 const bannerB1 = bannerAlerta(alertaProximaEntrega(leer(CLAVES.calendario, calendarioVacio()), hoyIso()));
@@ -747,7 +726,6 @@ const verEnHoja = buscar('#ver-en-hoja');
 verEnHoja.href = `./vista-previa.html?ver=${encodeURIComponent(rendicion.id)}`;
 verEnHoja.addEventListener('click', escribirPendiente);
 
-// ----------------------------------------------------------- exportar
 // Con un dato obligatorio pendiente no se exporta: el B-1 es una declaración
 // jurada. Se dice qué falta y se lleva ahí (como «Siguiente»).
 

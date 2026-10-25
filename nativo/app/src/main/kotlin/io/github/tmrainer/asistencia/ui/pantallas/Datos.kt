@@ -1,9 +1,6 @@
-// Datos.kt — «Tus datos» (pagina-datos.js): la copia (guardar, con
-// contraseña, recuperar y cuándo fue la última), qué va en ella, dónde se
-// guardan los datos y, al final y lejos de «Guardar una copia», «Borrar todo».
-//
-// Pasar a otro teléfono por QR (PasarDatos.kt), sin internet. La cuenta y la
-// nube esperan una cuenta de la organización.
+// «Tus datos»: la copia (guardar, con contraseña, recuperar y cuándo fue la última),
+// qué va en ella, dónde se guardan los datos y, al final y lejos de «Guardar una
+// copia», «Borrar todo». Pasar a otro teléfono por QR está en PasarDatos.kt.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import android.net.Uri
@@ -75,7 +72,7 @@ fun PantallaDatos(ctx: Contexto) {
     val alcance = rememberCoroutineScope()
     var tick by remember { mutableStateOf(0) }   // para releer «última copia» tras guardar
 
-    // ---- guardar una copia: el selector de archivos del teléfono ----
+    // Guardar una copia: el selector de archivos del teléfono.
     var textoAGuardar by remember { mutableStateOf<String?>(null) }
     val crear = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
         val texto = textoAGuardar ?: return@rememberLauncherForActivityResult
@@ -100,7 +97,6 @@ fun PantallaDatos(ctx: Contexto) {
         }
     }
 
-    // ---- recuperar una copia ----
     var pidiendoContrasena by remember { mutableStateOf<JsonObject?>(null) }
     var confirmando by remember { mutableStateOf<LecturaRespaldo.Lista?>(null) }
     var errorCopia by remember { mutableStateOf<String?>(null) }
@@ -209,7 +205,6 @@ fun PantallaDatos(ctx: Contexto) {
         }
     }
 
-    // ---- diálogos ----
     val sobre = pidiendoContrasena
     if (sobre != null) {
         var clave by remember { mutableStateOf("") }

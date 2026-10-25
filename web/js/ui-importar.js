@@ -9,11 +9,6 @@ import { buscar, crearElemento, chip } from './ui.js';
 
 // ctx: { estadoTexto, onRepintar() }
 
-// -------------------------------------------- importar un padrón desde archivo
-//
-// Nada se guarda hasta que la usuaria ve exactamente qué filas entran y cuáles
-// no, y confirma.
-
 let importacionPendiente = null;
 
 const ESTADO_FILA = {
@@ -98,10 +93,8 @@ export function montarImportacion(ctx) {
       }));
     }
 
-    // Una tarjeta por persona, no una tabla de seis columnas: en el celular la
-    // tabla obligaba a deslizar de lado y cortaba justo la columna «Estado».
-    // Las filas vacías (títulos, totales al pie) no se listan: ya las cuenta
-    // el resumen de arriba.
+    // Una tarjeta por persona, no una tabla: en el celular la tabla obliga a deslizar
+    // de lado. Las filas vacías (títulos, totales al pie) ya las cuenta el resumen.
     const lista = crearElemento('ul', { clase: 'imp-lista' });
     const visibles = r.filas.filter((f) => f.estado !== 'vacia');
     for (const f of visibles.slice(0, 50)) {

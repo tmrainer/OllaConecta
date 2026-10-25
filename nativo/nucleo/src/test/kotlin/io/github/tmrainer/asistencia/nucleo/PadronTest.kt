@@ -1,4 +1,3 @@
-// Grupos «Padrón», «Grupos de edad» y «Reporte» de web/js/casos-prueba.js.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.calculos.TRAMOS_ETARIOS

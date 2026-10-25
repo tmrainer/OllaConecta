@@ -1,7 +1,7 @@
-// Importar.kt — cargar la hoja de la Municipalidad: la olla no inscribe, el padrón es el de esa hoja. La primera
-// carga arma el padrón; las siguientes son actualizaciones. Antes de guardar
-// se ve quién entra, quién vuelve, quién sigue y quién sale (de baja, no se
-// borra), y se elige. Lee Excel o CSV, o filas pegadas (importar.js).
+// Cargar la hoja de la Municipalidad: la olla no inscribe, el padrón es el de esa hoja.
+// La primera carga arma el padrón; las siguientes son actualizaciones. Antes de guardar
+// se ve quién entra, quién vuelve, quién sigue y quién sale (de baja, no se borra), y
+// se elige. Lee Excel o CSV, o filas pegadas.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import androidx.activity.compose.rememberLauncherForActivityResult

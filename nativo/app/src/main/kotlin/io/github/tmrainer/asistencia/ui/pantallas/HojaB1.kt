@@ -1,10 +1,7 @@
-// HojaB1.kt — cómo queda el B-1 en la hoja oficial (vista-previa.html, fase 4). Solo muestra: el mismo dibujo del PDF de referencia
-// (dibujarHoja() sobre LienzoTrazos, en :nucleo), con los datos en las
-// posiciones de PLANTILLA_B1. No imprime. Si hay más compras que renglones,
-// van en una hoja más, como en el papel.
-//
-// No se portan la foto de fondo ni el panel para mover las cajas (son para el
-// equipo, al calibrar la hoja física).
+// Cómo queda el B-1 en la hoja oficial. Solo muestra: el mismo dibujo del PDF
+// (dibujarHoja() sobre LienzoTrazos, en :nucleo), con los datos en las posiciones de
+// PLANTILLA_B1. No imprime. Si hay más compras que renglones, van en una hoja más.
+// Sin foto de fondo ni panel para mover las cajas: son para calibrar la hoja física.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import android.graphics.Paint

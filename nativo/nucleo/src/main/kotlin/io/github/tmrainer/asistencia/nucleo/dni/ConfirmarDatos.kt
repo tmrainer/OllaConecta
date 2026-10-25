@@ -1,5 +1,5 @@
-// ConfirmarDatos.kt — lo que una persona escribió de sí misma (PrimerUso),
-// comparado con lo leído de su DNI: el DNI confirma, no llena.
+// Lo que una persona escribió de sí misma (PrimerUso), comparado con lo leído
+// de su DNI: el DNI confirma, no llena.
 package io.github.tmrainer.asistencia.nucleo.dni
 
 /** Qué difiere entre lo escrito y el DNI. [faltanEnDni]: palabras escritas que el DNI no tiene. */

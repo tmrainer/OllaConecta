@@ -1,9 +1,5 @@
-// Guias.kt — lo que abre «Ayuda» en cada pantalla: cómo se usa ESA pantalla,
-// en pocos pasos, con los mismos nombres de botones que se ven. La del
-// Inicio dice qué hay en cada sección y es también la bienvenida de la
-// primera vez. La ayuda se abre cuando se pide, en el lugar (no interrumpe).
-// Se muestra sobre la pantalla misma: todo se oscurece menos la parte de la
-// que habla cada paso, y el texto va sobre lo oscuro, sin ventana ni tarjeta.
+// Lo que abre «Ayuda» en cada pantalla: cómo se usa ESA pantalla, en pocos pasos, con
+// los mismos nombres de botones que se ven. Se abre cuando se pide (no interrumpe).
 package io.github.tmrainer.asistencia.ui
 
 import androidx.activity.compose.BackHandler

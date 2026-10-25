@@ -1,10 +1,5 @@
-// excel-reportes.js — el padrón, la asistencia y el B-1 como Excel (.xlsx).
-//
-// Las mismas cifras que los PDF (pdf-reportes.js, pdf-b1.js), pero en celdas:
-// los números son números (se pueden sumar en la hoja) y los DNI, texto (no
-// pierden el 0 de adelante). Solo ordenan y suman lo que ya está guardado: no
-// completan ni deducen nada. Puro: recibe los datos y devuelve
-// los bytes (xlsx.js).
+// excel-reportes.js — el padrón, la asistencia y el B-1 como Excel (.xlsx), con las
+// mismas cifras que los PDF. Los DNI van como texto: no pierden el 0 de adelante.
 
 import { aDdMmAa, nombreCompleto, cuantos } from './modelo.js';
 import {
@@ -18,8 +13,6 @@ const diaDeSemana = (iso) => { const [a, m, d] = iso.split('-').map(Number); ret
 const negrita = (v) => ({ v, negrita: true });
 const soles = (cent, conNegrita = false) => (Number.isFinite(cent) ? { v: cent / 100, soles: true, negrita: conNegrita } : '');
 const periodoTexto = (inicio, fin) => `del ${aDdMmAa(inicio)} al ${aDdMmAa(fin)}`;
-
-// ------------------------------------------------------------------ padrón
 
 // Los mismos títulos que entiende la importación (importar.js): el archivo se
 // puede volver a cargar en otro teléfono.
@@ -70,8 +63,6 @@ export function excelDelPadron(padron, { fechaRef, inicio, fin, centro = '' }) {
     }
   ]);
 }
-
-// --------------------------------------------------------------- asistencia
 
 /**
  * Hoja «Resumen por día» (raciones por menú, sin inscribir, recaudado) y hoja
@@ -128,8 +119,6 @@ export function excelDeAsistencia(padron, { inicio, fin, centro = '' }) {
     { nombre: 'Por persona', anchos: [5, 34, 12, ...dias.map(() => 9), 6], filas: porPersona }
   ]);
 }
-
-// --------------------------------------------------------------------- B-1
 
 const CANTIDAD = (e) => (e.cantidadVarios ? 'varios' : Number.isFinite(e.cantidad) ? e.cantidad : '');
 const PRECIO = (e) => (e.precioUnitarioVarios ? 'varios' : soles(e.precioUnitarioCent));

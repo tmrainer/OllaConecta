@@ -3,7 +3,7 @@
 
 import { aFecha, aIso, esIso, hoyIso, MESES } from './modelo.js';
 
-// ------------------------------------------------- Totales del Formato B-1
+// Totales del Formato B-1
 
 export function totalRendicionGastos(rendicion) {
   const filas = (rendicion && rendicion.egresos) || [];
@@ -74,7 +74,7 @@ export function descuadreFila(fila) {
   return { esperado, declarado: fila.montoTotalCent, diferencia };
 }
 
-// --------------------------------------------------------- Padrón
+// Padrón
 
 /**
  * ¿Estaba activa esta persona en la fecha `ref` ('AAAA-MM-DD' válida)?
@@ -170,8 +170,7 @@ export function resumenEtario(padron, fechaRefIso) {
   return conteo;
 }
 
-// ------------------------------------------- Asistencia, raciones y precios
-//
+// Asistencia, raciones y precios.
 // Las raciones NO se escriben: se cuentan de la asistencia marcada, porque la
 // comida se prepara el mismo día según quién viene. El precio sí está fijado de
 // antemano y se copia a cada día nuevo.
@@ -184,10 +183,8 @@ export function atencionesDelPeriodo(padron, inicioIso, finIso) {
 
 /**
  * Las asistencias marcadas de un día. Es la ÚNICA puerta de lectura de
- * `atencion.asistencias`: asistio, menuDe, desgloseDelDia, asistenciaPorAfiliado
- * y validarAtencion pasan por aquí. Quienes escriben ese arreglo están en
- * ui-asistencia.js (filaToque y marcarTodos).
- *
+ * `atencion.asistencias`; quienes lo escriben están en ui-asistencia.js.
+ * 
  * Devuelve el MISMO arreglo guardado, no una copia: no mutarlo desde aquí.
  * @param {?Object} at  una atención (un día) de `padron.atenciones`
  * @returns {Array<{afiliadoId: string, tipoMenu: 'normal'|'ayuda_social'}>}
@@ -198,8 +195,7 @@ export function asistenciasDelDia(at) {
 }
 
 /**
- * ¿Está marcada esta persona en este día? Lee `at.asistencias` vía
- * asistenciasDelDia. No escribe nada.
+ * ¿Está marcada esta persona en este día?
  * @param {?Object} at  una atención (un día)
  * @param {string} afiliadoId
  * @returns {boolean}
@@ -281,7 +277,7 @@ export function recaudacionDelDiaCent(at) {
   ];
   for (const [raciones, precio] of pares) {
     if (raciones === 0) continue;
-    if (!Number.isFinite(precio)) return null;   // falta el precio: no se estima
+    if (!Number.isFinite(precio)) return null;
     total += raciones * precio;
   }
   return total;
@@ -357,17 +353,10 @@ export function conteoAsistenciaDelDia(at) {
 }
 
 /**
- * Días que asistió cada persona dentro de un periodo.
- * Devuelve [{ afiliadoId, dias, normal, ayudaSocial }] ordenado de más a menos.
- *
- * Lee `padron.atenciones` del periodo (atencionesDelPeriodo) y, de cada día,
- * `at.asistencias` (asistenciasDelDia). No escribe nada. Es el punto donde el
- * padrón exportado (PDF y Excel) lee lo que se marcó en la pantalla de asistencia
- * (excel-reportes.js y pdf-reportes.js, al exportar el padrón).
- *
+ * Días que asistió cada persona dentro de un periodo, de más a menos. Es por donde
+ * el padrón exportado (PDF y Excel) lee lo marcado en la pantalla de asistencia.
  * Solo aparece quien asistió al menos un día: los demás no tienen fila.
  * Los días migrados con `legado` no suman, porque no dicen quién vino.
- *
  * @param {{atenciones: Object[]}} padron  normalmente estado.padron
  * @param {string} inicioIso  'AAAA-MM-DD', incluido
  * @param {string} finIso     'AAAA-MM-DD', incluido
@@ -401,21 +390,15 @@ export function afiliadosSinAsistencia(padron, inicioIso, finIso, activasAIso = 
   return afiliadosActivos(padron, activasAIso).filter((a) => !conAsistencia.has(a.id));
 }
 
-// ------------------------------------------------- Reporte para el padrón
-//
-// Filas listas para copiar al formato de padrón que pide la Municipalidad.
-// Solo ordena y numera datos ya ingresados: no completa ni deduce ninguno.
+// Reporte para el padrón: solo ordena y numera datos ya ingresados; no
+// completa ni deduce ninguno.
 
 /**
  * Filas del reporte del padrón: personas activas a `fechaRefIso`, ordenadas por
- * apellidos y nombres, y numeradas desde 1.
- *
- * Lee `padron.afiliados` (vía afiliadosActivos). NO lee asistencias: los días
- * asistidos los agrega quien llama, con asistenciaPorAfiliado. No escribe nada.
- *
+ * apellidos y nombres, y numeradas desde 1. NO lee asistencias: los días los
+ * agrega quien llama, con asistenciaPorAfiliado.
  * Edad y grupo etario se calculan a `fechaRefIso`, no se leen de lo guardado
  * (salvo `grupoEtarioManual` cuando no hay fecha de nacimiento).
- *
  * @param {{afiliados: Object[]}} padron  normalmente estado.padron
  * @param {string} [fechaRefIso]  'AAAA-MM-DD'; si no es válida, se usa hoy.
  * @returns {Array<{n: number, afiliadoId: string, apellidoPaterno: string,
@@ -454,8 +437,7 @@ export function filasPadron(padron, fechaRefIso) {
     });
 }
 
-// ----------------------------------------------------- Periodo propuesto
-// La app PROPONE; la usuaria acepta o cambia. Nunca se aplica sola.
+// Periodo propuesto. La app PROPONE; la usuaria acepta o cambia. Nunca se aplica sola.
 
 export function proponerPeriodo(tipo, fechaRefIso) {
   const ref = aFecha(esIso(fechaRefIso) ? fechaRefIso : hoyIso());

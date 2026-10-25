@@ -54,8 +54,6 @@ const MRZ_ICAO = [
 const ANVERSO_PRUEBA = ['REPÚBLICA DEL PERÚ', 'DOCUMENTO NACIONAL DE IDENTIDAD', 'Primer Apellido', 'MUÑOZ',
   'Segundo Apellido', 'QUISPE', 'Prenombres', 'JOSÉ ALBERTO', 'Sexo M'];
 
-// ------------------------------------------------------------------- utilería
-
 function ok(condicion, mensaje) {
   if (!condicion) throw new Error(mensaje || 'La condición no se cumplió');
 }
@@ -103,7 +101,6 @@ function rendicionDelEjemplar() {
 
 export const casos = [
 
-  // ---------------------------------------------------- dinero sin coma flotante
   {
     grupo: 'Dinero',
     nombre: 'aCentimos convierte sin error de coma flotante',
@@ -162,7 +159,6 @@ export const casos = [
     }
   },
 
-  // ------------------------------------------------------------------- totales
   {
     grupo: 'Totales',
     nombre: 'El ejemplar llenado a mano da 200.00 / 9.85 / 209.85',
@@ -275,7 +271,6 @@ export const casos = [
     }
   },
 
-  // ------------------------------------------------------------------ periodos
   {
     grupo: 'Periodo',
     nombre: 'Propone mes completo y ofrece las dos etiquetas',
@@ -309,7 +304,6 @@ export const casos = [
     }
   },
 
-  // ---------------------------------------------------------------- validación
   {
     grupo: 'Validación',
     nombre: 'El ejemplar completo no deja errores',
@@ -378,7 +372,6 @@ export const casos = [
     }
   },
 
-  // -------------------------------------------------------------------- padrón
   {
     grupo: 'Padrón',
     nombre: 'La edad se calcula respecto a una fecha de referencia',
@@ -646,7 +639,6 @@ export const casos = [
     }
   },
 
-  // ---------------------------------------------------------------- asistencia
   {
     grupo: 'Asistencia',
     nombre: 'El menú por defecto sale de cómo se inscribió la persona',
@@ -750,7 +742,6 @@ export const casos = [
     }
   },
 
-  // ---------------------------------------------------------- grupos de edad
   {
     grupo: 'Grupos de edad',
     nombre: 'Los cuatro tramos siguen las etapas de vida del MINSA',
@@ -790,7 +781,6 @@ export const casos = [
     }
   },
 
-  // ---------------------------------------------------------- reporte padrón
   {
     grupo: 'Reporte',
     nombre: 'Las filas del padrón van numeradas y ordenadas por apellido',
@@ -812,7 +802,6 @@ export const casos = [
     }
   },
 
-  // -------------------------------------------------------------- migración v3
   {
     grupo: 'Migración',
     nombre: 'Un día de la v2 conserva sus raciones escritas a mano, marcadas como legado',
@@ -883,7 +872,6 @@ export const casos = [
     }
   },
 
-  // --------------------------------------------------------------- calendario
   {
     grupo: 'Entregas',
     nombre: 'avanzarPeriodo respeta semana, quincena y mes',
@@ -1014,7 +1002,6 @@ export const casos = [
     }
   },
 
-  // ------------------------------------------------------------ escaneo de DNI
   {
     grupo: 'Escaneo DNI',
     nombre: 'parsearCadenaDni nunca lanza y devuelve el objeto completo',
@@ -1254,7 +1241,6 @@ export const casos = [
     }
   },
 
-  // ------------------------------------------------- lista por QR entre teléfonos
   {
     grupo: 'Lista por QR',
     nombre: 'Ida y vuelta: lo que sale en el QR vuelve igual, solo con cifras',
@@ -1308,7 +1294,6 @@ export const casos = [
     }
   },
 
-  // ---------------------------------------------------------------- sugerencias
   {
     grupo: 'Sugerencias',
     nombre: 'Perfil: la presidenta propone sus datos y sus firmas; la tesorera, los suyos; apoyo, nada',
@@ -1364,7 +1349,6 @@ export const casos = [
     }
   },
 
-  // ------------------------------------------------------------- importación
   {
     grupo: 'Importar',
     nombre: 'Reconoce el separador de Excel, CSV y punto y coma',
@@ -1746,7 +1730,6 @@ export const casos = [
     }
   },
 
-  // ---------------------------------------------------------------- utilidades
   {
     grupo: 'Fechas y texto',
     nombre: 'Las fechas se muestran como en el papel',
@@ -1767,7 +1750,6 @@ export const casos = [
       igual(nombreCompleto({ apellidoPaterno: 'Pérez', apellidoMaterno: '', nombres: 'Ana' }), 'Pérez Ana');
     }
   },
-  // ------------------------------------------------ pasar datos por QR
   {
     grupo: 'Pasar datos por QR',
     nombre: 'base45 (RFC 9285): el ejemplo de la norma y la vuelta',
@@ -1951,7 +1933,6 @@ export const casos = [
       igual(aqui.entregas.length, 1, 'no toca el original');
     }
   },
-  // ------------------------------------------------- la hoja oficial del B-1
   {
     grupo: 'Hoja oficial del B-1',
     nombre: 'Los datos se escriben como en el papel (DD-MM-AA, soles, «varios», una X)',

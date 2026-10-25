@@ -1,4 +1,3 @@
-// Grupo «Entregas» de web/js/casos-prueba.js.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.alertas.Nivel

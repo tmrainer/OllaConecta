@@ -1,8 +1,7 @@
-// MainActivity.kt — la única Activity: arma Compose y, al ocultarse, escribe
-// lo pendiente del guardado diferido (como pagehide en la web). La primera vez
-// en un teléfono que tenía el APK 1.7, trae sus datos antes de mostrar nada
-// (MigracionDel17); mientras, sigue la pantalla de inicio. Si se abrió tocando
-// un aviso del teléfono, va a la pantalla del aviso.
+// La única Activity: arma Compose y, al ocultarse, escribe lo pendiente del guardado
+// diferido. La primera vez en un teléfono que tenía el APK 1.7, trae sus datos antes
+// de mostrar nada (MigracionDel17); mientras, sigue la pantalla de inicio. Si se abrió
+// tocando un aviso del teléfono, va a la pantalla del aviso.
 package io.github.tmrainer.asistencia
 
 import android.content.Intent

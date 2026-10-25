@@ -1,21 +1,15 @@
-// qr-cruzado.mjs — cruza el QR del núcleo Kotlin con el de la WEB (módulos
-// tal cual, sin tocarlos; Node 22 o más nuevo). Dos usos:
+// Cruza el QR del núcleo Kotlin con el de la WEB (módulos tal cual, sin tocarlos;
+// Node 22 o más nuevo). Dos usos:
 //
 //   node nativo/herramientas/qr-cruzado.mjs
 //     Escribe nucleo/src/test/resources/qr-cruzado.json con lo que arma la web:
-//     a) matrices de qrcode-generator para textos como los de la app (partes
-//        P3…, partes de solo cifras 81…, textos justo en los límites de cada
-//        versión); QrCruzadoTest exige la misma matriz, módulo por módulo.
-//     b) el padrón, la asistencia (un día y todos) y las entregas del respaldo
-//        FICTICIO: el JSON de cada paquete y los textos de sus QR. Kotlin debe
-//        armar el mismo JSON y leer esos QR.
+//     matrices de qrcode-generator (QrCruzadoTest exige la misma, módulo por
+//     módulo) y, del respaldo FICTICIO, el JSON de cada paquete y los textos de
+//     sus QR (Kotlin debe armar el mismo JSON y leer esos QR).
 //
 //   node nativo/herramientas/qr-cruzado.mjs --verificar <partes-kotlin.json>
 //     Lee con la web los QR que armó Kotlin (QrCruzadoTest los escribe en
-//     nucleo/build/qr-cruzado/) y comprueba que dan el mismo paquete que la
-//     web arma del respaldo. Sale con código 1 si algo no coincide.
-//
-// Solo datos inventados: el respaldo ficticio y textos generados.
+//     nucleo/build/qr-cruzado/) y sale con código 1 si no dan el mismo paquete.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -30,7 +24,7 @@ import {
 const aqui = dirname(fileURLToPath(import.meta.url));
 const recursos = join(aqui, '../nucleo/src/test/resources');
 
-// El padrón como lo ve la app (igual que oraculo.mjs): migrado y con sinInscribir.
+// El padrón como lo ve la app: migrado y con sinInscribir.
 function respaldoFicticio() {
   const datos = JSON.parse(readFileSync(join(recursos, 'respaldo-ficticio.json'), 'utf8'));
   const padron = migrarPadron(datos.padron);
@@ -82,8 +76,6 @@ if (process.argv[2] === '--verificar') {
   process.exit(0);
 }
 
-// ---------------------------------------------------------- a) matrices
-
 const ALFANUM = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:';
 let semilla = 12345;
 const azar = () => (semilla = (semilla * 1103515245 + 12345) % 2147483648) / 2147483648;
@@ -134,8 +126,6 @@ const textos = [
   cifras(7089)                                                // lo máximo en cifras (versión 40)
 ];
 const matrices = textos.map(matriz);
-
-// --------------------------------------------------------- b) envíos
 
 const salidaEnvios = {};
 for (const [nombre, { tipo, paquete }] of Object.entries(envios)) {

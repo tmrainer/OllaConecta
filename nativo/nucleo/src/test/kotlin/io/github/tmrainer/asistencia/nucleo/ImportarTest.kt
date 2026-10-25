@@ -210,7 +210,7 @@ class ImportarTest {
         igual(desarmarCelda("O'Brien"), "O'Brien")
     }
 
-    // ------------------------------------------- diferencias con la web, a propósito
+    // Diferencias con la web, a propósito.
 
     @Test
     fun `Una fecha que no existe queda vacía, con su aviso`() {

@@ -52,8 +52,6 @@ async function entregar(armar, f) {
   }
 }
 
-// ------------------------------------------------------------- el padrón
-
 /**
  * Exportar el padrón: las fechas de los días asistidos y los dos botones.
  * Las personas son las activas a ctx.fechaRef («Edades a la fecha», arriba).
@@ -83,8 +81,6 @@ export function montarExportarPadron(ctx) {
     })
   });
 }
-
-// ------------------------------------------------------------- comunes
 
 const dos = (n) => String(n).padStart(2, '0');
 

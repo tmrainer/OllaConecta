@@ -1,10 +1,8 @@
-// importar-casos.mjs — corre web/js/importar.js tal cual (Node 22) sobre
-// entradas difíciles (separadores ; , y tabulador, comillas, BOM, saltos de
-// línea \r\n y \r, tildes, fechas de varias formas, duplicados, filas vacías,
-// títulos en otro orden o en mayúsculas, CSV de versiones anteriores) con un
-// «hoy» fijo, y escribe entradas + resultados de la web en
-// nucleo/src/test/resources/importar-casos.json. ImportarWebTest.kt corre lo
-// mismo en Kotlin y compara todo menos los id (uuid() no puede coincidir).
+// Corre web/js/importar.js tal cual (Node 22) sobre entradas difíciles (separadores,
+// comillas, BOM, saltos de línea, tildes, fechas de varias formas, duplicados, filas
+// vacías, títulos en otro orden) con un «hoy» fijo, y escribe entradas + resultados en
+// nucleo/src/test/resources/importar-casos.json. ImportarWebTest.kt compara todo menos
+// los id (uuid() no puede coincidir).
 //
 //   node nativo/herramientas/importar-casos.mjs
 //
@@ -33,8 +31,6 @@ globalThis.Date = class extends DateReal {
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const salida = join(aqui, '..', 'nucleo', 'src', 'test', 'resources', 'importar-casos.json');
-
-// ------------------------------------------------------- funciones sueltas
 
 const funciones = {
   detectarSeparador: ['a\tb', 'a;b,c;d', 'a,b,c;d', '"x;y",z', '', 'sin separador',
@@ -81,8 +77,6 @@ const resultadosFunciones = Object.fromEntries(Object.entries(funciones).map(([n
     return { entrada, esperado };
   })
 ]));
-
-// ----------------------------------------------------------- importaciones
 
 function persona(datos) {
   return Object.assign(nuevoAfiliado(), { altaEn: '2026-01-01' }, datos);

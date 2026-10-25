@@ -1,4 +1,4 @@
-// CodigoPeriodo.kt — el código de cada B-1 según el rango de días que rinde:
+// El código de cada B-1 según el rango de días que rinde:
 // «Octubre-2026-Q1» (del 1 al 15), «Octubre-2026-Q2» (del 16 a fin de mes),
 // «Octubre-2026-M» (el mes completo), «Octubre-2026-S2» (la 2.ª semana, de
 // lunes a domingo). Así se sabe cuál es cuál, y qué entrega corresponde a

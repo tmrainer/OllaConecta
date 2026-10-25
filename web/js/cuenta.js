@@ -1,24 +1,9 @@
 // cuenta.js — la cuenta de Google de quien usa la app y a qué olla pertenece.
-//
-// Primera parte del sistema central: Firebase Auth
-// dice quién es la persona y Firestore guarda las ollas, sus integrantes y
-// las invitaciones. El padrón y la asistencia de la olla van y vienen de la
-// nube en sincronizacion.js (§h); el B-1 y las entregas siguen en el teléfono.
-//
-// Firebase se carga solo cuando hay un proyecto configurado
-// (firebase-config.js) y recién cuando una página lo pide: las demás páginas
-// no lo tocan. La librería vive en vendor/firebase/ (copiada, sin CDN) y va
-// en ARCHIVOS de sw.js, así que también carga sin internet. Solo el primer
-// inicio de sesión necesita señal: después la sesión queda guardada en el
-// teléfono, y Firestore responde con lo último que vio.
-//
+// Firebase se carga solo si hay proyecto configurado; va en
+// vendor/firebase/ y en ARCHIVOS de sw.js, así que carga sin internet.
 // En el APK, Google no deja iniciar sesión dentro del visor web: lo hace el
-// complemento nativo (@capacitor-firebase/authentication, en
-// window.Capacitor.Plugins) y aquí se le pasa la credencial a la librería,
-// para que Firestore sepa quién es.
-//
-// Quién puede qué lo deciden las reglas de nube/firestore.rules, no este
-// archivo: lo que hay aquí es lo que la app intenta.
+// complemento nativo y aquí se le pasa la credencial a la librería.
+// Quién puede qué lo deciden las reglas de nube/firestore.rules, no este archivo.
 
 import { CONFIG_FIREBASE, hayCuentas } from './firebase-config.js';
 import { esAppNativa } from './avisos-nativos.js';

@@ -1,7 +1,5 @@
-// EnvioTest.kt — el correo a UNACEM que arma el teléfono es el mismo que
-// armaba el script de la nube: asunto, texto y nombre del adjunto, comparados
-// con armarCorreo() de la web (herramientas/correo-casos.mjs). El adjunto es
-// excelDeAsistencia / excelDelPadron, que DocumentosOraculoTest ya compara.
+// El correo a UNACEM que arma el teléfono: asunto, texto y nombre del adjunto,
+// comparados con armarCorreo() de la web (herramientas/correo-casos.mjs).
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDeAsistencia

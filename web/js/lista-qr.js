@@ -1,12 +1,6 @@
-// lista-qr.js — pasar la asistencia de un día de un teléfono a otro con un
-// código QR, sin internet ni servidor. Funciones PURAS: sin DOM ni estado.
-//
-// Cuando dos personas pasan lista en teléfonos distintos, una muestra un QR
-// con sus marcas y la otra lo lee con la cámara: se suman las que faltaban.
-// Se identifica a cada persona por su DNI (los dos teléfonos pueden tener el
-// padrón cargado por separado) y el QR lleva solo cifras, que en un QR
-// ocupan menos que las letras: más personas por código, más fácil de leer.
-//
+// lista-qr.js — pasar la asistencia de un día de un teléfono a otro con un QR, sin
+// internet. Funciones puras. Cada persona va por su DNI (los padrones pueden estar
+// cargados por separado) y solo cifras, que en un QR ocupan menos que las letras.
 // Formato de cada parte (todo cifras):
 //   «81» (marca y versión) · AAAAMMDD · parte (2) · total (2) · cuántas (3)
 //   · por persona: DNI (8) y menú (0 normal, 1 ayuda social)

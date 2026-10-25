@@ -1,16 +1,8 @@
-// plantilla-b1.js — dónde cae cada dato en la hoja oficial del Formato B-1.
-//
-// ÚNICA fuente de coordenadas: recalibrar es cambiar números
-// aquí, nunca tocar CSS. Todo en milímetros desde la esquina superior
-// izquierda de una hoja A4 vertical (210 × 297 mm). `y` es el borde de arriba
-// de la caja; el texto se apoya abajo, sobre la línea punteada del papel.
-//
-// ESTIMADO: medido sobre una foto de la hoja en blanco, enderezada a A4 con su
-// perspectiva corregida (las 4 esquinas del papel), no sobre la plantilla
-// física con regla. Las líneas de la tabla salieron rectas y a ±0,5 mm entre sí,
-// pero la escala absoluta depende de las esquinas de la foto.
-// DECISIÓN ABIERTA: se cierra midiendo la hoja física o un escaneo
-// plano a 300 ppp; entonces `estimado` pasa a false.
+// Dónde cae cada dato en la hoja oficial del Formato B-1. Única fuente de coordenadas:
+// recalibrar es cambiar números aquí, nunca el CSS. Milímetros desde la esquina
+// superior izquierda de un A4 vertical; `y` es el borde de arriba de la caja.
+// ESTIMADO: medido sobre una foto enderezada, no sobre la hoja física. Se cierra
+// midiendo la hoja o un escaneo plano a 300 ppp; entonces `estimado` pasa a false.
 
 export const PLANTILLA_B1 = {
   estimado: true,
@@ -46,7 +38,7 @@ export const PLANTILLA_B1 = {
   egresos: {
     primeraFilaYMm: 123.3,
     altoFilaMm: 3.876,
-    filas: 17, // FILAS_EGRESOS: contadas en la hoja (antes, provisional)
+    filas: 17, // contadas en la hoja
     columnas: {
       fechaCompra: { xMm: 15.1, anchoMm: 17.4, align: 'center' },
       descripcion: { xMm: 32.5, anchoMm: 40.3, align: 'left' },

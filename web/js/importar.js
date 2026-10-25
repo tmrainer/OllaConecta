@@ -1,13 +1,8 @@
-// importar.js — lectura de un padrón pegado desde Excel o de un CSV.
-// Funciones PURAS: sin DOM, sin estado, sin red.
-//
-// Interpreta lo que la usuaria pega, pero NO completa lo que falte: cada fila
-// sale con sus avisos y es ella quien confirma la importación.
+// importar.js — lectura de un padrón pegado desde Excel o de un CSV. Funciones puras.
+// NO completa lo que falte: cada fila sale con sus avisos y la usuaria confirma.
 
 import { normalizarNombre, esIso, hoyIso, uuid, nuevoAfiliado } from './modelo.js';
 import { grupoPorEdad } from './calculos.js';
-
-// --------------------------------------------------------------- lectura CSV
 
 /** Detecta el separador mirando la primera línea fuera de comillas. */
 export function detectarSeparador(texto) {
@@ -56,13 +51,9 @@ export function parsearTabla(texto, separador) {
     .filter((f) => f.some((c) => c !== ''));
 }
 
-// ------------------------------------------- celdas de un CSV de versiones anteriores
-
 /**
- * Las versiones anteriores exportaban el padrón como CSV: los documentos iban
- * como ="01234567" (para que Excel no se coma el 0) y lo que parecía fórmula,
- * con ' adelante. Al importar uno de esos archivos se deshace: ="0123" → 0123,
- * '=algo → =algo. Hoy se exporta en .xlsx, que no necesita nada de esto.
+ * Celdas de un CSV exportado por versiones anteriores: ="0123" → 0123 (era para que
+ * Excel no se comiera el 0) y '=algo → =algo.
  */
 export function desarmarCelda(texto) {
   const t = String(texto || '');
@@ -71,8 +62,6 @@ export function desarmarCelda(texto) {
   if (/^'[=+\-@]/.test(t)) return t.slice(1);
   return t;
 }
-
-// ------------------------------------------------- reconocimiento de columnas
 
 const SINONIMOS = {
   apellidoPaterno: ['apellido paterno', 'ap paterno', 'ap. paterno', 'apaterno',
@@ -123,8 +112,6 @@ export function pareceCabecera(fila) {
   return Object.keys(detectarColumnas(fila).mapa).length >= 2;
 }
 
-// ------------------------------------------------- interpretación de valores
-
 export function parsearFechaFlexible(texto) {
   const t = String(texto || '').trim();
   if (!t) return '';
@@ -171,8 +158,6 @@ function partirApellidos(texto) {
   return { paterno: partes[0], materno: partes.slice(1).join(' ') };
 }
 
-// ------------------------------------------------------ preparar importación
-
 /**
  * Lee el texto pegado y devuelve, por fila, la persona que se crearía y qué le
  * falta. NO modifica el padrón ni completa ningún dato: la usuaria confirma.
@@ -185,8 +170,8 @@ function partirApellidos(texto) {
  * ceroAgregado: un DNI de 5 a 7 cifras es uno que empezaba con 0 y que Excel
  * guardó como número (01234567 → 1234567). Se completa con ceros adelante y se
  * dice en la fila; `resumen.conCero` los cuenta. Es la única corrección que
- * hace la importación (decisión del equipo): pedírsela a la usuaria fila por
- * fila era un paso más que casi siempre se respondía igual.
+ * hace la importación: pedírsela a la usuaria fila por fila era un paso más que
+ * casi siempre se respondía igual.
  */
 export function prepararImportacion(texto, padron) {
   const tabla = parsearTabla(texto);

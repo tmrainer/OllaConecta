@@ -58,13 +58,8 @@ export function montarAltaPersona(ctx) {
   }
 }
 
-// ------------------------------------------- inscribir leyendo el DNI (en prueba)
-//
-// Solo en el APK. Lee el reverso (zona de lectura mecánica: DNI, nacimiento y
-// sexo con dígito de control) y luego el anverso (tildes, ñ y el segundo
-// apellido, cruzados con el reverso: escaneo-dni.js). LLENA el formulario,
-// no inscribe: la persona revisa, escribe quién revisó y toca «Inscribir».
-// La cadena leída no se guarda; solo los campos.
+// Inscribir leyendo el DNI (en prueba, solo en el APK): LLENA el formulario, no
+// inscribe; la persona revisa y toca «Inscribir». La cadena leída no se guarda.
 
 // Lo que vino del DNI y todavía no se inscribió: sexo y que el origen es el escaneo.
 let altaEscaneo = null;
@@ -397,7 +392,7 @@ function filaAfiliado(a, ctx, indice) {
   caja._desplegar = (abrir) => {
     const abierto = boton.getAttribute('aria-expanded') === 'true';
     const quiero = abrir === undefined ? !abierto : abrir;
-    if (quiero && !editor) {           // construcción perezosa
+    if (quiero && !editor) {
       editor = cuerpoAfiliado(a, ctx);
       caja.append(editor);
     }
@@ -480,8 +475,6 @@ function aplicarBusqueda(lista, ctx) {
       : 'Nadie coincide con la búsqueda o el filtro.';
   }
 }
-
-// ------------------------------------------- resumen por grupos y filtros
 
 /** Chips con las activas y su reparto por grupo etario, a ctx.fechaRef. */
 export function pintarResumenEtario(caja, ctx) {

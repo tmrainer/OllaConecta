@@ -1,29 +1,22 @@
-// CompartirQr.kt — porte de web/js/compartir-qr.js: pasar el padrón, la
-// asistencia de uno o varios días o las entregas de un teléfono a otro con
+// Pasar el padrón, la asistencia o las entregas de un teléfono a otro con
 // códigos QR, sin internet ni servidor. Funciones puras: sin Android, sin red.
-// Comprimir usa java.util.zip, del propio teléfono: nada sale de él.
 //
-// Quien recibe NUNCA guarda a ciegas: primero se compara lo
-// recibido con lo que ya hay (compararPadron, compararAsistencia,
-// compararEntregas) y la pantalla muestra qué se agrega, qué es igual y qué
-// no coincide. Lo que no coincide queda como está salvo que la persona elija
-// lo recibido; las aplicar…() solo hacen lo elegido y devuelven objetos
-// nuevos.
+// Quien recibe NUNCA guarda a ciegas: primero se compara (compararPadron,
+// compararAsistencia, compararEntregas) y lo que no coincide queda como está
+// salvo que la persona elija lo recibido; las aplicar…() solo hacen lo
+// elegido y devuelven objetos nuevos.
 //
 // Formato de cada QR (modo alfanumérico, el más compacto con letras):
 //   «P3» · tipo (P padrón, A asistencia, E entregas) · id del envío (4)
 //   · parte (2 cifras) · total (2 cifras) · trozo · «:» de cierre
 // El contenido es JSON comprimido (deflate sin envoltura zlib: el
-// 'deflate-raw' de CompressionStream en la web, Deflater/Inflater con
-// nowrap = true aquí) y escrito en base45 (RFC 9285), que usa justo las letras
-// que el QR guarda en modo alfanumérico. El «:» del final protege los espacios
-// del trozo si un lector recorta el texto. El id une las partes de un mismo
-// envío: dos envíos no se mezclan. También se leen los QR de antes (solo
-// cifras, ListaQr.kt).
+// 'deflate-raw' de la web, nowrap = true aquí) y escrito en base45 (RFC 9285),
+// que usa justo las letras del modo alfanumérico. El «:» final protege los
+// espacios del trozo si un lector recorta el texto. También se leen los QR
+// de antes (solo cifras, ListaQr.kt).
 //
 // Los bytes comprimidos pueden no ser idénticos a los de la web (otra
-// versión de zlib), pero los dos lados leen lo que arma el otro: lo prueba
-// QrCruzadoTest en ambos sentidos.
+// versión de zlib), pero cada lado lee lo que arma el otro (QrCruzadoTest).
 package io.github.tmrainer.asistencia.nucleo.qr
 
 import io.github.tmrainer.asistencia.nucleo.calculos.ConteoSinInscribir
@@ -89,8 +82,6 @@ enum class TipoEnvio(val clave: String, val letra: Char) {
     }
 }
 
-// ------------------------------------------------------------- paquetes
-//
 // Lo que viaja, ya revisado. En el QR va como JSON con claves cortas y filas
 // en arreglos (mismo formato que la web, versión 1):
 //   padrón      {"t":"P","v":1,"p":[[13 campos], …]}
@@ -153,8 +144,6 @@ data class EntregaQr(val fechaLimite: String, val estado: String, val nota: Stri
 data class PaqueteEntregas(val config: ConfigEntregasQr, val entregas: List<EntregaQr>) : Paquete {
     override val tipo get() = TipoEnvio.ENTREGAS
 }
-
-// ------------------------------------------------------------------ base45
 
 fun aBase45(bytes: ByteArray): String {
     val s = StringBuilder()
@@ -231,8 +220,6 @@ private fun descomprimir(bytes: ByteArray): ByteArray? {
     }
 }
 
-// ------------------------------------------------------- partes del envío
-
 private val AZAR = SecureRandom()
 
 private fun idCorto(): String {
@@ -296,8 +283,8 @@ fun leerParteQr(texto: String?): ParteQr? {
 }
 
 /**
- * Lo que el lector lleva juntado (el bucle de lectura de camara-qr.js): una
- * parte de otro envío empieza de nuevo con ese; una repetida no cambia nada.
+ * Lo que el lector lleva juntado: una parte de otro envío empieza de nuevo
+ * con ese; una repetida no cambia nada.
  * Cuando `completas`, se llama a juntarPartesQr(partes.values); si da null
  * («no se leyó bien»), se vuelve a empezar con PartesRecibidas().
  */
@@ -340,8 +327,6 @@ fun juntarPartesQr(partes: Collection<ParteQr>): Paquete? {
     }
 }
 
-// ----------------------------------------------- el JSON que va en el QR
-
 /** El JSON del paquete, igual al JSON.stringify() de la web. */
 internal fun textoJson(paquete: Paquete): String = buildJsonObject {
     put("t", paquete.tipo.letra.toString())
@@ -378,8 +363,6 @@ internal fun textoJson(paquete: Paquete): String = buildJsonObject {
         }
     }
 }.toString()
-
-// ------------------------------------------------- qué lleva cada envío
 
 private val FECHA = Regex("\\d{4}-\\d{2}-\\d{2}")
 private fun esFecha(s: String?) = s != null && FECHA.matches(s)
@@ -529,8 +512,6 @@ fun paqueteDeEntregas(calendario: Calendario): PaqueteEntregas = PaqueteEntregas
         .map { EntregaQr(it.fechaLimite, it.estado.ifEmpty { "pendiente" }, it.nota.take(200)) }
 )
 
-// --------------------------------------------------------------- padrón
-
 /** Los campos que se comparan, con su nombre para la pantalla. */
 val CAMPOS_PERSONA = listOf(
     "apellidoPaterno" to "Apellido paterno", "apellidoMaterno" to "Apellido materno", "nombres" to "Nombres",
@@ -539,7 +520,7 @@ val CAMPOS_PERSONA = listOf(
     "activo" to "Activa en la olla", "bajaEn" to "Fecha de baja", "motivoBaja" to "Motivo de baja"
 )
 
-/** El valor tal cual (p[campo] en la web): String, String? (grupoEtarioManual) o Boolean (activo). */
+/** El valor tal cual: String, String? (grupoEtarioManual) o Boolean (activo). */
 private fun valorCrudo(p: Afiliado, campo: String): Any? = when (campo) {
     "apellidoPaterno" -> p.apellidoPaterno
     "apellidoMaterno" -> p.apellidoMaterno
@@ -612,8 +593,8 @@ data class ComparacionPadron(
 /**
  * Compara el padrón recibido con el de este teléfono, persona por persona,
  * por el número de documento. `mia` en dudosas y distintas es la MISMA
- * instancia que está en `padron.afiliados` (aplicarPadron la busca así, como
- * la web): se aplica sobre el padrón que se comparó.
+ * instancia que está en `padron.afiliados` (aplicarPadron la busca así): se
+ * aplica sobre el padrón que se comparó.
  */
 fun compararPadron(padron: Padron, paquete: PaquetePadron): ComparacionPadron {
     val mias = padron.afiliados
@@ -680,8 +661,6 @@ fun aplicarPadron(padron: Padron, eleccion: EleccionPadron, hoy: String = hoyIso
     }
     return padron.copy(afiliados = afiliados)
 }
-
-// ----------------------------------------------------------- asistencia
 
 data class PorAgregar(val afiliado: Afiliado, val tipoMenu: String)
 
@@ -829,8 +808,6 @@ fun aplicarAsistencia(
     }
     return padron.copy(atenciones = atenciones)
 }
-
-// ------------------------------------------------------------- entregas
 
 private val CAMPOS_ENTREGAS = listOf(
     "periodicidad" to "Cada cuánto se entrega", "fechaLimiteBase" to "Una fecha de entrega", "diasDeAviso" to "Días de aviso"

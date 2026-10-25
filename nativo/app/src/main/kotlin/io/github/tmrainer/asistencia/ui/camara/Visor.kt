@@ -1,11 +1,7 @@
-// Visor.kt — la cámara de atrás en vivo (camara-trasera.js y el visor de
-// camara-dni.js / camara-qr.js): CameraX muestra la imagen y, en otro hilo,
-// entrega cada fotograma recortado a lo que hay dentro del recuadro. Lo que
-// ve la cámara solo pasa por el visor y por ese recorte en memoria: ningún
-// fotograma se guarda ni sale del teléfono.
-//
-// Los lectores (ML Kit de los servicios de Google Play) están abajo: el texto
-// para la MRZ y el anverso del DNI, los códigos para los QR.
+// La cámara de atrás en vivo: CameraX muestra la imagen y, en otro hilo, entrega
+// cada fotograma recortado a lo que hay dentro del recuadro. Lo que ve la cámara
+// solo pasa por el visor y por ese recorte en memoria: ningún fotograma se guarda
+// ni sale del teléfono.
 package io.github.tmrainer.asistencia.ui.camara
 
 import android.graphics.Bitmap
@@ -161,7 +157,7 @@ fun VisorCamara(
             val p = try { futuro.get() } catch (e: Exception) { alFallar("No se pudo abrir la cámara."); return@addListener }
             proveedor = p
             val previa = Preview.Builder().build().also { it.surfaceProvider = vista.surfaceProvider }
-            // 1920 × 1080 como en la web: con menos, las letras de la MRZ salen chicas.
+            // 1920 × 1080: con menos, las letras de la MRZ salen chicas.
             val analisis = ImageAnalysis.Builder()
                 .setResolutionSelector(
                     ResolutionSelector.Builder().setResolutionStrategy(
@@ -321,8 +317,6 @@ private fun aLaFuente(r: Rect, giro: Int, sw: Int, sh: Int): Rect {
     return salida
 }
 
-// ---------------------------------------------------------------- lectores
-
 /** El lector no está (sin servicios de Google Play) o todavía se instala. */
 class LectorNoDisponible : Exception()
 
@@ -334,7 +328,7 @@ private fun <T> esperar(tarea: com.google.android.gms.tasks.Task<T>): T = try {
     throw e
 }
 
-/** Texto de un fotograma, una línea de ML Kit por fragmento (como LectorTextoPlugin.java del 1.7). */
+/** Texto de un fotograma, una línea de ML Kit por fragmento. */
 class LectorTexto : AutoCloseable {
     private val reconocedor = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 

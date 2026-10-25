@@ -1,9 +1,6 @@
-// PrimerUso.kt — lo que la app pide antes de usarse, y vuelve a pedir al
-// abrir mientras falte algo: quién eres (rol, nombre y DNI), la confirmación
-// con tu DNI y de qué olla eres. Es de este teléfono (Preferencias). Los datos
-// los escribe la persona; la cámara lee el DNI solo para CONFIRMARLOS y, si
-// algo difiere, ofrece usar lo del DNI. Lo de aquí solo se PROPONE en el B-1,
-// nunca se llena solo.
+// Lo que la app pide antes de usarse, y vuelve a pedir mientras falte algo. Es de este
+// teléfono (Preferencias). Los datos los escribe la persona; la cámara lee el DNI solo
+// para CONFIRMARLOS. Lo de aquí solo se PROPONE en el B-1, nunca se llena solo.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import androidx.activity.compose.BackHandler
@@ -93,7 +90,7 @@ fun PrimerUso(ctx: Contexto, ollaPropuesta: String, alTraerDatos: () -> Unit, al
     // Lo leído del DNI (null: todavía no se leyó). Si se corrige a mano, se vuelve a comparar.
     var nombreLeido by rememberSaveable { mutableStateOf<String?>(null) }
     var dniLeido by rememberSaveable { mutableStateOf<String?>(null) }
-    // Los errores se muestran después de tocar «Siguiente» o «Listo», no mientras se escribe.
+    // Los errores se muestran después de tocar «Continuar» o «Terminar», no mientras se escribe.
     var intento by rememberSaveable { mutableStateOf(false) }
     BackHandler(enabled = paso > 0) { intento = false; paso -= 1 }
     val c = colores
@@ -195,20 +192,20 @@ fun PrimerUso(ctx: Contexto, ollaPropuesta: String, alTraerDatos: () -> Unit, al
                         Boton("Empezar", { paso = 1 }, Modifier.fillMaxWidth(), tipo = TipoBoton.PRINCIPAL)
                         Boton("Ya uso la app en otro teléfono", alTraerDatos, Modifier.fillMaxWidth(), icono = "nube")
                     }
-                    1 -> BotonesPaso({ intento = false; paso = 0 }, "Siguiente") {
+                    1 -> BotonesPaso({ intento = false; paso = 0 }, "Continuar") {
                         intento = true
                         if (!faltaRol && !faltaNombre && !faltaDni) { guardarQuienEres(); intento = false; paso = 2 }
                     }
                     2 -> when {
                         confirmacion == null -> BotonesPaso({ paso = 1 }, "Leer mi DNI", icono = "camara", alSiguiente = ::leerDni)
-                        confirmacion.coincide -> BotonesPaso({ paso = 1 }, "Siguiente") { paso = 3 }
+                        confirmacion.coincide -> BotonesPaso({ paso = 1 }, "Continuar") { paso = 3 }
                         // Lo más probable: que el DNI tenga razón.
                         else -> BotonesPaso({ paso = 1 }, "Usar los datos del DNI") {
                             nombre = nombreLeido.orEmpty(); dni = dniLeido.orEmpty()
                             guardarQuienEres()
                         }
                     }
-                    else -> BotonesPaso({ intento = false; paso = 2 }, "Listo") {
+                    else -> BotonesPaso({ intento = false; paso = 2 }, "Terminar") {
                         intento = true
                         if (!faltaOlla) {
                             prefs.guardarPerfil(prefs.perfil.value.copy(olla = olla.trim()))

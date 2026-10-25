@@ -1,11 +1,6 @@
-// Padron.kt — inscribir, listar y corregir personas (pagina-padron.js +
-// ui-personas.js). La olla inscribe a quien llega y queda pendiente hasta que
-// la Municipalidad la registre; la hoja municipal (Importar.kt) confirma a las
-// pendientes y actualiza el resto. Inscribir es una
-// pantalla propia que se queda abierta para inscribir a
-// varias seguidas. La lista queda para consultar; cada fila se despliega para editar.
-//
-// Cargar un padrón desde Excel y exportarlo llegan en una fase siguiente.
+// Inscribir, listar y corregir personas. La olla inscribe a quien llega y queda
+// pendiente hasta que la Municipalidad la registre; la hoja municipal (Importar.kt)
+// confirma a las pendientes y actualiza el resto.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDePendientes
@@ -498,7 +493,7 @@ fun PantallaInscribir(ctx: Contexto) {
     ).let { a -> escaneo?.let { sexo -> a.copy(origenDato = "escaneo_dni", sexo = sexo, verificadoPor = verifica.trim()) } ?: a }
 
     /**
-     * Llena el formulario con lo leído del DNI (llenarConDni de ui-personas.js).
+     * Llena el formulario con lo leído del DNI.
      * No inscribe: una letra dudosa queda vacía con sus opciones, y se dice qué revisar.
      */
     fun inscritaCon(dni: String) = estado.padron.value.afiliados.firstOrNull { it.activo && it.numeroDocumento == dni }
@@ -586,7 +581,6 @@ fun PantallaInscribir(ctx: Contexto) {
                 CampoFecha("Fecha de la hoja", fechaHoja, { if (it.isNotEmpty()) fechaHoja = it }, obligatorio = true)
             } else {
                 Pista("Queda pendiente hasta que la registren en la Municipalidad.", Modifier.padding(top = Medidas.e2, bottom = Medidas.e3))
-                // ---- leer el DNI (en prueba) ----
                 Pista("En prueba. Revisa todo antes de inscribir.", Modifier.padding(bottom = Medidas.e2))
                 Boton("Leer el DNI con la cámara", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeer = ::llenarConDni, yaEsta = { inscritaCon(it) != null }) } }, Modifier.objetivoGuia("inscribir.dni"), icono = "camara")
                 if (avisoDni.isNotEmpty()) Text(avisoDni, style = tipos.chicoFuerte, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))

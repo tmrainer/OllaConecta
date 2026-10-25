@@ -1,9 +1,5 @@
-// ui-cuenta.js — el bloque «Tu cuenta» de Tus datos: entrar con Google, ver
-// en qué olla se está y aceptar una invitación.
-//
-// Al entrar, si el perfil del teléfono (perfil.js) está en blanco, se le
-// proponen el nombre de la cuenta y el rol de la olla: solo llena lo vacío,
-// nunca pisa lo que la persona escribió.
+// El bloque «Tu cuenta» de Tus datos: entrar con Google, ver la olla y aceptar invitaciones.
+// Al entrar se propone el perfil (perfil.js) desde la cuenta: solo llena lo vacío, nunca pisa.
 
 import { crearElemento } from './ui.js';
 import {

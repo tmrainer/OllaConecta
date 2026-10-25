@@ -1,17 +1,10 @@
-// armar.mjs — junta el código del Excel de la app en un solo archivo para
-// Apps Script: reportes.js.
+// Junta el código del Excel de la app en un solo archivo para Apps Script,
+// reportes.js, con el projectId de web/js/firebase-config.js. Se corre desde
+// nube/ con `node apps-script/armar.mjs` (npm run pruebas lo hace solo).
 //
-//   node apps-script/armar.mjs      (desde nube/; también lo corre npm run pruebas)
-//
-// Apps Script no entiende módulos (import/export), pero sí todo lo demás que
-// usan modelo.js, calculos.js, xlsx.js y excel-reportes.js. Aquí cada módulo
-// queda envuelto en una función que devuelve lo que exportaba, y cada import
-// pasa a leer de ahí. Así el correo lleva EXACTAMENTE el mismo Excel que
-// exporta la app, sin mantener dos copias. Si cambia alguno de esos archivos,
-// hay que volver a armar (las pruebas lo hacen solas).
-//
-// También toma el projectId de web/js/firebase-config.js, para que el script
-// sepa a qué proyecto hablarle sin escribirlo dos veces.
+// Apps Script no entiende módulos (import/export): cada módulo queda envuelto
+// en una función que devuelve lo que exportaba, y cada import pasa a leer de
+// ahí. Así el correo lleva el mismo Excel que exporta la app, sin dos copias.
 
 import fs from 'node:fs';
 import path from 'node:path';

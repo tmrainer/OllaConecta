@@ -1,13 +1,6 @@
-// Qr.kt — mostrar y leer los QR para pasar datos de un teléfono a otro
-// (camara-qr.js; el formato está en nucleo/qr). Se abren sobre toda la app
-// con ctx.abrirCapa { … }.
-//
-// Mostrar: si son varias partes, UN solo código que cambia solo cada 0,8 s;
-// quien recibe solo apunta y su teléfono junta las partes en cualquier orden.
-// Si una cámara no alcanza a leerlo al vuelo, «¿No lo lee? Ver de a uno».
-// Mientras se muestra, la pantalla no se apaga y va con todo el brillo.
-// Leer: ML Kit de códigos; se juntan las partes de un mismo envío.
-// Nada de esto sale del teléfono: el QR se ve en pantalla y nada más.
+// Mostrar y leer los QR para pasar datos de un teléfono a otro (el formato está en
+// nucleo/qr). Varias partes van en UN solo código que cambia cada 0,8 s; quien recibe
+// las junta en cualquier orden. Nada sale del teléfono: el QR se ve en pantalla y nada más.
 package io.github.tmrainer.asistencia.ui.camara
 
 import android.app.Activity
@@ -55,6 +48,9 @@ import io.github.tmrainer.asistencia.nucleo.qr.Paquete
 import io.github.tmrainer.asistencia.nucleo.qr.PartesRecibidas
 import io.github.tmrainer.asistencia.nucleo.qr.juntarPartesQr
 import io.github.tmrainer.asistencia.nucleo.qr.matrizQr
+import androidx.compose.runtime.CompositionLocalProvider
+import io.github.tmrainer.asistencia.ui.tema.COLORES_OSCURO
+import io.github.tmrainer.asistencia.ui.tema.LocalColores
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.Enlace
@@ -199,6 +195,8 @@ fun LeerQr(alRecibir: (Paquete) -> Unit, alCerrar: () -> Unit) {
         }
     }
 
+    // Fondo siempre negro: los botones con los colores del modo oscuro, también en el claro.
+    CompositionLocalProvider(LocalColores provides COLORES_OSCURO) {
     val c = colores
     Column(
         Modifier.fillMaxSize().background(Color.Black).systemBarsPadding().padding(Medidas.e4),
@@ -230,4 +228,5 @@ fun LeerQr(alRecibir: (Paquete) -> Unit, alCerrar: () -> Unit) {
         }
     }
     @Suppress("UNUSED_VARIABLE") val sinUso = c
+    }
 }

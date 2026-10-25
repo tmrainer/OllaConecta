@@ -1,9 +1,8 @@
-// ListaQr.kt — porte de web/js/lista-qr.js: el QR de antes, solo cifras, con
-// la asistencia de un día. Funciones puras: sin Android, sin estado.
+// El QR de antes, solo cifras, con la asistencia de un día. Funciones puras:
+// sin Android, sin estado.
 //
-// Ya no se genera desde la pantalla (compartir-qr manda «P3…»), pero un
-// teléfono con la versión anterior todavía lo muestra y hay que poder leerlo
-// (leerParteQr() de CompartirQr.kt lo reconoce).
+// Ya no se genera, pero un teléfono con la versión anterior todavía lo muestra
+// y hay que poder leerlo (leerParteQr() de CompartirQr.kt lo reconoce).
 //
 // Formato de cada parte (todo cifras):
 //   «81» (marca y versión) · AAAAMMDD · parte (2) · total (2) · cuántas (3)

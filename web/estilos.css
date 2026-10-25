@@ -1,10 +1,7 @@
-/* estilos.css — OllaConecta.
-   Verdes del informe del proyecto (UNACEM · Desafío 2) sobre un sistema
-   visual de pocas piezas: colores con nombre de uso (no de tono), cinco
-   tamaños de letra, una escala de espacios, tres radios y dos sombras. El
-   modo oscuro solo cambia los valores de los colores (sigue al teléfono). */
+/* OllaConecta: colores con nombre de uso (no de tono), cinco tamaños de letra, una
+   escala de espacios, tres radios y dos sombras. El modo oscuro solo cambia los colores. */
 
-/* ------------------------------------------------------------- tokens */
+/* Tokens */
 
 /* Letra: Atkinson Hyperlegible Next (Braille Institute, licencia OFL en
    fuentes/OFL.txt), hecha para leerse bien con poca vista: no confunde I, l y 1
@@ -135,7 +132,7 @@
   --toque: rgba(255, 255, 255, .08);
 }
 
-/* ---------------------------------------------------------------- base */
+/* Base */
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
@@ -184,11 +181,9 @@ a { color: var(--acento-texto); }
 }
 main:focus, [data-paso] > h2:focus { outline: none; }
 
-/* ----------------------------------------------------- transiciones
-
-   Entre pantallas no hay recarga en blanco: el contenido se funde y la
-   cabecera y el menú de abajo se quedan quietos (View Transitions, sin
-   librerías; donde no existen, todo funciona igual, sin la animación). */
+/* Transiciones: entre pantallas no hay recarga en blanco; el contenido se funde y
+   la cabecera y el menú de abajo se quedan quietos (View Transitions; donde no
+   existen, todo funciona igual, sin la animación). */
 
 @view-transition { navigation: auto; }
 .cabecera { view-transition-name: cabecera; }
@@ -207,7 +202,7 @@ main:focus, [data-paso] > h2:focus { outline: none; }
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
-/* ------------------------------------------------------------- cabecera */
+/* Cabecera */
 
 .cabecera {
   /* Con la pantalla de borde a borde (app instalada, APK) la cabecera
@@ -318,9 +313,7 @@ body::before {
 }
 .saltar-al-contenido:focus { top: 0; }
 
-/* ------------------------------------------------------------- bloques
-
-   Una sola capa: secciones sobre el fondo, sin caja alrededor. Lo que es
+/* Bloques: una sola capa, secciones sobre el fondo sin caja alrededor. Lo que es
    una unidad (una lista, una compra, el día) es una superficie. */
 
 section.bloque, details.bloque { margin: 0 0 var(--e5); }
@@ -347,7 +340,7 @@ section.bloque.apoyo > h2 { color: var(--tinta-suave); font-size: var(--t-texto)
   .rejilla.tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-/* --------------------------------------------------------------- campos */
+/* Campos */
 
 .campo { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .campo > label, .leyenda { font-size: var(--t-chico); font-weight: 600; color: var(--tinta); }
@@ -387,10 +380,8 @@ legend.obligatoria::after { content: " *"; color: var(--error); font-weight: 700
 .campo-error { margin: 2px 0 0; font-size: .82rem; font-weight: 400; color: var(--aviso); }
 .campo-error.es-error { color: var(--error); }
 
-/* --------------------------------------------------------------- botones
-
-   Tres clases y nada más: principal (relleno), secundario (contorno) y de
-   texto (enlace-ir). Diminuto es solo un tamaño. */
+/* Botones: tres clases y nada más: principal (relleno), secundario (contorno) y
+   de texto (enlace-ir). Diminuto es solo un tamaño. */
 
 /* hidden siempre esconde: si no, un display de clase (.boton, .fab…) le gana. */
 [hidden] { display: none !important; }
@@ -417,10 +408,8 @@ legend.obligatoria::after { content: " *"; color: var(--error); font-weight: 700
   padding: 6px var(--e1); min-height: 32px; border-radius: var(--r-s);
 }
 
-/* ------------------------------------------------- fichas y etiquetas
-
-   Una sola forma redondeada para todo lo que es una etiqueta: filtros,
-   conteos del panel, cifras de un resumen, menú de cada persona. */
+/* Fichas y etiquetas: una sola forma redondeada para todo lo que es una etiqueta:
+   filtros, conteos del panel, cifras de un resumen, menú de cada persona. */
 
 .pastilla, .chip, .ficha-filtro, .toque-menu, .persona-falta, .dia-hoy, .banner-cuenta, .meta-social {
   display: inline-flex; align-items: center; gap: 6px; border-radius: var(--r-redondo); white-space: nowrap;
@@ -443,10 +432,8 @@ legend.obligatoria::after { content: " *"; color: var(--error); font-weight: 700
 }
 .ficha-filtro[aria-pressed="true"] { background: var(--seleccion); border-color: var(--acento-texto); font-weight: 700; }
 
-/* --------------------------------------------------------- avisos y franjas
-
-   Todos iguales: fondo suave del estado, esquinas redondeadas, un ícono.
-   Sin rayas de color al costado. */
+/* Avisos y franjas: todos iguales, fondo suave del estado, esquinas redondeadas y
+   un ícono. Sin rayas de color al costado. */
 
 .aviso-sistema, .recordatorio-respaldo, .banner-alerta, .estado-b1, .sugerencia {
   border-radius: var(--r-m); padding: var(--e3) var(--e4); font-size: .9rem;
@@ -489,7 +476,7 @@ legend.obligatoria::after { content: " *"; color: var(--error); font-weight: 700
 .marca-propuesto { font-size: .8rem; color: var(--acento-texto); font-weight: 700; }
 
 
-/* -------------------------------------------------------- panel de revisión */
+/* Panel de revisión */
 
 .panel {
   position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
@@ -519,10 +506,8 @@ body[data-pagina="asistencia"] .panel { position: static; }
 .panel-tipo { font-weight: 700; }
 .panel-mensaje { flex: 1 1 200px; }
 
-/* ----------------------------------------------------------- listas
-
-   Una lista es UNA superficie con filas separadas por una línea fina, como
-   en Android; no una tarjeta por fila dentro de otra tarjeta. */
+/* Listas: UNA superficie con filas separadas por una línea fina, como en Android;
+   no una tarjeta por fila dentro de otra tarjeta. */
 
 .lista-toque, #lista-afiliados, #lista-atenciones, .imp-lista, .meses-lista, .agenda, .revision-pendientes {
   list-style: none; margin: var(--e3) 0 0; padding: 0;
@@ -631,7 +616,7 @@ body[data-pagina="asistencia"] .panel { position: static; }
 .vacio-mensaje.logrado .vacio-dibujo { background: var(--acento); color: #fff; }
 .vacio-mensaje .boton { text-decoration: none; }
 
-/* ------------------------------------------------- asistencia de hoy */
+/* Asistencia de hoy */
 
 /* El título «Asistencia de hoy» ya lo dice la cabecera: queda para quien
    usa lector de pantalla, no a la vista. */
@@ -668,7 +653,7 @@ body[data-pagina="asistencia"] .panel { position: static; }
 .asistencia summary { cursor: pointer; font-weight: 700; font-size: .86rem; color: var(--acento-texto); padding-block: 6px; }
 .asistencia-resumen { font-size: .84rem; color: var(--tinta-suave); margin-top: var(--e2); }
 
-/* ---------------------------------------------------------- compras del B-1 */
+/* Compras del B-1 */
 
 .ficha {
   background: var(--superficie); border-radius: var(--r-m); padding: var(--e4);
@@ -719,7 +704,7 @@ details.bloque.desplegable > summary h2 { margin: 0; }
 details.bloque.desplegable[open] { padding-bottom: var(--e4); }
 details.bloque.desplegable[open] > summary + * { margin-top: var(--e1); }
 
-/* --------------------------------------------------- agenda e importación */
+/* Agenda e importación */
 
 .agenda-item { display: flex; flex-wrap: wrap; gap: var(--e3); align-items: center; padding: var(--e3) var(--e4); }
 .agenda-fecha { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 9ch; color: var(--titulo); }
@@ -753,7 +738,7 @@ table.tabla th, table.tabla td { border-bottom: 1px solid var(--borde); padding:
 table.tabla thead th { font-size: .78rem; font-weight: 700; color: var(--tinta-suave); background: var(--superficie-2); white-space: nowrap; position: sticky; top: 0; }
 table.tabla td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
-/* ------------------------------------------------- plegables y pie */
+/* Plegables y pie */
 
 .plegable { border-top: 1px solid var(--borde); margin: var(--e2) 0 2px; }
 .plegable > summary {
@@ -772,7 +757,7 @@ table.tabla td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .detalle-error { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .78rem; max-height: 12em; overflow: auto; margin: 6px 0 0; }
 
-/* --------------------------------------- aviso abajo con «Deshacer» y FAB */
+/* Aviso abajo con «Deshacer» y FAB */
 
 .aviso-abajo {
   position: fixed; left: var(--e4); right: var(--e4); z-index: 45; max-width: 460px; margin: 0 auto;
@@ -799,7 +784,7 @@ table.tabla td.num { text-align: right; font-variant-numeric: tabular-nums; }
 /* En el B-1 por pasos, el botón flotante va sobre la barra de «Siguiente». */
 body.por-pasos .fab { bottom: calc(var(--alto-nav-abajo, 68px) + 84px); }
 
-/* ------------------------------------------------------- B-1 por pasos */
+/* B-1 por pasos */
 
 body.por-pasos [data-paso]:not(.paso-actual) { display: none; }
 .pasos { margin: 0 0 var(--e3); }
@@ -825,7 +810,7 @@ body.por-pasos [data-paso]:not(.paso-actual) { display: none; }
 .revision-paso { font-size: .76rem; font-weight: 700; color: var(--aviso); background: var(--aviso-fondo); border-radius: var(--r-redondo); padding: 2px var(--e2); }
 .revision-texto { flex: 1 1 14em; }
 
-/* ------------------------------------------------- entregas: cuenta regresiva */
+/* Entregas: cuenta regresiva */
 
 .reloj-entrega {
   text-align: center; margin: 0 0 var(--e4); padding: var(--e5) var(--e4);
@@ -843,7 +828,7 @@ body.por-pasos [data-paso]:not(.paso-actual) { display: none; }
 .reloj-circulo span { color: var(--tinta-suave); font-size: .9rem; }
 .reloj-texto { margin: 0 auto; max-width: 26em; font-weight: 600; color: var(--titulo); }
 
-/* ------------------------------------------------------------- inicio */
+/* Inicio */
 
 .hoy-tarjeta { background: var(--marca); color: #fff; border-radius: var(--r-l); padding: var(--e4) var(--e5); box-shadow: var(--sombra-1); margin-bottom: var(--e4); }
 .hoy-etiqueta { display: block; margin: 0; color: var(--marca-suave); font-size: .9rem; }
@@ -880,7 +865,7 @@ body.por-pasos [data-paso]:not(.paso-actual) { display: none; }
 .nota-copia.pendiente .icono { color: var(--aviso); }
 .nota-copia.pendiente span { flex: 1 1 12em; color: var(--tinta); }
 
-/* ---------------------------------------------- primer uso: ¿cómo se usa? */
+/* Primer uso: ¿cómo se usa? */
 
 dialog.bienvenida {
   border: 0; border-radius: var(--r-l); padding: var(--e5) var(--e5) var(--e4); width: min(92vw, 420px);
@@ -897,16 +882,11 @@ dialog.bienvenida::backdrop { background: rgba(10, 18, 12, .6); }
 .bienvenida-botones { display: flex; gap: 10px; margin-top: var(--e5); }
 .bienvenida-botones .boton { flex: 1; }
 
-/* ------------------------------------------- reservar el sitio por adelantado
-
-   Las páginas se pintan cuando su módulo ya corrió (blocking="render"): la
-   cabecera, el menú, el banner y el panel aparecen de una vez, sin saltos.
-   Lo que quedó vacío no ocupa lugar. */
+/* Las páginas se pintan cuando su módulo ya corrió (blocking="render"), sin saltos:
+   lo que quedó vacío no ocupa lugar. */
 #banner:empty, .panel:empty { display: none; }
 
-/* ------------------------------------------------------------ hover
-
-   Solo con ratón: en un celular el :hover se queda puesto después del toque. */
+/* Hover solo con ratón: en un celular el :hover se queda puesto después del toque. */
 @media (hover: hover) {
   .nav-enlace:hover { color: var(--titulo); }
   input:hover, select:hover, textarea:hover { border-color: var(--acento-texto); }
@@ -918,10 +898,8 @@ dialog.bienvenida::backdrop { background: rgba(10, 18, 12, .6); }
   .plegable > summary:hover { color: var(--titulo); }
 }
 
-/* ------------------------------------------------------------- celular
-
-   Pensado para pasar lista con una mano: el menú abajo, al alcance del
-   pulgar; arriba solo lo indispensable, para que la lista se vea al abrir. */
+/* Celular: pensado para pasar lista con una mano; el menú abajo, al alcance del
+   pulgar, y arriba solo lo indispensable, para que la lista se vea al abrir. */
 
 @media (max-width: 619px) {
   .cabecera-titulo { padding: var(--e2) var(--e1) var(--e2) var(--e4); }
@@ -950,7 +928,7 @@ dialog.bienvenida::backdrop { background: rgba(10, 18, 12, .6); }
 /* El panel se pega arriba: lo enfocado nunca queda debajo de él. ui.js mide su alto. */
 html { scroll-padding-top: calc(var(--alto-panel, 6rem) + var(--e2) + env(safe-area-inset-top, 0px)); }
 
-/* ---------- Ajustes ---------- */
+/* Ajustes */
 .enlace-ajustes {
   display: flex; align-items: center; gap: var(--e3); min-height: 48px; padding: var(--e3) var(--e4);
   margin-top: var(--e3); border-radius: var(--r-m); background: var(--superficie); color: var(--tinta);
@@ -966,7 +944,7 @@ button.enlace-ajustes { width: 100%; border: 0; font: inherit; text-align: start
 .enlace-datos > span { flex: 1; display: grid; gap: 2px; }
 .enlace-detalle { font-weight: 400; font-size: .9rem; color: var(--tinta-suave); }
 
-/* ---------- Tus datos ---------- */
+/* Tus datos */
 .lugares { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e3); }
 .lugar {
   display: flex; gap: var(--e3); align-items: flex-start; padding: var(--e3) var(--e4);
@@ -1004,7 +982,7 @@ button.enlace-ajustes { width: 100%; border: 0; font: inherit; text-align: start
 :root[data-tema="oscuro"] .logo-oscuro { display: block; }
 .acerca p { text-align: center; text-wrap: balance; }
 
-/* ---------- Cámara para leer el DNI ---------- */
+/* Cámara para leer el DNI */
 dialog.camara-dni {
   width: min(560px, calc(100% - 2 * var(--e4))); max-height: calc(100dvh - 2 * var(--e4));
   border: 0; border-radius: var(--r-l); padding: var(--e4); overflow-y: auto; overscroll-behavior: contain;
@@ -1116,7 +1094,7 @@ pre.plantilla {
   border-radius: var(--r-m); padding-block: var(--e2); overflow-wrap: anywhere;
 }
 
-/* ---------- Vista previa del B-1 sobre la hoja oficial ---------- */
+/* Vista previa del B-1 sobre la hoja oficial */
 /* La hoja es papel: blanca y con tinta negra también en modo oscuro. Cada dato
    es una caja absoluta en mm (plantilla-b1.js); sin flujo, tablas ni flexbox. */
 .hoja-marco {

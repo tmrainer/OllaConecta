@@ -1,16 +1,8 @@
-// Almacen.kt — los datos en el teléfono. Equivale a leer()/guardar() de
-// web/js/modelo.js sobre localStorage, pero sobre archivos de una carpeta
-// (en Android, context.filesDir).
-//
-// Una clave = un archivo, como las cinco claves de localStorage: se separan a
-// propósito, un padrón corrupto no debe impedir llenar una rendición. El
-// contenido de cada archivo es el mismo JSON que esa parte lleva en el
-// respaldo exportado (padron.json = respaldo.padron, etc.).
-//
-// Toda lectura tolera ausencia y corrupción: ante duda se arranca vacío y se
-// avisa; lo ilegible se conserva aparte (<archivo>.respaldo), nunca se borra
-// en silencio. Toda escritura es atómica: archivo temporal + rename, así un
-// corte de luz a medio escribir deja el archivo anterior intacto.
+// Los datos en el teléfono: una clave = un archivo JSON en una carpeta (en
+// Android, context.filesDir). Se separan a propósito: un padrón corrupto no
+// debe impedir llenar una rendición. Lo ilegible se conserva aparte
+// (<archivo>.respaldo), nunca se borra en silencio. Toda escritura es atómica
+// (temporal + rename): un corte de luz a medio escribir deja el anterior intacto.
 package io.github.tmrainer.asistencia.nucleo.almacen
 
 import io.github.tmrainer.asistencia.nucleo.modelo.JSON
@@ -37,7 +29,7 @@ class Almacen(private val carpeta: File) {
     // Lo último leído o escrito de cada clave: si no cambió, no se escribe.
     private val enDisco = HashMap<Clave, String?>()
 
-    /** Avisos de lectura o escritura acumulados (como avisosAlmacenamiento() en la web). */
+    /** Avisos de lectura o escritura acumulados. */
     fun avisosAlmacenamiento(): List<String> = avisos.toList()
 
     private fun archivo(clave: Clave) = File(carpeta, clave.archivo)

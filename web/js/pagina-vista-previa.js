@@ -1,13 +1,6 @@
-// pagina-vista-previa.js — controlador de vista-previa.html (fase 4).
-//
-// Se abre desde el paso «Revisar» del B-1. Solo muestra: exportar (PDF o
-// Excel) está en el propio B-1, junto al enlace que trae aquí.
-//
-// Pone los datos del B-1 en sus posiciones de la hoja oficial (plantilla-b1.js)
-// y lo muestra en pantalla. No imprime. Opcional: una foto de la hoja en blanco
-// de fondo, solo en memoria (URL.createObjectURL): ni localStorage, ni red, ni
-// impresión. Para el equipo, un panel que mueve las cajas en vivo y copia las
-// coordenadas para pegarlas en plantilla-b1.js (no se guardan solas).
+// Controlador de vista-previa.html: pone los datos del B-1 en sus posiciones de la
+// hoja oficial (plantilla-b1.js) solo para verlos; no imprime ni exporta.
+// La foto de fondo vive solo en memoria (URL.createObjectURL): ni localStorage, ni red.
 
 import { CLAVES, leer } from './modelo.js';
 import { buscar, crearElemento, montarCabecera, pintarAvisosAlmacenamiento, avisoAbajo } from './ui.js';
@@ -39,8 +32,6 @@ buscar('#cual-b1').textContent = rendicion
   ? `B-1 ${rendicion.periodo && rendicion.periodo.etiqueta ? `de ${rendicion.periodo.etiqueta}` : 'en curso'}. ` +
     'Solo van los datos: los rótulos, líneas y recuadros ya están en el papel.'
   : 'Todavía no hay un B-1 llenado: la hoja sale vacía.';
-
-// ---------------------------------------------------------------- la hoja
 
 const capa = buscar('#hoja-datos');
 const LETRA_MIN = -0.08; // em: lo más que se aprietan las letras antes de truncar
@@ -142,9 +133,8 @@ if (hojas.length > 1) {
 pintarHoja();
 escalar();
 
-// ------------------------------------------------- el formato dibujado
-// El mismo dibujo del PDF, en SVG (mm: viewBox 210 × 297): sin él solo se
-// veían los datos sueltos y parecía que el formato no terminaba de cargar.
+// El mismo dibujo del PDF, en SVG (mm: viewBox 210 × 297): sin él, los datos
+// sueltos parecen una hoja que no terminó de cargar.
 
 function lienzoSvg(svg) {
   const NS = 'http://www.w3.org/2000/svg';
@@ -178,8 +168,6 @@ dibujarFormato(lienzoSvg(formato));
 const mostrarFormato = buscar('#mostrar-formato');
 mostrarFormato.addEventListener('change', () => { formato.style.display = mostrarFormato.checked ? '' : 'none'; });
 
-// ------------------------------------------------------- la foto de fondo
-
 const guia = buscar('#hoja-guia');
 const opacidad = buscar('#opacidad-guia');
 const mostrar = buscar('#mostrar-guia');
@@ -202,8 +190,7 @@ opacidad.addEventListener('input', aplicarGuia);
 mostrar.addEventListener('change', aplicarGuia);
 aplicarGuia();
 
-// ------------------------------------------------- ajustar (equipo)
-
+// Panel para el equipo: mueve las cajas en vivo y copia las coordenadas para plantilla-b1.js.
 const cual = buscar('#ajustar-cual');
 const OPCIONES = [
   ...Object.keys(plantilla.campos).map((k) => ['campo', k, k]),

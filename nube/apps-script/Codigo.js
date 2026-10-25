@@ -1,19 +1,11 @@
-// Codigo.js — el envío a UNACEM: toma las solicitudes que deja la app, arma el
-// Excel (reportes.js: el mismo código con el que la app exporta) y lo manda
-// por correo. De noche manda solo lo que ninguna olla pidió.
+// El envío a UNACEM: toma las solicitudes de ollas/{olla}/envios, arma el Excel
+// (reportes.js: el mismo código con el que la app exporta) y lo manda por correo
+// a ajustes/envio. De noche manda solo lo que ninguna olla pidió.
 //
 // Corre en Google Apps Script, cada 10 minutos (instalar() lo programa), con
 // la cuenta dueña del proyecto Firebase. Lee y escribe Firestore por su API
 // REST con el permiso de esa cuenta: no pasa por firestore.rules y no guarda
 // ninguna clave.
-//
-// Qué mira en Firestore (ver firestore.rules):
-//   ajustes/envio                  { correo }  a dónde se manda; lo pone quien coordina
-//   ollas/{olla}/envios/{id}       una solicitud: tipo ('asistencia' | 'padron'), fecha,
-//                                  inicio, fin, modo ('manual' | 'automatico'), estado
-//                                  ('pendiente' → 'enviado' | 'fallo'), pedidoPor, pedidoEn;
-//                                  aquí se le agregan enviadoEn, para, archivo, intentos, error.
-//   ollas/{olla}/personas, dias    el padrón y la asistencia (sincronizacion.js los sube)
 //
 // Un envío de asistencia es un día (inicio = fin = fecha). Uno de padrón, las
 // personas activas a `fecha` con los días que vinieron entre inicio y fin.
@@ -27,8 +19,6 @@ const AJUSTES = {
 };
 
 const MIME_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-
-// ------------------------------------------------------------------ entrada
 
 /** Lo que corre cada 10 minutos: lo pedido y, de noche, lo que falte. */
 function revisar() {
@@ -48,8 +38,6 @@ function instalar() {
   ScriptApp.newTrigger('revisar').timeBased().everyMinutes(10).create();
   Logger.log('Listo: revisar() corre cada 10 minutos.');
 }
-
-// -------------------------------------------------------------- los envíos
 
 function correoDestino() {
   const d = leerDoc('ajustes/envio');
@@ -187,7 +175,6 @@ function aBytesDeJava(bytes) {
   return salida;
 }
 
-// ------------------------------------------------------------------ fechas
 // Perú no cambia la hora en el año: Lima es siempre UTC-5.
 
 const LIMA_MS = -5 * 3600000;
@@ -209,7 +196,6 @@ function quincena(iso) {
   return d <= 15 ? [mes + '01', mes + '15'] : [mes + '16', mes + dos(ultimoDia(a, m))];
 }
 
-// --------------------------------------------------------- Firestore (REST)
 // Documentos como objetos planos; cada documento trae además `ruta`
 // ('ollas/x/envios/y') e `id` (el último tramo), salvo que sus campos lo pisen.
 

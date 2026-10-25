@@ -1,4 +1,3 @@
-// Proyecto nativo (Kotlin).
 pluginManagement {
     repositories {
         google()

@@ -1,4 +1,3 @@
-// Grupos «Raciones» y «Asistencia» de web/js/casos-prueba.js.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.calculos.Origen

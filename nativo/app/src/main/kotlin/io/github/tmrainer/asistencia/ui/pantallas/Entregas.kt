@@ -1,6 +1,5 @@
-// Entregas.kt — fechas de entrega del B-1 y cuenta regresiva
-// (pagina-calendario.js). Lo primero que se ve: cuántos días faltan, grande,
-// como en un reloj. Con permiso, el teléfono avisa aunque la app esté
+// Fechas de entrega del B-1 y cuenta regresiva. Lo primero que se ve: cuántos días
+// faltan, grande, como en un reloj. Con permiso, el teléfono avisa aunque la app esté
 // cerrada (AvisosTelefono.kt); sin él, se ofrece activarlos.
 package io.github.tmrainer.asistencia.ui.pantallas
 
@@ -117,7 +116,6 @@ fun PantallaEntregas(ctx: Contexto) {
             val avisosAlmacen = estado.avisosAlmacenamiento()
             if (avisosAlmacen.isNotEmpty()) AvisoSistema(avisosAlmacen.joinToString(" "), Modifier.padding(bottom = Medidas.e4))
 
-            // ---- cuenta regresiva ----
             val a = alertaProximaEntrega(calendario, hoy)
             val diasAlerta = a?.diasRestantes
             val fechaAlerta = a?.fechaLimite
@@ -157,7 +155,6 @@ fun PantallaEntregas(ctx: Contexto) {
 
             PanelHallazgos(validarCalendario(calendario))
 
-            // ---- próximas entregas ----
             TituloSeccion("Próximas entregas")
             val r = rendiciones.firstOrNull()
             if (r != null) {
@@ -227,7 +224,6 @@ fun PantallaEntregas(ctx: Contexto) {
             }
             AvisosDelTelefono(esIso(calendario.fechaLimiteBase))
 
-            // ---- cada cuánto entregas ----
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Cada cuánto entregas")
             Leyenda("Cada cuánto")

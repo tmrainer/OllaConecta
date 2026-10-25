@@ -1,8 +1,6 @@
-// Envio.kt — el correo a UNACEM, armado en el teléfono (armarCorreo(),
-// esDiaDePadron() y quincena() de nube/apps-script/Codigo.js). En la web lo
-// manda un script en la nube; aquí la dirigente lo manda desde su propio
-// correo: la app solo deja listos el asunto, el texto y el Excel adjunto
-// (los mismos de excel-reportes.js), sin servidor ni cuenta.
+// El correo a UNACEM, armado en el teléfono: la dirigente lo manda desde su
+// propio correo y la app solo deja listos el asunto, el texto y el Excel
+// adjunto, sin servidor ni cuenta.
 //
 // Solo ordena y suma lo ya ingresado: no completa ni deduce nada.
 package io.github.tmrainer.asistencia.nucleo.envio
@@ -39,7 +37,7 @@ fun quincena(iso: String): Pair<String, String> {
 
 /**
  * El nombre del archivo: solo letras sin tilde, números, guion y punto (así
- * lo acepta Android y se lee bien en WhatsApp), como nombreArchivo() de la web.
+ * lo acepta Android y se lee bien en WhatsApp).
  */
 fun nombreArchivo(texto: String, extension: String): String {
     val sinTildes = Normalizer.normalize(texto, Normalizer.Form.NFD).replace(Regex("[\\u0300-\\u036f]"), "")

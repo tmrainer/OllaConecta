@@ -1,6 +1,5 @@
-// Grupo «Escaneo DNI» de web/js/casos-prueba.js (16 casos). Todos los datos
-// son inventados: la MRZ de ejemplo de la propia norma ICAO 9303-5 (país
-// ficticio «UTO») y nombres y números de prueba.
+// Escaneo del DNI. Todos los datos son inventados: la MRZ de ejemplo de la
+// propia norma ICAO 9303-5 (país ficticio «UTO») y nombres y números de prueba.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.dni.CAMPOS
@@ -32,7 +31,7 @@ private val MRZ_ICAO = listOf(
 private val ANVERSO_PRUEBA = listOf("REPÚBLICA DEL PERÚ", "DOCUMENTO NACIONAL DE IDENTIDAD", "Primer Apellido", "MUÑOZ",
     "Segundo Apellido", "QUISPE", "Prenombres", "JOSÉ ALBERTO", "Sexo M")
 
-/** El campo de CAMPOS por su nombre, como `r[c]` en la web. */
+/** El campo de CAMPOS por su nombre. */
 private fun campo(r: DatosDni, nombre: String): String? = when (nombre) {
     "tipoDocumento" -> r.tipoDocumento
     "numeroDocumento" -> r.numeroDocumento

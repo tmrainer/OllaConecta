@@ -1,4 +1,4 @@
-// Pruebas de la migración del APK 1.7 (fase 4): los textos de localStorage
+// Pruebas de la migración del APK 1.7: los textos de localStorage
 // que la web deja con el respaldo ficticio cargado, traducidos aquí, deben dar
 // lo mismo que recuperar el respaldo ficticio. Los casos límite del padrón
 // empacado se comparan con desempacarPadron() de la web. Los dos recursos los

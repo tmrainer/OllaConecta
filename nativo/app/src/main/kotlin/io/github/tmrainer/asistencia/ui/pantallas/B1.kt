@@ -1,9 +1,6 @@
-// B1.kt — el Formato B-1 por pasos (pagina-b1.js): una sección a la vez, con
-// «Atrás / Siguiente» y una barra que dice dónde estás y qué paso tiene algo
-// pendiente. No se avanza con un dato obligatorio pendiente: se dice cuál y
-// se lleva ahí. Las sugerencias se ofrecen; nunca se aplican solas.
-//
-// Ver cómo queda en la hoja y exportar llegan en una fase siguiente.
+// El Formato B-1 por pasos: una sección a la vez, con «Atrás / Siguiente» y una barra
+// que dice dónde estás y qué paso tiene algo pendiente. Las sugerencias se ofrecen;
+// nunca se aplican solas.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import io.github.tmrainer.asistencia.nucleo.modelo.uuid
@@ -222,7 +219,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
         if (campo.startsWith("egreso.")) egresoAbierto = campo.removePrefix("egreso.")
     }
 
-    /** Exportar pide el B-1 completo: si falta algo, se dice qué y se lleva ahí (listoParaExportar de la web). */
+    /** Exportar pide el B-1 completo: si falta algo, se dice qué y se lleva ahí. */
     fun listoParaExportar(): Boolean {
         val pendientes = validarRendicion(rendicion).filter { it.severidad == Severidad.ERROR }.sortedBy { pasoDe(it.campo) }
         if (pendientes.isEmpty()) { ctx.estado.guardarPendiente(); return true }
@@ -262,7 +259,6 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                 BannerEntrega(ctx, calendario, hoyIso())
                 PanelHallazgos(hallazgos, alIrA = { irACampo(it) })
 
-                // ---- la barra de pasos ----
                 Row(Modifier.objetivoGuia("b1.barra").fillMaxWidth().padding(bottom = 2.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     PASOS.forEachIndexed { i, nombre ->
                         val n = i + 1
@@ -302,7 +298,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                 EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
                 Text("El B-1 es una declaración jurada: revisa todo.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e5))
             }
-            // ---- Atrás / Siguiente, pegados abajo, con su propio fondo y una línea arriba ----
+            // Atrás / Siguiente, pegados abajo.
             Separador()
             Column(Modifier.fillMaxWidth().background(c.superficie).padding(Medidas.e4, 10.dp)) {
                 if (avisoPasos.isNotEmpty()) {
@@ -363,8 +359,6 @@ private fun BannerEntrega(ctx: Contexto, calendario: io.github.tmrainer.asistenc
     // Una sola idea: la cuenta. El detalle está en Entregas.
     FranjaEstado("$titulo: $cuenta.", tono, Modifier.padding(bottom = Medidas.e4), icono = if (alerta.nivel == Nivel.VENCIDA) "aviso" else "reloj", boton = "Ver entregas" to { ctx.ir(Ruta.ENTREGAS) })
 }
-
-// ------------------------------------------------------------------ pasos
 
 @Composable
 private fun PasoCentro(
@@ -556,7 +550,7 @@ private fun PasoCompras(
     // Agregar es el botón flotante «Compra»: una sola acción principal por pantalla.
     Text("${cuantos(r.egresos.size, "compra")}. La hoja del formato tiene 17 filas.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
 
-    // ---- totales: se suman solos; de solo lectura ----
+    // Los totales se suman solos; de solo lectura.
     val t = totales(r)
     Superficie(Modifier.padding(top = Medidas.e4)) {
         Column(Modifier.padding(Medidas.e4, Medidas.e3)) {
@@ -577,7 +571,7 @@ private fun PasoCompras(
         }
     }
 
-    // ---- gasto propio: fuera del B-1 ----
+    // Gasto propio: fuera del B-1.
     Spacer(Modifier.height(Medidas.e5))
     TituloSeccion("Gasto propio (no va en el B-1)", apoyo = true)
     Pista("Lo comprado con su propio dinero, como azúcar extra. No va en el B-1: sale en el reporte del mes.", Modifier.padding(bottom = Medidas.e3))
@@ -680,10 +674,11 @@ private fun PasoRevisar(
     BotonesExportar(
         pdf = { Documento(pdfDelB1(hojasDelB1(r), selloAhora(), "Formato B-1 $etiqueta"), "B-1 $etiqueta", "Formato B-1 $etiqueta (copia de referencia)", AlElegir.B1(r.id, "pdf")) },
         excel = { Documento(excelDelB1(r), "B-1 $etiqueta", "Formato B-1 $etiqueta", AlElegir.B1(r.id, "excel")) },
-        puede = listoParaExportar
+        puede = listoParaExportar,
+        // En el último paso, mandar el B-1 es lo que se hace: la única acción rellena.
+        pdfPrincipal = true
     )
 
-    // ---- meses anteriores ----
     Spacer(Modifier.height(Medidas.e5))
     TituloSeccion("Meses anteriores", apoyo = true)
     if (indice == 0) {

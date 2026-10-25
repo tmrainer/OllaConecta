@@ -1,6 +1,6 @@
-// ReportesOllaTest.kt — los reportes del día y del mes: cuadran con lo que ya
-// calcula la app (raciones, asistencia por persona), no inventan lo que no se
-// anotó, y el gasto propio queda aparte de los insumos del B-1.
+// Los reportes del día y del mes: cuadran con lo que ya calcula la app
+// (raciones, asistencia por persona), no inventan lo que no se anotó, y el
+// gasto propio queda aparte de los insumos del B-1.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.calculos.asistenciaPorAfiliado

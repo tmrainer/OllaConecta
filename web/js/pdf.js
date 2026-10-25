@@ -1,9 +1,6 @@
 // pdf.js — escribir un PDF a mano: texto, líneas y recuadros, con las fuentes
 // estándar Helvetica y Helvetica-Bold (codificación WinAnsi, con tildes y ñ).
 // Sin librerías ni red. Puro: devuelve los bytes.
-//
-// Lo usan el PDF del B-1 (pdf-b1.js) y los del padrón y la asistencia
-// (pdf-reportes.js).
 
 export const PT = 72 / 25.4; // puntos por mm
 
@@ -38,8 +35,6 @@ export function anchoMm(texto, pt, negrita = false) {
   }
   return (mil / 1000) * pt * (negrita ? 1.07 : 1) / PT;
 }
-
-// ------------------------------------------------------------ dibujo en mm
 
 /** Una hoja en blanco para dibujar en mm desde arriba a la izquierda. A4: 297 de alto; apaisada: 210. */
 export function lienzo(altoMm = 297) {

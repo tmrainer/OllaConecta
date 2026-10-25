@@ -1,5 +1,4 @@
-// Alertas.kt — porte de web/js/alertas.js: cuenta regresiva hasta la próxima
-// entrega del formato. Funciones PURAS.
+// Cuenta regresiva hasta la próxima entrega del formato. Funciones PURAS.
 //
 // La app NO conoce el calendario oficial de la Municipalidad. Todo sale de dos
 // datos que escribe la usuaria: cada cuánto entrega, y UNA fecha de entrega.

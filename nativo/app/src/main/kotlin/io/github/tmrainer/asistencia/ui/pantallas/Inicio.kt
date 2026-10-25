@@ -1,5 +1,4 @@
-// Inicio.kt — la pantalla de Inicio (pagina-inicio.js): el día de un vistazo,
-// la próxima entrega, las tareas («Pasar lista hoy», «Anotar una compra»…), la
+// La pantalla de Inicio: el día de un vistazo, la próxima entrega, las tareas, la
 // copia de los datos y «Más». También la bienvenida de la primera vez.
 package io.github.tmrainer.asistencia.ui.pantallas
 
@@ -71,7 +70,6 @@ fun PantallaInicio(ctx: Contexto) {
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
         ) {
-            // ---- el día de hoy ----
             val atHoy = padron.atenciones.firstOrNull { it.fecha == hoy }
             val d = desgloseDelDia(atHoy)
             val rec = if (atHoy != null) recaudacionDelDiaCent(atHoy) else 0L
@@ -119,7 +117,6 @@ fun PantallaInicio(ctx: Contexto) {
                 }
             }
 
-            // ---- las tareas: ícono y palabra ----
             Spacer(Modifier.height(Medidas.e4))
             Row(
                 Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(Medidas.rL)).clip(RoundedCornerShape(Medidas.rL)).background(c.acento)
@@ -141,7 +138,6 @@ fun PantallaInicio(ctx: Contexto) {
                 Tarea("archivo", "Reportes del día y del mes", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.REPORTES) }
             }
 
-            // ---- la copia de los datos ----
             val dias = ctx.estado.diasDesdeUltimaCopia()
             Spacer(Modifier.height(Medidas.e4))
             if (dias != null && dias < 14) {

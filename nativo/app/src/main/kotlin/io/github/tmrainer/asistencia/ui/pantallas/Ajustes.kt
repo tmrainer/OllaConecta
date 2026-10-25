@@ -1,6 +1,5 @@
-// Ajustes.kt — lo que es de este teléfono (pagina-ajustes.js): quién lo usa,
-// el modo claro u oscuro, el tamaño de la letra, la voz y a qué correo va el
-// envío a UNACEM. No va en las copias.
+// Lo que es de este teléfono: quién lo usa, el modo claro u oscuro, el tamaño de la
+// letra, la voz y a qué correo va el envío a UNACEM. No va en las copias.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import androidx.compose.foundation.Image

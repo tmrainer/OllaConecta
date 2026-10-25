@@ -1,4 +1,4 @@
-// correo-casos.mjs — los correos a UNACEM que arma la web (armarCorreo() de
+// Los correos a UNACEM que arma la web (armarCorreo() de
 // nube/apps-script/Codigo.js, con su reportes.js tal como está en el
 // repositorio) sobre el respaldo ficticio, para que EnvioTest.kt compare el
 // asunto, el texto y el nombre del adjunto. El Excel ya lo compara

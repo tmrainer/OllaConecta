@@ -1,16 +1,7 @@
-// Pdf.kt — porte de web/js/pdf.js: escribir un PDF a mano: texto, líneas y
-// recuadros, con las fuentes estándar Helvetica y Helvetica-Bold (codificación
-// WinAnsi, con tildes y ñ). Sin librerías ni red. Puro: devuelve
-// los bytes.
-//
-// Lo usan el PDF del B-1 (PdfB1.kt) y los del padrón y la asistencia
-// (PdfReportes.kt).
-//
-// Diferencia con la web: el «lienzo» es una interfaz (Lienzo). El del PDF
-// (LienzoPdf) escribe los operadores igual que la web; LienzoTrazos guarda lo
-// mismo como datos (líneas, recuadros y textos en mm) para que la app dibuje la
-// hoja en pantalla sin pasar por los bytes del PDF, como hace la vista previa
-// de la web con su lienzo SVG.
+// Escribir un PDF a mano: texto, líneas y recuadros, con las fuentes estándar
+// Helvetica y Helvetica-Bold (codificación WinAnsi, con tildes y ñ). Sin
+// librerías ni red. LienzoPdf escribe los operadores; LienzoTrazos guarda lo
+// mismo como datos para dibujar la hoja en pantalla sin pasar por el PDF.
 package io.github.tmrainer.asistencia.nucleo.documentos
 
 import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
@@ -61,8 +52,6 @@ fun anchoMm(texto: String, pt: Double, negrita: Boolean = false): Double {
     return (mil.toDouble() / 1000) * pt * (if (negrita) 1.07 else 1.0) / PT
 }
 
-// ------------------------------------------- números como los escribe la web
-//
 // El PDF y el Excel llevan números escritos como texto. Para que salgan los
 // mismos bytes que en la web, se escriben como JavaScript: `String(n)` y
 // `n.toFixed(2)`.
@@ -98,8 +87,6 @@ internal fun diaDeSemanaJs(iso: String): Int {
     val (a, m, d) = iso.split("-").map { it.toInt() }
     return LocalDate.of(a, 1, 1).plusMonths(m - 1L).plusDays(d - 1L).dayOfWeek.value % 7
 }
-
-// ------------------------------------------------------------ dibujo en mm
 
 /**
  * Una hoja para dibujar en mm desde arriba a la izquierda. Lo saben hacer el
@@ -140,7 +127,7 @@ class LienzoPdf(val altoMm: Double = 297.0) : Lienzo {
     }
 }
 
-/** Una hoja en blanco para el PDF, como `lienzo()` de la web. */
+/** Una hoja en blanco para el PDF. */
 fun lienzo(altoMm: Double = 297.0) = LienzoPdf(altoMm)
 
 /**
@@ -161,8 +148,8 @@ sealed interface Trazo {
 }
 
 /**
- * Un lienzo que anota en vez de escribir el PDF (el lienzoSvg() de
- * pagina-vista-previa.js). Empieza como un PDF: negro, línea de 1 pt, continua.
+ * Un lienzo que anota en vez de escribir el PDF. Empieza como un PDF: negro,
+ * línea de 1 pt, continua.
  * La punteada del PDF es [0.6 1.8] pt: 0.21 mm de raya y 0.64 mm de espacio.
  */
 class LienzoTrazos : Lienzo {
@@ -222,8 +209,8 @@ fun armarPdf(paginasPdf: List<PaginaPdf>, titulo: String): ByteArray {
 }
 
 /**
- * «14-10-26 18:40»: cuándo se generó una copia (selloAhora() de
- * ui-reportes.js). Es el valor por defecto de `generado` en los PDF.
+ * «14-10-26 18:40»: cuándo se generó una copia. Es el valor por defecto de
+ * `generado` en los PDF.
  */
 fun selloAhora(ahora: LocalDateTime = LocalDateTime.now()): String {
     fun dos(n: Int) = n.toString().padStart(2, '0')

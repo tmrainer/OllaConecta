@@ -1,10 +1,7 @@
-// EscaneoDniWebTest.kt — EscaneoDni.kt contra web/js/escaneo-dni.js, caso por
-// caso. nativo/herramientas/escaneo-dni-casos.mjs corre el módulo de la web
-// sobre entradas sintéticas (MRZ con sus controles ICAO, ruido del OCR, filas
-// partidas, anversos con tildes y ñ; todo inventado) y guarda lo que dio en
-// escaneo-dni.esperado.json. Aquí se recalcula en Kotlin y se compara.
+// EscaneoDni.kt contra web/js/escaneo-dni.js, caso por caso, con entradas
+// sintéticas (todo inventado). Para regenerar escaneo-dni.esperado.json:
 //
-//   node nativo/herramientas/escaneo-dni-casos.mjs     (para regenerarlo)
+//   node nativo/herramientas/escaneo-dni-casos.mjs
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.dni.CampoCruzado
@@ -56,8 +53,6 @@ class EscaneoDniWebTest {
         if (distintos.isNotEmpty()) fail("${distintos.size} de ${casos.size} casos distintos de la web:\n" + distintos.take(15).joinToString("\n"))
     }
 }
-
-// ------------------------------------------------------ de JSON a Kotlin y vuelta
 
 private fun texto(e: JsonElement?): String? = (e as? JsonPrimitive)?.contentOrNull
 private fun textos(e: JsonElement?): List<String>? = (e as? JsonArray)?.map { texto(it)!! }

@@ -1,4 +1,4 @@
-// HojaMunicipalTest.kt — cargar la hoja de la Municipalidad: la primera arma
+// Cargar la hoja de la Municipalidad: la primera arma
 // el padrón; las siguientes dicen quién entra, quién vuelve, quién sigue y
 // quién sale, y solo se aplica lo elegido. Datos inventados.
 package io.github.tmrainer.asistencia.nucleo

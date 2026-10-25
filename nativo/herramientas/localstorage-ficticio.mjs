@@ -1,9 +1,6 @@
-// localstorage-ficticio.mjs — lo que el APK 1.7 (la web dentro de Capacitor)
-// tendría guardado en localStorage con el respaldo FICTICIO cargado: cada
-// clave b1.* con el texto exacto que escribe guardar() de web/js/modelo.js
-// (el padrón con la asistencia en casillas, empacarPadron()). Más casos
-// límite del formato del padrón con lo que devuelve desempacarPadron() de la
-// web. Lo usa MigracionWebTest.kt para probar la migración del 1.7 al nativo.
+// Lo que el APK 1.7 (la web dentro de Capacitor) tendría guardado en localStorage con
+// el respaldo FICTICIO cargado, con el texto exacto de guardar() de web/js/modelo.js,
+// más casos límite de desempacarPadron(). Lo usa MigracionWebTest.kt.
 //
 //   node nativo/herramientas/localstorage-ficticio.mjs
 //

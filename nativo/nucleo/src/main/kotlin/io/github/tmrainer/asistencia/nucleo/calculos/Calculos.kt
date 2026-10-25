@@ -1,5 +1,5 @@
-// Calculos.kt — porte de web/js/calculos.js. Funciones puras: sin Android,
-// sin estado, sin red. Todo monto en céntimos enteros.
+// Cálculos del B-1, el padrón, las raciones y los periodos. Funciones puras:
+// sin Android, sin estado, sin red. Todo monto en céntimos enteros.
 package io.github.tmrainer.asistencia.nucleo.calculos
 
 import io.github.tmrainer.asistencia.nucleo.modelo.Afiliado
@@ -19,8 +19,6 @@ import java.time.temporal.ChronoUnit
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToLong
-
-// ------------------------------------------------- Totales del Formato B-1
 
 fun totalRendicionGastos(rendicion: Rendicion): Long =
     rendicion.egresos.sumOf { it.montoTotalCent ?: 0L }
@@ -89,8 +87,6 @@ fun descuadreFila(fila: Egreso?): Descuadre? {
     if (kotlin.math.abs(diferencia) <= 1) return null
     return Descuadre(esperado, declarado, diferencia)
 }
-
-// --------------------------------------------------------- Padrón
 
 /**
  * ¿Estaba activa esta persona en la fecha `ref` ('AAAA-MM-DD' válida)?
@@ -175,8 +171,6 @@ fun resumenEtario(padron: Padron, fechaRefIso: String? = null): ResumenEtario {
     return ResumenEtario(conteo["nino"]!!, conteo["adolescente"]!!, conteo["adulto"]!!, conteo["adulto_mayor"]!!, conteo["sin_dato"]!!)
 }
 
-// ------------------------------------------- Asistencia, raciones y precios
-//
 // Las raciones NO se escriben: se cuentan de la asistencia marcada. El precio
 // sí está fijado de antemano y se copia a cada día nuevo.
 
@@ -188,7 +182,6 @@ fun atencionesDelPeriodo(padron: Padron, inicioIso: String?, finIso: String?): L
 /** Las asistencias marcadas de un día. Única puerta de lectura de `atencion.asistencias`. */
 fun asistenciasDelDia(at: Atencion?): List<Asistencia> = at?.asistencias ?: emptyList()
 
-/** ¿Está marcada esta persona en este día? */
 fun asistio(at: Atencion?, afiliadoId: String): Boolean =
     asistenciasDelDia(at).any { it.afiliadoId == afiliadoId }
 
@@ -363,8 +356,6 @@ fun afiliadosSinAsistencia(padron: Padron, inicioIso: String?, finIso: String?, 
     return afiliadosActivos(padron, activasAIso).filter { it.id !in conAsistencia }
 }
 
-// ------------------------------------------------- Reporte para el padrón
-
 data class FilaPadron(
     val n: Int,
     val afiliadoId: String,
@@ -414,7 +405,6 @@ fun filasPadron(padron: Padron, fechaRefIso: String? = null): List<FilaPadron> {
         }
 }
 
-// ----------------------------------------------------- Periodo propuesto
 // La app PROPONE; la usuaria acepta o cambia. Nunca se aplica sola.
 
 data class PeriodoPropuesto(

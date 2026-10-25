@@ -1,17 +1,7 @@
-// CamaraDni.kt — leer el DNI con la cámara (camara-dni.js), sobre toda la
-// pantalla: se abre con ctx.abrirCapa { CamaraDni(…) }. Solo la zona de lectura mecánica (MRZ) y el anverso, con el
-// reconocimiento de texto de ML Kit; el PDF417 no se usa (sin verificar). La secuencia es la de EscaneoDni.kt:
-//
-// - Inscribir: cuatro pantallas. Una dice qué lado mostrar (el de atrás); la
-//   cámara lee el reverso hasta dos lecturas iguales de la MRZ con sus
-//   controles; otra pide voltear; la cámara lee el anverso (tildes, ñ y el
-//   segundo apellido), cruzado con la MRZ, con «Omitir». En el DNI azul los
-//   nombres están del mismo lado: si aparecen, no se pide voltear. La cámara
-//   se abre detrás de la primera pantalla y sigue abierta detrás de la
-//   tercera: al tocar «Empezar» o «Continuar» ya está lista. El resultado solo
-//   llena el formulario: inscribir sigue siendo de la persona.
-// - Pasar lista: solo el reverso, continuo. Cada DNI leído se entrega y se
-//   sigue con el siguiente; el mismo DNI frente a la cámara no se repite.
+// Leer el DNI con la cámara, sobre toda la pantalla: la MRZ del reverso y el anverso,
+// con el reconocimiento de texto de ML Kit (el PDF417 no se usa: no se verifica).
+// Inscribir lee el reverso, pide voltear y lee el anverso; el resultado solo llena el
+// formulario. Pasar lista lee solo reversos, uno tras otro.
 //
 // La lectura no se guarda ni se registra: se entrega y se descarta.
 package io.github.tmrainer.asistencia.ui.camara
@@ -77,6 +67,10 @@ import io.github.tmrainer.asistencia.nucleo.dni.buscarMrzTd1
 import io.github.tmrainer.asistencia.nucleo.dni.combinarMrzYAnverso
 import io.github.tmrainer.asistencia.nucleo.dni.evaluar
 import io.github.tmrainer.asistencia.nucleo.dni.unirFilasOcr
+import androidx.compose.runtime.CompositionLocalProvider
+import io.github.tmrainer.asistencia.ui.componentes.TipoBoton
+import io.github.tmrainer.asistencia.ui.tema.COLORES_OSCURO
+import io.github.tmrainer.asistencia.ui.tema.LocalColores
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.Icono
@@ -279,7 +273,9 @@ fun CamaraDni(
 
     // Sobre toda la app (Contexto.abrirCapa), entre la barra de arriba y la de abajo.
     val antes = etapa == Etapa.ANTES_ATRAS || etapa == Etapa.ANTES_FOTO
-    Box(Modifier.fillMaxSize()) {
+    // El fondo de la cámara es siempre negro: sus botones usan los colores del modo
+    // oscuro también en el claro (el verde del claro sobre negro no se lee bien).
+    CompositionLocalProvider(LocalColores provides COLORES_OSCURO) { Box(Modifier.fillMaxSize()) {
         Column(
             Modifier.fillMaxSize().background(Color.Black).systemBarsPadding().padding(Medidas.e4)
                 .then(if (antes) Modifier.clearAndSetSemantics { } else Modifier),
@@ -324,14 +320,15 @@ fun CamaraDni(
                 Text(abajo, style = tipos.textoFuerte, color = if (consejo == Consejo.BIEN && estadoTexto.isEmpty()) VERDE_VISOR else Color.White,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             }
-            Acciones {
-                if (negado) Boton("Dar permiso en Ajustes", {
-                    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)))
-                    cerrar()
-                })
-                if (hayLinterna) Boton(if (linterna) "Apagar la linterna" else "Prender la linterna", { linterna = !linterna }, activo = linterna)
-                if (conOmitir && busqueda.mrz != null) Boton("Omitir este paso", ::omitir)
-                Boton(if (enAsistencia) "Terminar" else "Cancelar", ::cerrar)
+            // Dos botones por fila como máximo: lo que no es de todos los días va solo, arriba.
+            if (negado) Boton("Dar permiso en Ajustes", {
+                context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)))
+                cerrar()
+            }, Modifier.fillMaxWidth(), tipo = TipoBoton.PRINCIPAL)
+            if (conOmitir && busqueda.mrz != null) Boton("Omitir este paso", ::omitir, Modifier.fillMaxWidth())
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+                if (hayLinterna) Boton(if (linterna) "Apagar la linterna" else "Prender la linterna", { linterna = !linterna }, Modifier.weight(1f), activo = linterna)
+                Boton(if (enAsistencia) "Terminar" else "Cancelar", ::cerrar, if (hayLinterna) Modifier else Modifier.fillMaxWidth())
             }
         }
         when (etapa) {
@@ -339,7 +336,7 @@ fun CamaraDni(
             Etapa.ANTES_FOTO -> AntesDelLado(2, alSeguir = { etapa = Etapa.FOTO }, alCancelar = ::cerrar, alOmitir = ::omitir)
             else -> {}
         }
-    }
+    } }
 }
 
 /**
@@ -389,7 +386,7 @@ private class Busqueda {
 
 /**
  * El recuadro donde va el DNI (o el QR), con la sombra alrededor. Al leer, se
- * pone verde un instante con un ✓ (destelloLeido en ui.js); [alTerminarDestello]
+ * pone verde un instante con un ✓; [alTerminarDestello]
  * corre cuando se apaga. Con la guía en vivo, [tarjeta] es el DNI que se ve
  * (en píxeles del visor): su contorno va en ámbar, y en verde con el recuadro
  * cuando está [bien] puesto.
@@ -401,7 +398,7 @@ fun Recuadro(recorte: Recorte, destellos: Int, tarjeta: RectF? = null, bien: Boo
     val marca = remember { Animatable(0f) }
     LaunchedEffect(destellos) {
         if (destellos == 0) return@LaunchedEffect
-        // El ✓ entra con un pequeño rebote, como .camara-leido-marca.
+        // El ✓ entra con un pequeño rebote.
         marca.snapTo(0f)
         launch { marca.animateTo(1f, tween(190, easing = CubicBezierEasing(.2f, 1.4f, .4f, 1f))) }
         brillo.snapTo(1f)

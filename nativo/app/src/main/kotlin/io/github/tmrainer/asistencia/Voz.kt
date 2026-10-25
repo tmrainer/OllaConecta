@@ -1,7 +1,6 @@
-// Voz.kt — leer en voz alta con la voz del propio teléfono (decir() y
-// callar() de ui.js): TextToSpeech de Android, sin internet si el teléfono
-// tiene la voz en español instalada. Se prende la primera vez que se usa; lo
-// que se pide antes de que esté lista se dice apenas lo esté.
+// Leer en voz alta con la voz del propio teléfono: TextToSpeech de Android, sin
+// internet si el teléfono tiene la voz en español instalada. Se prende la primera vez
+// que se usa; lo que se pide antes de que esté lista se dice apenas lo esté.
 package io.github.tmrainer.asistencia
 
 import android.content.Context

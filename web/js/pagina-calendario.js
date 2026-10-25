@@ -204,8 +204,6 @@ function irACampo(campo) {
   if (control) control.focus({ preventScroll: true });
 }
 
-// ------------------------------------------------------------------- arranque
-
 montarCabecera('calendario', 'Fechas de entrega del B-1');
 pintarAvisosAlmacenamiento(buscar('#avisos-sistema'));
 

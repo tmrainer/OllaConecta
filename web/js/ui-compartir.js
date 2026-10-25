@@ -1,11 +1,6 @@
-// ui-compartir.js — pasar datos a otro teléfono por QR, y recibirlos.
-//
-// Enviar: el padrón, la asistencia de los días que se elijan o las entregas.
-// Recibir: se lee el envío y, ANTES de guardar, se muestra la comparación con
-// lo de este teléfono: qué se agrega, qué ya estaba, qué no coincide y qué
-// queda como está. Lo que no coincide se queda como aquí salvo que se elija
-// lo recibido. Así dos teléfonos no cruzan datos sin que nadie lo vea.
-//
+// Pasar datos a otro teléfono por QR, y recibirlos. Al recibir, ANTES de guardar se
+// muestra la comparación con lo de aquí; lo que no coincide se queda como aquí salvo
+// que se elija lo recibido, para no cruzar datos sin que nadie lo vea.
 // Recibir lee y escribe lo GUARDADO (localStorage), sin tocar `estado`: la
 // página que lo usa guarda lo pendiente antes y recarga después (alGuardar).
 
@@ -26,8 +21,6 @@ export { puedeLeerQr };
 
 const AVISO_PRIVADO = 'Lleva nombres y DNI: muéstralo solo al otro teléfono de la olla.';
 const DONDE_RECIBIR = 'En el otro teléfono: «Recibir por QR», en Tus datos.';
-
-// ----------------------------------------------------------------- enviar
 
 /**
  * @param {'padron'|'asistencia'|'entregas'} tipo
@@ -114,8 +107,6 @@ export function elegirDiasYEnviar(padron) {
   dialogo.showModal();
   contar();
 }
-
-// ---------------------------------------------------------------- recibir
 
 /** Lo guardado ahora mismo, sin tocar `estado` (que la página puede estar usando). */
 export function leerGuardado() {
@@ -205,8 +196,8 @@ function compararYConfirmar(paquete, alGuardar) {
   const armado = paquete.tipo === 'padron' ? vistaPadron(paquete, datos)
     : paquete.tipo === 'asistencia' ? vistaAsistencia(paquete, datos) : vistaEntregas(paquete, datos);
   if (!armado.hayCambios) {
-    // Antes era un aviso abajo que se iba solo: la cámara se cerraba y parecía
-    // que no había pasado nada. Ahora queda a la vista hasta tocar «Listo».
+    // Un diálogo y no un aviso abajo: con la cámara cerrándose, un aviso que se va
+    // solo parecía que no había pasado nada.
     const listo = crearElemento('button', { type: 'button', clase: 'boton', texto: 'Listo', onclick: () => { aviso.close(); aviso.remove(); } });
     const aviso = crearElemento('dialog', { clase: 'camara-dni comparar', 'aria-labelledby': 'comparar-titulo' }, [
       crearElemento('h2', { id: 'comparar-titulo', texto: armado.titulo }),

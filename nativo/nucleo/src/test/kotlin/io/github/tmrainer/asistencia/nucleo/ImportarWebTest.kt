@@ -99,8 +99,6 @@ class ImportarWebTest {
         }
     }
 
-    // ----------------------------------------------- a JSON, como lo escribe la web
-
     private fun comoJson(f: FilaTabla) = JsonObject(mapOf("celdas" to json(f.celdas), "linea" to JsonPrimitive(f.linea)))
 
     private fun columnas(mapa: Map<String, Int>) = JsonObject(mapa.mapValues { JsonPrimitive(it.value) })

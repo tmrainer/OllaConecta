@@ -1,17 +1,7 @@
-// escaneo-dni.js — parser de la cadena del código de barras del DNI.
-// Función PURA: sin DOM, sin estado, sin red.
-//
-// ESTADO: STUB DELIBERADO. No implementado.
-//
-// El DNI peruano lleva un código de barras PDF417 en el reverso. La codificación
-// exacta de sus campos NO está verificada, y escribir un parser contra un
-// formato supuesto produciría exactamente el tipo de dato inventado que este
-// proyecto prohíbe. Mientras tanto esta función devuelve el
-// objeto completo con todo vacío y confianza "desconocida", y la interfaz cae
-// al ingreso manual.
-//
-// Para implementarlo: conseguir muestras reales anonimizadas (dígitos
-// sustituidos), escribir PRIMERO los casos en pruebas.html, y después el parser.
+// escaneo-dni.js — parser de la cadena del código de barras del DNI. Funciones puras.
+// parsearCadenaDni es un STUB DELIBERADO: la codificación del PDF417 del DNI NO está
+// verificada, y un parser contra un formato supuesto inventaría datos. Para hacerlo:
+// muestras reales anonimizadas, PRIMERO los casos en pruebas.html, después el parser.
 
 export const CAMPOS = [
   'tipoDocumento', 'numeroDocumento', 'apellidoPaterno',
@@ -51,13 +41,9 @@ export function parsearCadenaDni(cadena) {
   return resultadoVacio(CAMPOS, 'desconocida');
 }
 
-// ------------------------------------------------- en verificación
-//
-// Lo de abajo NO lo usa la inscripción todavía: solo el modo de prueba de
-// pruebas.html, para comprobar con DNIs reales cómo vienen los datos. Lo que
-// se lee ahí se muestra a quien escaneó su propio DNI y no se guarda.
-//
-// Dos fuentes:
+// En verificación: lo de abajo NO lo usa la inscripción todavía, solo el
+// modo de prueba de pruebas.html. Lo que se lee ahí se muestra a quien escaneó su
+// propio DNI y no se guarda.
 // - La zona de lectura mecánica (MRZ) del reverso, en todos los DNI: formato
 //   TD1 de la norma ICAO 9303 (parte 5), pública, con dígitos de control. La
 //   lee el reconocimiento de texto del APK.
@@ -266,8 +252,7 @@ export function buscarMrzTd1(lineasOcr, fechaRef) {
   return null;
 }
 
-// ------------------------------------------------ el anverso, para tildes y ñ
-//
+// El anverso, para tildes y ñ.
 // La MRZ no lleva tildes ni ñ (la norma solo admite A-Z), los nombres no
 // tienen dígito de control y en el DNI peruano trae solo el primer apellido.
 // El anverso sí trae los nombres como son. Se cruzan: una fila del anverso

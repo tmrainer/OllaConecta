@@ -1,4 +1,4 @@
-// PasosDni.kt — lo que acompaña a la cámara del DNI: la pantalla que dice qué
+// Lo que acompaña a la cámara del DNI: la pantalla que dice qué
 // lado mostrar antes de cada paso (con su animación), el dibujo de cada paso y
 // la revisión de lo leído antes de usarlo. La revisión es solo texto: el
 // fotograma no se guarda ni se muestra.

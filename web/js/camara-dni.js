@@ -1,18 +1,7 @@
-// camara-dni.js — el visor de cámara para leer el reverso del DNI.
-//
-// Dos lectores, los dos sin librerías en la app web:
-// - El código PDF417 (DNI azul), con BarcodeDetector, del propio navegador.
-// - La zona de lectura mecánica (MRZ, todos los DNI), con el reconocimiento de
-//   texto de ML Kit que trae el APK (complemento «LectorTexto», en mobile/).
-//   En el navegador no está, y solo queda el código.
-// Busca con los dos a la vez y entrega lo primero que lea con seguridad. La
-// MRZ vale cuando dos lecturas seguidas dan lo mismo; después se pide el
-// anverso, que trae tildes, ñ y el segundo apellido (escaneo-dni.js lo cruza):
-// vale en cuanto paterno y nombres coinciden con la MRZ.
-//
-// Lo que ve la cámara solo pasa por el visor en vivo y por un lienzo que se
-// reutiliza: ningún fotograma se guarda ni sale del teléfono. Quien
-// llama recibe la cadena y decide; esta pieza no guarda nada.
+// camara-dni.js — el visor de cámara para leer el DNI: el PDF417 (DNI azul) con
+// BarcodeDetector y la MRZ con el ML Kit del APK («LectorTexto»; en el navegador, solo
+// el código). La MRZ vale cuando dos lecturas seguidas dan lo mismo.
+// Ningún fotograma se guarda ni sale del teléfono.
 
 import { crearElemento, icono, destelloLeido } from './ui.js';
 import { buscarMrzTd1, unirFilasOcr, combinarMrzYAnverso } from './escaneo-dni.js';
@@ -196,8 +185,7 @@ export async function abrirCamaraDni({ alLeer, alCerrar = () => {}, modo = 'comp
     lienzo.getContext('2d', { alpha: false }).drawImage(video, (vw - ancho) / 2, (vh - alto) / 2 + alto * desde, ancho, altoFuente,
       0, 0, lienzo.width, lienzo.height);
     // toDataURL y no toBlob: en el WebView de Android toBlob espera a que el
-    // teléfono «esté libre» y tardaba ~4 s por fotograma (medido en un moto g77
-    // y un g23); con una imagen de este tamaño, toDataURL tarda ~15 ms.
+    // teléfono «esté libre» (~4 s por fotograma); toDataURL tarda ~15 ms.
     return lienzo.toDataURL('image/jpeg', 0.75).split(',')[1];
   }
 
@@ -232,9 +220,7 @@ export async function abrirCamaraDni({ alLeer, alCerrar = () => {}, modo = 'comp
           const pdf = hallados.find((h) => h.format === 'pdf417' && h.rawValue);
           if (pdf) return entregar({ tipo: 'pdf417', cadena: pdf.rawValue });
         }
-        // Cada vuelta: con la franja chica, un intento cuesta ~0,2 s.
-        // Si se cerró mientras se buscaba el código, el lienzo ya está vacío:
-        // pedir la lectura con una imagen en blanco solo dejaba un error en la consola.
+        // Si se cerró mientras se buscaba el código, el lienzo ya está vacío.
         if (lector && abierto) {
           const { fragmentos } = await lector.leer({ imagen: fotogramaDelRecuadro(fase === 'reverso') });
           if (!abierto) return;

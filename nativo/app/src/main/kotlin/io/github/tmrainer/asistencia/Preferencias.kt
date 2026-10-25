@@ -1,6 +1,5 @@
-// Preferencias.kt — lo que es de este teléfono y no va en las copias (como
-// las claves «pi3.*» de preferencias.js y perfil.js): el modo, el tamaño de
-// letra, la voz, quién usa el teléfono, y si ya vio la bienvenida.
+// Lo que es de este teléfono y no va en las copias: el modo, el tamaño de letra, la
+// voz, quién usa el teléfono, y si ya vio la bienvenida.
 package io.github.tmrainer.asistencia
 
 import android.content.Context
@@ -82,7 +81,7 @@ class Preferencias(context: Context) {
      */
     fun traerDeLaWeb(crudos: Map<String, String>) {
         Tema.values().firstOrNull { it.clave == crudos["pi3.tema"] }?.let(::cambiarTema)
-        // «Letra grande» de antes (pi3.letraGrande = '1') sigue valiendo, como en preferencias.js.
+        // «Letra grande» de antes (pi3.letraGrande = '1') sigue valiendo.
         val letra = crudos["pi3.letra"] ?: if (crudos["pi3.letraGrande"] == "1") "grande" else null
         Letra.values().firstOrNull { it.clave == letra }?.let(::cambiarLetra)
         if (crudos["pi3.voz.boton"] == "1") cambiarVozBoton(true)

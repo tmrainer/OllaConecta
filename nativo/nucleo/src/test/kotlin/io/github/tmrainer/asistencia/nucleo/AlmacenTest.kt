@@ -1,6 +1,5 @@
-// Pruebas del almacén de archivos (fase 2). Equivalen a lo que la web prueba
-// de leer()/guardar() en localStorage: tolerar lo ausente y lo corrupto, no
-// borrar nada en silencio, y que lo guardado tenga el formato del respaldo.
+// Pruebas del almacén de archivos: tolerar lo ausente y lo corrupto, no borrar
+// nada en silencio, y que lo guardado tenga el formato del respaldo.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.almacen.Almacen

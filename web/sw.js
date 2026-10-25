@@ -1,18 +1,10 @@
-// sw.js — que la aplicación abra sin internet.
+// Que la app abra sin internet. Solo guarda los archivos de la app en Cache Storage;
+// los DATOS no pasan por aquí (siguen en localStorage). No habla con otro dominio.
 //
-// Solo guarda los archivos de la propia aplicación (HTML, CSS, JS, iconos) en
-// el Cache Storage del navegador. Los DATOS no pasan por aquí: siguen en
-// localStorage. No habla con ningún otro dominio.
-//
-// Estrategia: la app se sirve SIEMPRE de una copia completa y coherente de
-// todos sus archivos, al instante y con o sin señal. Pedir a la red archivo
-// por archivo, con mala señal, podía mezclar un HTML nuevo con un JS viejo, y
-// un import que no existe deja la página en blanco.
-//
-// Las novedades llegan en segundo plano: cuando una página lo pide, se
-// revalidan todos los archivos (con ETag, lo que no cambió no se descarga) y,
-// solo si llegaron TODOS y alguno cambió, se arma una copia nueva entera y se
-// reemplaza la vieja de una vez. La página avisa que hay versión nueva.
+// Siempre sirve una copia completa y coherente: pedir archivo por archivo con mala
+// señal podía mezclar un HTML nuevo con un JS viejo y dejar la página en blanco.
+// Las novedades se revalidan en segundo plano (con ETag) y solo si llegaron TODAS y
+// algo cambió se reemplaza la copia entera de una vez.
 
 const PREFIJO = 'pi3-app-';
 const MINUTOS_ENTRE_REVISIONES = 30;

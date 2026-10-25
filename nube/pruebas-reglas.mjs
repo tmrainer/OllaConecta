@@ -1,6 +1,4 @@
-// pruebas-reglas.mjs — prueba firestore.rules contra el emulador de Firestore.
-//
-//   npm run pruebas      (levanta el emulador, corre esto y lo apaga)
+// Prueba firestore.rules contra el emulador de Firestore (`npm run pruebas`).
 //
 // Cada caso dice lo que una cuenta intenta y si las reglas lo dejan. Las
 // cuentas son ficticias: «coordina» coordina el proyecto; «ana» es la

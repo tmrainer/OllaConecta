@@ -1,13 +1,5 @@
-// pdf-b1.js — el B-1 como PDF de referencia, para guardar o mandar por
-// WhatsApp cuando no se puede imprimir sobre la hoja oficial.
-//
-// No es el formato oficial ni sirve para superponer (eso es la fase 5): dibuja los rótulos y las líneas del formato en gris y los datos en negro,
-// en las mismas posiciones de plantilla-b1.js, para que se lea solo. Cada hoja
-// dice arriba «Copia de referencia» y cuándo se generó.
-//
-// El PDF se escribe a mano (texto, líneas y recuadros con las fuentes estándar
-// Helvetica, codificación WinAnsi): sin librerías, sin red. Puro: recibe las
-// hojas de hojasDelB1() y devuelve los bytes.
+// El B-1 como PDF de referencia (para guardar o mandar por WhatsApp): no es el
+// formato oficial ni sirve para superponer; el formato va en gris y los datos en negro.
 
 import { PLANTILLA_B1 } from './plantilla-b1.js';
 import { PT, anchoMm, lienzo, armarPdf } from './pdf.js';
@@ -34,7 +26,6 @@ function datoEnCaja(l, texto, { xMm, yMm, anchoMm: w, altoMm: h, align }, ptBase
   if (!texto) return;
   const margen = 0.8;
   const libre = w - 2 * margen;
-  // Primero, un poco más chico en un solo renglón (hasta 2 pt menos).
   let pt1 = ptBase;
   while (pt1 > ptBase - 2 && anchoMm(texto, pt1) > libre) pt1 -= 0.25;
   if (anchoMm(texto, pt1) <= libre) ptBase = pt1;
@@ -59,8 +50,6 @@ function datoEnCaja(l, texto, { xMm, yMm, anchoMm: w, altoMm: h, align }, ptBase
   const xm = align === 'right' ? xMm + w - margen - ancho : align === 'center' ? xMm + (w - ancho) / 2 : xMm + margen;
   l.texto(t, xm, yMm + h - 0.7, pt);
 }
-
-// -------------------------------------------- la estructura del formato
 
 const P = PLANTILLA_B1;
 const ROTULO = 6.5; // pt
@@ -202,8 +191,6 @@ export function dibujarFormato(l) {
   ];
   dj.forEach((t, i) => l.texto(t, 16, 284 + i * 3.6, 5.8));
 }
-
-// ------------------------------------------------------------ una hoja
 
 function hoja(h, { generado, numero, total }) {
   const l = lienzo();

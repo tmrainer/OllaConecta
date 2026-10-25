@@ -1,5 +1,4 @@
-// Utileria.kt — ayudas compartidas por las pruebas. Porte de la utilería de
-// web/js/casos-prueba.js: ok(), igual() y la rendición del ejemplar.
+// Ayudas compartidas por las pruebas: ok(), igual() y la rendición del ejemplar.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.modelo.Egreso
@@ -47,5 +46,5 @@ fun rendicionDelEjemplar(): Rendicion = nuevaRendicion().copy(
     )
 )
 
-/** Una fila de egreso solo con monto, como `Object.assign(nuevoEgreso(), { montoTotalCent })`. */
+/** Una fila de egreso solo con monto. */
 fun egresoCon(montoTotalCent: Long): Egreso = nuevoEgreso().copy(montoTotalCent = montoTotalCent)

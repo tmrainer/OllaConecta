@@ -1,13 +1,7 @@
-// humo.mjs — prueba de humo de la aplicación en un Chromium sin ventana.
-//
-// Abre las cinco páginas, con el almacenamiento vacío y con un padrón de
-// prueba, y falla si hay errores de consola o si lo que se ve no cuadra con los
-// datos. También comprueba lo que las aserciones de pruebas.html no alcanzan:
-// que no se pierda el último toque al salir de la página, que dos pestañas
-// abiertas no se pisen los datos, que en un celular la lista se vea al abrir
-// y que, apagado el servidor, el service worker abra la aplicación igual.
-//
-// Sin dependencias: Node 22 o más (fetch y WebSocket propios) y un Chromium.
+// Prueba de humo de la aplicación en un Chromium sin ventana: abre las
+// páginas, vacías y con un padrón de prueba, y falla ante errores de consola o
+// si lo que se ve no cuadra con los datos. Sin dependencias: Node 22 o más
+// (fetch y WebSocket propios) y un Chromium.
 //
 //   node herramientas/humo.mjs
 //   CHROME=/ruta/a/chrome node herramientas/humo.mjs
@@ -25,8 +19,6 @@ import { fileURLToPath } from 'node:url';
 
 const RAIZ = path.resolve(process.argv[2] || path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'web'));
 const PAGINAS = ['index', 'asistencia', 'padron', 'formato-b1', 'calendario', 'ajustes', 'datos', 'coordinacion', 'vista-previa', 'probar-dni', 'pruebas'];
-
-// ------------------------------------------------------------ padrón de prueba
 
 function hoyLocal() {
   const d = new Date();
@@ -57,8 +49,6 @@ const PADRON = {
     precioTomadoDeConfig: true, legado: null, nota: ''
   }]
 };
-
-// ---------------------------------------------------------- servidor estático
 
 const TIPOS = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -99,8 +89,6 @@ function servir() {
   return new Promise((ok) => servidor.listen(0, '127.0.0.1', () => ok(servidor)));
 }
 
-// ------------------------------------------------------------------- Chromium
-
 function buscarChromium() {
   if (process.env.CHROME) return process.env.CHROME;
   const cache = path.join(os.homedir(), '.cache', 'ms-playwright');
@@ -134,8 +122,6 @@ function lanzar(ejecutable) {
     proc.on('exit', (c) => mal(new Error(`Chromium terminó (${c}):\n${salida}`)));
   });
 }
-
-// ------------------------------------------------------------ cliente CDP
 
 class Cdp {
   constructor(url) {
@@ -219,8 +205,6 @@ async function pestana(cdp) {
   };
   return p;
 }
-
-// --------------------------------------------------------------- las pruebas
 
 const resultados = [];
 function comprobar(nombre, condicion, detalle = '') {
@@ -933,7 +917,7 @@ async function correr(base, cdp) {
     await p.cerrar();
   }
 
-  // 6b. Entregas: lo mismo (antes no guardaba lo pendiente al salir).
+  // 6b. Entregas: lo mismo.
   {
     const p = await pestana(cdp);
     await p.ir(`${base}/__sembrar`);
@@ -948,10 +932,8 @@ async function correr(base, cdp) {
   }
 
   // 6c. Un año de uso de una olla grande (300 personas, 365 días): cabe con
-  // holgura, abre rápido y un toque no se demora. Antes de las casillas y del
-  // índice de validación, esto llenaba el espacio y cada toque tardaba
-  // segundos en un celular modesto. Los límites son holgados (aquí no se
-  // frena la CPU): saltan si vuelve un recorrido de todos contra todos.
+  // holgura, abre rápido y un toque no se demora. Los límites son holgados
+  // (aquí no se frena la CPU): saltan ante un recorrido de todos contra todos.
   {
     const p = await pestana(cdp);
     await p.ir(`${base}/__sembrar`);
@@ -1089,8 +1071,6 @@ async function sinServidor(base, cdp, servidor) {
   comprobar('sin servidor: sin errores de consola', p.errores.length === 0, p.errores.join(' | '));
   await p.cerrar();
 }
-
-// ---------------------------------------------------------------------- main
 
 const servidor = await servir();
 const base = `http://127.0.0.1:${servidor.address().port}`;

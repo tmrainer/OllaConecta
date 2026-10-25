@@ -1,10 +1,6 @@
-// camara-trasera.js — abre la cámara de atrás que ENFOCA SOLA.
-//
-// Teléfonos con varias cámaras atrás (Samsung A, Xiaomi, moto) pueden entregar
-// la gran angular o la macro cuando se pide «la de atrás». Esas tienen foco
-// fijo: un DNI o un QR de cerca sale borroso siempre. Si la cámara que llegó
-// no tiene enfoque continuo, se prueban las otras de atrás y se queda la
-// primera que lo tenga; si ninguna, se vuelve a la de siempre.
+// camara-trasera.js — abre la cámara de atrás que ENFOCA SOLA: con varias cámaras
+// atrás, «la de atrás» puede ser la gran angular o la macro, de foco fijo, y un DNI
+// o QR de cerca sale borroso.
 
 /** true si la cámara enfoca sola, o si el teléfono no dice cómo enfoca. */
 function enfocaSola(flujo) {

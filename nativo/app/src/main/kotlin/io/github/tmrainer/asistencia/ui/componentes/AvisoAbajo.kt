@@ -1,6 +1,5 @@
-// AvisoAbajo.kt — el aviso de abajo con «Deshacer» (avisoAbajo() en ui.js):
-// hacer y ofrecer deshacer, en vez de preguntar «¿Está segura?». 4 s sin
-// deshacer; 7 s con deshacer, que es tiempo de leerlo y reaccionar sin apuro.
+// El aviso de abajo con «Deshacer»: hacer y ofrecer deshacer, en vez de preguntar
+// «¿Está segura?».
 package io.github.tmrainer.asistencia.ui.componentes
 
 import android.content.Context

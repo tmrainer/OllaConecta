@@ -1,12 +1,7 @@
-// MigracionWeb.kt — traer los datos del APK 1.7 (la web dentro de Capacitor).
-// La app nativa se instala ENCIMA del 1.7 (mismo paquete), pero ese guardaba
-// todo en el localStorage del WebView. La cáscara Android saca de ahí los
-// textos crudos de las claves b1.*; aquí se traducen al respaldo de siempre,
-// que Estado.restaurar() escribe como cualquier «Recuperar una copia».
-//
-// El padrón de localStorage va empacado (la asistencia de cada día en
-// casillas, empacarPadron() de web/js/modelo.js); desempacarPadron() es el
-// mismo camino de vuelta que leer() de la web, formato de desarrollo incluido.
+// Trae los datos del APK 1.7 (la web dentro de Capacitor), que se instala por
+// encima con el mismo paquete pero guardaba todo en el localStorage del WebView.
+// La cáscara Android saca los textos crudos de las claves b1.*; aquí se
+// traducen al respaldo de siempre, que Estado.restaurar() escribe.
 package io.github.tmrainer.asistencia.nucleo.almacen
 
 import io.github.tmrainer.asistencia.nucleo.modelo.JSON
@@ -62,7 +57,7 @@ fun leerDatosWeb(crudos: Map<String, String>): DatosWeb {
     return DatosWeb(leerRespaldo(respaldo), ultimaCopia, ilegibles)
 }
 
-// ------------------------------------------------ padrón empacado (modelo.js)
+// El padrón de localStorage va empacado: la asistencia de cada día en casillas.
 
 private const val B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 

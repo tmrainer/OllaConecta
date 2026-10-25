@@ -1,64 +1,13 @@
-// EscaneoDni.kt — porte de web/js/escaneo-dni.js. Funciones PURAS: sin
-// android.*, sin estado, sin red.
+// Lectura del DNI: MRZ TD1, anverso, PDF417 y lector HID. Funciones puras:
+// sin android.*, sin estado, sin red.
 //
-// parsearCadenaDni sigue siendo un STUB DELIBERADO, igual que en la web: la
-// codificación del PDF417 del DNI no está verificada y un parser contra un
-// formato supuesto inventaría datos. Lo verificado es la
-// MRZ TD1 (norma pública ICAO 9303, con dígitos de control) y el cruce con el
-// anverso. leerPdf417DniAzul es de un tercero, SIN VERIFICAR.
+// parsearCadenaDni es un stub deliberado: la codificación del PDF417 del DNI
+// no está verificada y un parser contra un formato supuesto inventaría datos.
+// leerPdf417DniAzul es de un tercero, SIN VERIFICAR.
 //
 // Privacidad: lo leído (líneas de la MRZ, filas del anverso, la cadena
 // del PDF417) vive solo en memoria mientras dura la lectura. No se guarda, no
 // va a un log, no se muestra crudo. Por eso LecturaMrz no imprime sus líneas.
-//
-// ------------------------------------------------------------------------
-// Cómo lo usa la cámara (porte de web/js/camara-dni.js, que NO se porta aquí)
-// ------------------------------------------------------------------------
-//
-// Entrada de cada fotograma: ML Kit Text Recognition (latín). De `Text` se
-// toman TODAS las líneas de todos los bloques, una FragmentoOcr por línea,
-// igual que LectorTextoPlugin.java (mobile/) se las daba a la web:
-//
-//     for (bloque in texto.textBlocks) for (linea in bloque.lines) {
-//         val r = linea.boundingBox ?: Rect()
-//         val e = linea.cornerPoints             // ángulo de esquinas[0] a esquinas[1]
-//         val angulo = if (e == null || e.size < 2) 0.0
-//             else Math.toDegrees(atan2((e[1].y - e[0].y).toDouble(), (e[1].x - e[0].x).toDouble()))
-//         FragmentoOcr(linea.text, r.top, r.bottom, r.left, r.right, angulo)
-//     }
-//
-// y luego `val filas = unirFilasOcr(fragmentos)`. El orden de los
-// fragmentos no importa. La imagen: solo el recuadro del DNI, ampliado (en
-// el reverso basta el 45 % de abajo de la tarjeta, ~1200 px de ancho; para
-// los nombres, la tarjeta entera, ~1400 px). Ningún fotograma se guarda.
-//
-// INSCRIPCIÓN (MRZ dos veces + anverso):
-//  1. Fase reverso. Por fotograma: `mrz = buscarMrzTd1(filas)`;
-//     `clave = mrz?.lineas?.joinToString("") ?: ""`. Si `mrz != null` y
-//     `clave == anterior`, la MRZ vale (dos lecturas seguidas iguales): se
-//     guarda en memoria, `anterior = ""`, aviso breve (vibración/destello) y
-//     se pasa al anverso. Si no, `anterior = clave` y se sigue.
-//  2. Fase anverso. Por fotograma: `anverso = combinarMrzYAnverso(mrz.campos, filas)`.
-//     En el DNI azul los nombres están en la MISMA cara que la MRZ: recién a
-//     la 3.ª vuelta sin éxito se pide voltear al lado de la foto y aparece
-//     «Omitir este paso» (entrega la MRZ con anverso = null).
-//     Si `anverso != null`: `lecturasAnverso += 1`; se entrega cuando
-//       (paterno y nombres CONFIRMADO y (materno != NO_LEIDO o lecturasAnverso >= 4))
-//       o `anverso == anteriorAnverso` (dos lecturas iguales, p. ej. con un DUDOSO).
-//     Siempre `anteriorAnverso = anverso` (null incluido).
-//  3. Lo entregado llena el formulario de revisión, nunca el padrón:
-//     si `mrz.campos.pais != "PER"`, no se llena nada; DUDOSO deja el campo
-//     vacío y ofrece `opciones`; SIN_CONFIRMAR se marca «compáralo con el
-//     DNI»; sin anverso, los nombres de la MRZ van sin tildes ni ñ. Inscribir
-//     exige «quién revisó». La inscripción NO usa el PDF417.
-//
-// ASISTENCIA (solo el número de DNI, continuo):
-//  Solo fase reverso. Mismo `buscarMrzTd1(filas)` y la misma regla de dos
-//  claves iguales seguidas. Al cumplirse: `dni = mrz.campos.numeroDocumento`;
-//  si `dni != ultimoDni` o pasaron más de 5000 ms desde `ultimoEn`, se marca
-//  a esa persona (vibración, destello, mensaje «Marcaste a…»); en todo caso
-//  `ultimoDni = dni`, `ultimoEn = ahora`, `anterior = ""`, y el visor sigue
-//  buscando al siguiente. Del DNI no se usa ni se guarda nada más.
 package io.github.tmrainer.asistencia.nucleo.dni
 
 import io.github.tmrainer.asistencia.nucleo.modelo.hoyIso
@@ -68,8 +17,6 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.tan
-
-// ---------------------------------------------------------------- el stub
 
 val CAMPOS: List<String> = listOf(
     "tipoDocumento", "numeroDocumento", "apellidoPaterno",
@@ -116,13 +63,10 @@ fun parsearCadenaDni(cadena: String?): DatosDni {
     return resultadoVacio(CAMPOS, Confianza.DESCONOCIDA)
 }
 
-// ------------------------------------------------- en verificación
-//
-// Dos fuentes:
-// - La zona de lectura mecánica (MRZ) del reverso, en todos los DNI: formato
-//   TD1 de la norma ICAO 9303 (parte 5), pública, con dígitos de control.
-// - El código PDF417 del DNI azul (el de 1997). Su distribución de campos
-//   viene de una fuente de terceros y está SIN VERIFICAR.
+// En verificación. Dos fuentes:
+// - La MRZ del reverso, en todos los DNI: TD1 de ICAO 9303 (parte 5), pública,
+//   con dígitos de control.
+// - El PDF417 del DNI azul (1997): distribución de campos de un tercero, SIN VERIFICAR.
 
 /** Valor de un carácter de la MRZ para el dígito de control (ICAO 9303-3 §4.9). */
 private fun valorIcao(c: Char): Int = when (c) {
@@ -283,10 +227,9 @@ private fun limpiarLineaMrz(texto: String): String =
     texto.uppercase().replace("«", "<<").replace(NO_MRZ, "")   // los espacios también se van
 
 /**
- * Un pedazo de texto del reconocimiento, con su caja en píxeles de la imagen:
- * una `Text.Line` de ML Kit, con la misma forma que LectorTextoPlugin.java
- * le daba a la web (`boundingBox` y el ángulo de `cornerPoints`, ver la
- * cabecera). `angulo`: inclinación en grados, negativa si sube hacia la derecha.
+ * Un pedazo de texto del reconocimiento (una `Text.Line` de ML Kit), con su
+ * caja en píxeles de la imagen. `angulo`: inclinación en grados según
+ * `cornerPoints`, negativa si sube hacia la derecha.
  */
 data class FragmentoOcr(
     val texto: String,
@@ -388,8 +331,6 @@ fun buscarMrzTd1(lineasOcr: List<String>?, fechaRef: String = hoyIso()): Lectura
     return null
 }
 
-// ------------------------------------------------ el anverso, para tildes y ñ
-//
 // La MRZ no lleva tildes ni ñ (la norma solo admite A-Z), los nombres no
 // tienen dígito de control y en el DNI peruano trae solo el primer apellido.
 // El anverso sí trae los nombres como son. Se cruzan: una fila del anverso
@@ -555,8 +496,6 @@ fun combinarMrzYAnverso(camposMrz: CamposMrz?, filasAnverso: List<String>?): Lec
     return LecturaAnverso(apellidoPaterno = paterno, apellidoMaterno = materno, nombres = nombres)
 }
 
-// ------------------------------------------------------ PDF417 (sin verificar)
-
 data class CamposPdf417(
     val numeroDocumento: String,
     val apellidoPaterno: String,
@@ -620,8 +559,6 @@ fun plantillaAnonima(cadena: String?): String {
     }
     return r.toString()
 }
-
-// ------------------------------------------------------ lector físico (HID)
 
 /**
  * Reconoce una ráfaga de teclas como escaneo de un lector HID (el lector se

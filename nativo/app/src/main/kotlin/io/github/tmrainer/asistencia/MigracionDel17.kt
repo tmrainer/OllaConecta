@@ -1,4 +1,4 @@
-// MigracionDel17.kt — la primera vez que la app nativa abre en un teléfono que
+// La primera vez que la app nativa abre en un teléfono que
 // tenía el APK 1.7 (la web dentro de Capacitor), trae sus datos. El 1.7 los
 // guardaba en el localStorage del WebView, del origen https://localhost; un
 // WebView oculto abre ese mismo origen (la página la da esta clase, no hay red)

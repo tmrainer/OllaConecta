@@ -1,13 +1,6 @@
-// compartir-archivo.js — entregar un archivo que arma la app (PDF o Excel
-// exportado, copia de los datos): el menú «Compartir» del teléfono o, si no hay, una
-// descarga.
-//
-// En el APK, el WebView no tiene navigator.share y una descarga no llega a
-// ninguna parte: se usa el complemento propio «CompartirArchivo» (mobile/,
-// CompartirArchivoPlugin.java), que abre el menú de Android con WhatsApp,
-// Drive, Gmail… En el navegador del celular, navigator.share; en la
-// computadora, la descarga de siempre. Nada sale del teléfono hasta que la
-// persona elige a dónde mandarlo.
+// compartir-archivo.js — entregar un archivo que arma la app: menú «Compartir» o descarga.
+// En el APK el WebView no tiene navigator.share y una descarga no llega a ninguna parte:
+// se usa el complemento propio CompartirArchivo (mobile/CompartirArchivoPlugin.java).
 
 function complemento() {
   const C = window.Capacitor;

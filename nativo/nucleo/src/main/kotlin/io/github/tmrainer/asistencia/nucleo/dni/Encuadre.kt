@@ -1,8 +1,6 @@
-// Encuadre.kt — cómo está el DNI frente a la cámara, para guiar en vivo como
-// las apps de los bancos («Acerca el DNI», «Hay un reflejo»): el brillo, los
-// reflejos, la nitidez y dónde están los bordes de la tarjeta. Trabaja sobre
-// los grises de un fotograma chico (unos 320 px de ancho), en memoria; no
-// guarda nada. Sin librerías: sumas sobre los píxeles.
+// Cómo está el DNI frente a la cámara, para guiar en vivo: brillo, reflejos,
+// nitidez y bordes de la tarjeta. Trabaja sobre los grises de un fotograma
+// chico (unos 320 px de ancho), en memoria; no guarda nada.
 package io.github.tmrainer.asistencia.nucleo.dni
 
 import kotlin.math.abs
@@ -45,10 +43,9 @@ enum class Consejo(val texto: String) {
     BIEN("Bien. No lo muevas.")
 }
 
-// Umbrales, en grises de 320 px de ancho. Reflejo y nitidez, medidos con un
-// DNI real en un moto g77 (25-10-2026): el plástico ya quema un 2–3 % de los
-// píxeles sin reflejo (con uno, 11 %); enfocado da 2400–9000 de nitidez y
-// movido, 115–660.
+// Umbrales, en grises de 320 px de ancho. Medidos con un DNI real: el plástico
+// ya quema un 2–3 % de los píxeles sin reflejo (con uno, 11 %); enfocado da
+// 2400–9000 de nitidez y movido, 115–660.
 private const val BRILLO_MINIMO = 55.0
 private const val QUEMADO = 250
 private const val REFLEJO_MAXIMO = 0.06

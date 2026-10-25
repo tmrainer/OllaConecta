@@ -1,7 +1,6 @@
-// Pruebas del estado en memoria y su guardado (fase 2). Siguen los contratos
-// de web/js/estado.js: guardarPronto escribe 400 ms después del último cambio,
-// guardarYa escribe de inmediato, al ocultarse se escribe lo pendiente, hoy
-// sigue al precio, y el recordatorio de copia a los 14 días.
+// Pruebas del estado en memoria y su guardado: guardarPronto escribe 400 ms
+// después del último cambio, guardarYa escribe de inmediato, al ocultarse se
+// escribe lo pendiente, hoy sigue al precio, y el recordatorio de copia a los 14 días.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.almacen.Almacen

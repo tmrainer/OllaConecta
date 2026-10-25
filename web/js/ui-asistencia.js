@@ -1,8 +1,4 @@
-// ui-asistencia.js — pasar lista y revisar días anteriores.
-//
-// Marcar a alguien es UN toque en su fila. El menú sale de cómo se inscribió
-// (habitual -> normal, ayuda social -> menú de ayuda social) y solo hace falta
-// tocarlo cuando ese día come otro. Sin desplegables.
+// Pasar lista y revisar días anteriores.
 
 import {
   nuevaAtencion, nombreCompleto, normalizarNombre, ORDEN_NOMBRES, aDdMmAa, hoyIso, aCentimos,
@@ -26,8 +22,6 @@ function claveBusqueda(p) {
   return `${normalizarNombre(nombreCompleto(p))} ${p.numeroDocumento || ''}`;
 }
 
-// ----------------------------------------- asistencia: una fila, un toque
-//
 // Marcar a alguien es UN toque en su fila. El menú sale de cómo se inscribió
 // (habitual -> normal, ayuda social -> menú de ayuda social) y solo hace falta
 // tocarlo cuando ese día come otro. Sin desplegables.
@@ -114,8 +108,6 @@ function asistenciasDelDiaCopia(at) {
   return Array.isArray(at.asistencias) ? at.asistencias.map((x) => ({ ...x })) : [];
 }
 
-// --------------------------------------------- quienes comen sin estar inscritos
-//
 // Alguien de paso, un familiar: no está en el padrón y no hace falta
 // inscribirlo para que su ración cuente. Solo se suma, por tipo de menú.
 
@@ -149,8 +141,6 @@ function contadorSinInscribir(at, alCambiar) {
   }
   return caja;
 }
-
-// ------------------------------------------------- asistencia por día (checklist)
 
 function fichaAtencion(at, ctx) {
   const idp = at.id.slice(0, 8);
@@ -240,7 +230,6 @@ function fichaAtencion(at, ctx) {
         : '';
     }
 
-    // ---- lista de un toque ----
     const buscador = crearElemento('input', {
       id: `at-buscar-${idp}`, type: 'search', placeholder: 'Buscar…', autocomplete: 'off'
     });
@@ -350,10 +339,7 @@ export function pintarOtrosDias(lista, ctx) {
   for (const at of ordenadas) lista.append(fichaAtencion(at, ctx));
 }
 
-// ------------------------------------- juntar la lista de dos teléfonos (QR)
-//
-// Si dos personas pasan lista en teléfonos distintos, una muestra un QR con
-// sus marcas de hoy y la otra lo lee. Antes de guardar se ve qué se suma y
+// Juntar la lista de dos teléfonos por QR: antes de guardar se ve qué se suma y
 // qué no coincide (ui-compartir.js). Sin internet ni servidor. Se puede deshacer.
 
 function juntarConOtroTelefono(at, ctx) {
@@ -373,9 +359,7 @@ function juntarConOtroTelefono(at, ctx) {
   ]);
 }
 
-// -------------------------------------------------------- asistencia de hoy
-//
-// Siempre visible y siempre apuntando al día de hoy. El registro del día NO se
+// La asistencia de hoy, siempre visible. El registro del día NO se
 // crea al abrir la página: se crea cuando se marca a la primera persona. Así,
 // abrir la aplicación no inventa un día de atención que nadie tuvo.
 

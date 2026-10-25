@@ -1,6 +1,5 @@
-// Sugerencias.kt — porte de web/js/sugerencias.js. Funciones puras que
-// PROPONEN. Nunca aplican nada. Origen interno, procedencia
-// visible, aceptación explícita, reversible.
+// Funciones puras que PROPONEN. Nunca aplican nada. Origen interno,
+// procedencia visible, aceptación explícita, reversible.
 package io.github.tmrainer.asistencia.nucleo.sugerencias
 
 import io.github.tmrainer.asistencia.nucleo.modelo.Config

@@ -1,5 +1,4 @@
-// Validaciones.kt — porte de web/js/validaciones.js. Señalan y explican;
-// NUNCA corrigen. Los mensajes son los mismos que en la web.
+// Señalan y explican; NUNCA corrigen. Los mensajes son los mismos que en la web.
 package io.github.tmrainer.asistencia.nucleo.validaciones
 
 import io.github.tmrainer.asistencia.nucleo.calculos.TRAMOS_ETARIOS
@@ -55,7 +54,7 @@ private val CE = Regex("^[A-Za-z0-9]{8,12}$")
 private fun soloDigitos(v: String?) = DIGITOS.matches(v ?: "")
 private fun vacio(v: String?) = (v ?: "").trim().isEmpty()
 
-// ------------------------------------------------------------ Encabezado
+// Encabezado
 
 private fun validarEncabezado(r: Rendicion): List<Hallazgo> {
     val hs = ArrayList<Hallazgo>()
@@ -106,7 +105,7 @@ private fun validarEncabezado(r: Rendicion): List<Hallazgo> {
     return hs
 }
 
-// --------------------------------------------------------------- Ingresos
+// Ingresos
 
 private fun validarIngresos(r: Rendicion): List<Hallazgo> {
     val hs = ArrayList<Hallazgo>()
@@ -132,7 +131,7 @@ private fun validarIngresos(r: Rendicion): List<Hallazgo> {
     return hs
 }
 
-// ---------------------------------------------------------------- Egresos
+// Egresos
 
 private fun filaTieneAlgo(f: Egreso): Boolean =
     !vacio(f.fechaCompra) || !vacio(f.descripcion) || !vacio(f.rucProveedor) ||
@@ -208,7 +207,7 @@ private fun validarEgresos(r: Rendicion): List<Hallazgo> {
     return hs
 }
 
-// --------------------------------------------------------------- Conjunto
+// Conjunto
 
 const val FILAS_EGRESOS = 17 // provisional
 
@@ -262,7 +261,7 @@ fun validarRendicion(rendicion: Rendicion?): List<Hallazgo> {
         validarEgresos(rendicion) + validarConjunto(rendicion)
 }
 
-// ----------------------------------------------------------------- Padrón
+// Padrón
 
 /**
  * Índice del padrón para validar sin comparar a cada persona con todas las
@@ -291,7 +290,7 @@ fun indicePadron(padron: Padron): IndicePadron {
 
 /**
  * `hoy` existe para poder probar con una fecha fija; por defecto es la de
- * hoy, como en la web.
+ * hoy.
  */
 fun validarAfiliado(
     afiliado: Afiliado,
@@ -306,7 +305,7 @@ fun validarAfiliado(
     if (vacio(a.apellidoPaterno)) hs.add(h(ERROR, campo, "Falta el apellido paterno."))
     if (vacio(a.nombres)) hs.add(h(ERROR, campo, "Faltan los nombres."))
 
-    // El número de documento es OBLIGATORIO (decisión del equipo).
+    // El número de documento es OBLIGATORIO.
     if (vacio(a.numeroDocumento)) {
         hs.add(h(ERROR, campo, "Falta el número de documento. Es obligatorio para el padrón."))
     } else {
@@ -363,7 +362,7 @@ fun validarAfiliado(
     return hs
 }
 
-// --------------------------------------------------------------- Raciones
+// Raciones
 
 fun validarAtencion(atencion: Atencion, padron: Padron, indice: IndicePadron = indicePadron(padron)): List<Hallazgo> {
     val hs = ArrayList<Hallazgo>()
@@ -401,7 +400,6 @@ fun validarAtencion(atencion: Atencion, padron: Padron, indice: IndicePadron = i
                 "a contarse de ahí."))
     }
 
-    // --- asistencia ---
     val vistos = HashSet<String>()
     for (a in asistenciasDelDia(at)) {
         if (a.afiliadoId.isEmpty()) continue
@@ -433,8 +431,6 @@ fun validarAtencion(atencion: Atencion, padron: Padron, indice: IndicePadron = i
     return hs
 }
 
-// --------------------------------------------------- Precio del menú (config)
-
 fun validarPreciosMenu(config: Config?, hayRaciones: Boolean = true): List<Hallazgo> {
     val hs = ArrayList<Hallazgo>()
     if (config == null) return hs
@@ -453,8 +449,6 @@ fun validarPreciosMenu(config: Config?, hayRaciones: Boolean = true): List<Halla
     }
     return hs
 }
-
-// ------------------------------------------------- Calendario de entregas
 
 fun validarCalendario(calendario: Calendario?): List<Hallazgo> {
     val hs = ArrayList<Hallazgo>()

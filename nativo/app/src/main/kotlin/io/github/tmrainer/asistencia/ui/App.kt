@@ -1,8 +1,5 @@
-// App.kt — la cáscara: tema, navegación, cabecera con sus botones con palabra
-// (Ayuda, Ajustes), el menú de abajo (ícono y palabra, la sección actual con
-// una píldora) y el aviso de abajo con «Deshacer». Las pantallas van en
-// ui/pantallas. Cada pantalla anota lo que se lee en voz alta (Lectura);
-// «Ayuda» o el botón «Escuchar» lo leen.
+// La cáscara: tema, navegación, cabecera, menú de abajo y el aviso de abajo con
+// «Deshacer». Las pantallas van en ui/pantallas.
 package io.github.tmrainer.asistencia.ui
 
 import androidx.compose.ui.semantics.heading
@@ -90,7 +87,7 @@ import io.github.tmrainer.asistencia.ui.tema.TemaOlla
 import io.github.tmrainer.asistencia.ui.tema.colores
 import io.github.tmrainer.asistencia.ui.tema.tipos
 
-/** Las secciones del menú de abajo, en orden, como PAGINAS en ui.js. */
+/** Las secciones del menú de abajo, en orden. */
 enum class Ruta(val ruta: String, val texto: String, val icono: String) {
     INICIO("inicio", "Inicio", "casa"),
     ASISTENCIA("asistencia", "Asistencia", "lista"),

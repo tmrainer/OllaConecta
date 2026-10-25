@@ -1,4 +1,4 @@
-// GenerarPerfil.kt — el recorrido que define el perfil de arranque: abrir la
+// El recorrido que define el perfil de arranque: abrir la
 // app, llenar el primer uso (la app aparte arranca sin datos) y pasar por las
 // cinco secciones del menú de abajo. Lo que se use aquí, Android lo deja
 // compilado por adelantado y la app abre más rápido.
@@ -42,12 +42,12 @@ class GenerarPerfil {
             device.wait(Until.findObject(By.text("Presidenta")), 3_000)?.click()
             escribir("Prueba Perfil")   // nombre
             escribir("12345678")        // DNI
-            device.findObject(By.text("Siguiente"))?.click()
+            device.findObject(By.text("Continuar"))?.click()
             // Sin un DNI delante de la cámara: se sigue sin confirmar.
             device.wait(Until.findObject(By.textStartsWith("No puedo leer mi DNI")), 3_000)?.click()
             device.wait(Until.findObject(By.text("Nombre de la olla")), 3_000)
             escribir("Olla de prueba")
-            device.findObject(By.text("Listo"))?.click()
+            device.findObject(By.text("Terminar"))?.click()
             device.wait(Until.findObject(By.text("Cerrar")), 3_000)?.click()
         }
         for (seccion in listOf("Asistencia", "Padrón", "B-1", "Entregas", "Inicio")) {

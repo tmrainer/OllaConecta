@@ -1,12 +1,6 @@
 // errores.js — si algo falla, decirlo en pantalla en vez de dejarla en blanco.
-//
-// Es un script clásico (no un módulo) y se carga antes que todos: cuando un
-// módulo no carga o tiene un error, ninguno de los módulos corre, y este aviso
-// tiene que poder aparecer igual. No usa nada de la aplicación.
-//
-// Los datos no se tocan: siguen en localStorage. El detalle técnico queda a la
-// vista (plegado) para poder sacarle una foto y mostrárselo a quien mantiene
-// la aplicación.
+// Script clásico (no módulo) cargado antes que todos: si un módulo falla, ninguno
+// corre, y este aviso tiene que aparecer igual. No usa nada de la aplicación.
 
 (function () {
   'use strict';

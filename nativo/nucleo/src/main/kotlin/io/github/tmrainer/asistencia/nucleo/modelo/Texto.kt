@@ -1,4 +1,4 @@
-// Texto.kt — utilidades de texto de web/js/modelo.js: plurales, nombres, orden.
+// Utilidades de texto: plurales, nombres, orden.
 package io.github.tmrainer.asistencia.nucleo.modelo
 
 import java.text.Collator

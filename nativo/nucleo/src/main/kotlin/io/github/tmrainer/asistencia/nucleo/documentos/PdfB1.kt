@@ -1,19 +1,7 @@
-// PdfB1.kt — porte de web/js/pdf-b1.js: el B-1 como PDF de referencia, para
-// guardar o mandar por WhatsApp cuando no se puede imprimir sobre la hoja oficial.
-//
-// No es el formato oficial ni sirve para superponer (eso es la fase 5): dibuja los rótulos y las líneas del formato en gris y los datos en negro,
-// en las mismas posiciones de PlantillaB1.kt, para que se lea solo. Cada hoja
-// dice arriba «Copia de referencia» y cuándo se generó.
-//
-// Para la pantalla: dibujarFormato() y dibujarHoja() dibujan sobre cualquier
-// Lienzo. Con un LienzoTrazos, la app recibe el mismo dibujo del PDF como datos
-// (Trazo: líneas, recuadros, rellenos y textos en mm sobre la A4):
-//
-//     val l = LienzoTrazos(); dibujarFormato(l)              // solo el formato
-//     val l = LienzoTrazos(); dibujarHoja(l, hojasDelB1(r)[0])  // la hoja del PDF entera
-//
-// Diferencia con la web: la hoja() interna de la web, que crea su lienzo, aquí
-// es dibujarHoja(l, …) y recibe el lienzo; el PDF sale igual byte a byte.
+// El B-1 como PDF de referencia, para cuando no se puede imprimir sobre la hoja
+// oficial: el formato en gris y los datos en negro, en las posiciones de
+// PlantillaB1.kt. Con un LienzoTrazos, la pantalla recibe el mismo dibujo como
+// datos. El PDF sale igual byte a byte que el de la web.
 package io.github.tmrainer.asistencia.nucleo.documentos
 
 import kotlin.math.max
@@ -70,8 +58,6 @@ private fun datoEnCaja(l: Lienzo, texto: String?, caja: CampoB1, ptInicial: Doub
     val xm = if (align == "right") xMm + w - margen - ancho else if (align == "center") xMm + (w - ancho) / 2 else xMm + margen
     l.texto(t, xm, yMm + h - 0.7, pt)
 }
-
-// -------------------------------------------- la estructura del formato
 
 private val P = PLANTILLA_B1
 private const val ROTULO = 6.5 // pt
@@ -217,8 +203,6 @@ fun dibujarFormato(l: Lienzo) {
     )
     dj.forEachIndexed { i, t -> l.texto(t, 16.0, 284 + i * 3.6, 5.8) }
 }
-
-// ------------------------------------------------------------ una hoja
 
 /**
  * Una hoja del PDF entera: el formato, el aviso de copia de referencia y los

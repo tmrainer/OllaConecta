@@ -1,6 +1,6 @@
-// OraculoTest.kt — el criterio de éxito de la fase 1: un respaldo exportado
-// por la web se lee en Kotlin, se recalcula todo, y da los MISMOS números que
-// los módulos de la web (nativo/herramientas/oraculo.mjs escribe lo esperado).
+// Un respaldo exportado por la web se lee en Kotlin, se recalcula todo, y da
+// los MISMOS números que los módulos de la web (nativo/herramientas/oraculo.mjs
+// escribe lo esperado).
 //
 // Dos entradas:
 //  - respaldo-ficticio.json (versionado, datos inventados): corre siempre.
@@ -95,8 +95,6 @@ class OraculoTest {
         }
     }
 }
-
-// ----------------------------------------------------------- lo que se calcula
 
 private fun calcularTodo(r: Respaldo, crudo: JsonElement, hoy: String, hoyValidacion: String, periodos: List<Pair<String, String>>): JsonObject = buildJsonObject {
     put("hoy", hoy)
@@ -240,8 +238,6 @@ private fun conteo(hs: List<Hallazgo>): JsonObject {
 }
 
 private fun <T> lista(xs: Iterable<T>, f: (T) -> JsonElement): JsonArray = buildJsonArray { for (x in xs) add(f(x)) }
-
-// ------------------------------------------------------------- comparar
 
 /** Diferencias entre lo que dijo la web y lo que dio Kotlin. Una clave ausente vale null. */
 private fun diferencias(esperado: JsonElement?, obtenido: JsonElement?, ruta: String): List<String> {

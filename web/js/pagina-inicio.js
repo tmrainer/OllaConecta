@@ -1,8 +1,5 @@
-// pagina-inicio.js — controlador de index.html: la pantalla de Inicio.
-//
-// Se entra por tareas («Pasar lista hoy», «Anotar una compra»), no por
-// secciones: así nadie tiene que saber que una compra va en el «Formato B-1».
-// Arriba, el día de un vistazo y la próxima entrega.
+// Controlador de index.html. Se entra por tareas, no por secciones: así nadie
+// tiene que saber que una compra va en el «Formato B-1».
 
 import {
   CLAVES, leer, hoyIso, formatearSoles, configVacia, calendarioVacio, padronVacio, cuantos, fechaLarga
@@ -26,7 +23,6 @@ const centro = config.ultimoCentro && String(config.ultimoCentro.nombreCentro ||
 if (centro) buscar('.cabecera-titulo h1').textContent = centro;
 pintarAvisosAlmacenamiento(buscar('#avisos-sistema'), { recordatorio: false });
 
-// ---- el día de hoy ----
 const atHoy = (padron.atenciones || []).find((a) => a.fecha === hoy);
 const d = desgloseDelDia(atHoy);
 buscar('#hoy-raciones').textContent = String(d.total);
@@ -37,7 +33,6 @@ buscar('#hoy-tarjeta').dataset.leer = '';
 buscar('#hoy-tarjeta').setAttribute('aria-label',
   `Hoy: ${cuantos(d.total, 'ración', 'raciones')}` + (rec ? `, ${formatearSoles(rec)} soles recaudados` : ''));
 
-// ---- la próxima entrega ----
 const entrega = buscar('#hoy-entrega');
 const alerta = alertaProximaEntrega(calendario, hoy);
 let textoEntrega = 'Anota cuándo entregas el B-1 y la app te avisa';
@@ -50,7 +45,6 @@ if (alerta && alerta.configurado) {
 }
 entrega.append(icono('reloj', { tam: 22 }), crearElemento('span', { texto: textoEntrega }));
 
-// ---- las tareas: ícono y palabra ----
 for (const t of document.querySelectorAll('.tarea')) {
   const texto = t.textContent;
   t.textContent = '';
@@ -67,7 +61,6 @@ for (const [id, cual] of [['#enlace-datos', 'escudo'], ['#enlace-ajustes', 'ajus
   e.append(icono('flecha', { tam: 20 }));
 }
 
-// ---- la copia de los datos ----
 const nota = buscar('#nota-copia');
 const ultima = leer(CLAVES.respaldo, {}).ultimoEn;
 const dias = ultima ? Math.round((Date.parse(hoy) - Date.parse(ultima)) / 86400000) : null;
@@ -87,7 +80,6 @@ if (dias !== null && dias < 14) {
   nota.hidden = true;
 }
 
-// ---- quién usa este teléfono ----
 // Una invitación, no un paso obligatorio: se puede decir «Ahora no».
 const notaPerfil = buscar('#nota-perfil');
 if (!perfilCompleto() && !perfilOmitido()) {

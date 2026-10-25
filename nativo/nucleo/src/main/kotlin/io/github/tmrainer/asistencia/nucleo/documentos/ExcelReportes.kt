@@ -1,11 +1,6 @@
-// ExcelReportes.kt — porte de web/js/excel-reportes.js: el padrón, la
-// asistencia y el B-1 como Excel (.xlsx).
-//
-// Las mismas cifras que los PDF (PdfReportes.kt, PdfB1.kt), pero en celdas:
-// los números son números (se pueden sumar en la hoja) y los DNI, texto (no
-// pierden el 0 de adelante). Solo ordenan y suman lo que ya está guardado: no
-// completan ni deducen nada. Puro: recibe los datos y devuelve
-// los bytes (Xlsx.kt).
+// El padrón, la asistencia y el B-1 como Excel (.xlsx). Las mismas cifras que
+// los PDF, pero en celdas: los números son números y los DNI, texto (no pierden
+// el 0 de adelante). Solo ordenan y suman lo guardado; no completan nada.
 package io.github.tmrainer.asistencia.nucleo.documentos
 
 import io.github.tmrainer.asistencia.nucleo.calculos.TRAMOS_ETARIOS
@@ -31,10 +26,8 @@ private fun negrita(v: Any?) = Celda(v, negrita = true)
 private fun soles(cent: Long?, conNegrita: Boolean = false): Any = if (cent != null) Celda(cent / 100.0, soles = true, negrita = conNegrita) else ""
 private fun periodoTexto(inicio: String, fin: String) = "del ${aDdMmAa(inicio)} al ${aDdMmAa(fin)}"
 
-// ------------------------------------------------------------------ padrón
-
-// Los mismos títulos que entiende la importación (importar.js): el archivo se
-// puede volver a cargar en otro teléfono.
+// Los mismos títulos que entiende la importación: el archivo se puede volver a
+// cargar en otro teléfono.
 val CABECERA_PADRON = listOf("N°", "Apellido paterno", "Apellido materno", "Nombres", "Tipo de documento",
     "Número de documento", "Grupo de edad", "Edad", "Tipo", "Días asistidos")
 
@@ -81,8 +74,6 @@ fun excelDelPadron(padron: Padron, fechaRef: String, inicio: String, fin: String
         )
     ))
 }
-
-// --------------------------------------------------------------- asistencia
 
 /**
  * Hoja «Resumen por día» (raciones por menú, sin inscribir, recaudado) y hoja
@@ -137,8 +128,6 @@ fun excelDeAsistencia(padron: Padron, inicio: String, fin: String, centro: Strin
         HojaXlsx(nombre = "Por persona", anchos = listOf(5, 34, 12) + dias.map { 9 } + 6, filas = porPersona)
     ))
 }
-
-// --------------------------------------------------------------------- B-1
 
 private fun cantidad(e: Egreso): Any = if (e.cantidadVarios) "varios" else e.cantidad?.takeIf { it.isFinite() } ?: ""
 private fun precio(e: Egreso): Any = if (e.precioUnitarioVarios) "varios" else soles(e.precioUnitarioCent)

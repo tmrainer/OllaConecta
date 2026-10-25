@@ -1,12 +1,5 @@
-// camara-qr.js — mostrar y leer los QR para pasar datos de un teléfono a
-// otro (formato en compartir-qr.js).
-//
-// Mostrar: el QR lo arma qrcode-generator (vendor/, MIT, copiado dentro de la
-// app: sin internet) y se dibuja en un lienzo. Si son varias partes, un solo
-// código que cambia solo; la otra cámara las junta mientras apunta.
-// Leer: con BarcodeDetector, del propio navegador (en el APK lo trae el
-// WebView). Se juntan las partes de un mismo envío hasta tenerlas todas.
-// Nada de esto sale del teléfono: el QR se ve en pantalla y nada más.
+// camara-qr.js — mostrar y leer los QR para pasar datos de un teléfono a otro
+// (formato en compartir-qr.js). Nada sale del teléfono: el QR solo se ve en pantalla.
 
 import { crearElemento, destelloLeido, modoDepuracion } from './ui.js';
 import { leerParteQr, juntarPartesQr } from './compartir-qr.js';

@@ -1,5 +1,4 @@
-// Modelo.kt — forma de los datos. Porte de web/js/modelo.js (constructores).
-// Sin Android, sin red.
+// Forma de los datos. Sin Android, sin red.
 //
 // Las clases son inmutables: se cambian con copy(). Todos los campos tienen
 // valor por defecto para que un respaldo con un campo ausente o en null se lea
@@ -13,8 +12,6 @@ import kotlinx.serialization.Serializable
 const val VERSION_ESQUEMA = 1
 const val VERSION_PADRON = 3      // v3: raciones derivadas de la asistencia
 const val VERSION_CALENDARIO = 1
-
-// ------------------------------------------------------------ Formato B-1
 
 @Serializable
 data class Periodo(
@@ -43,7 +40,7 @@ data class Egreso(
     val origenFondo: String = "subsidio"  // "subsidio" | "ayuda_social" | "aporte_propio"
 )
 
-/** Cuándo se exportó un B-1 (pagina-b1.js, registrarExportacion). Va en la copia. */
+/** Cuándo se exportó un B-1. Va en la copia. */
 @Serializable
 data class Generacion(
     val en: String = "",
@@ -86,8 +83,6 @@ data class GastoPropio(
     val montoCent: Long? = null,
     val nota: String = ""
 )
-
-// ----------------------------------------------------------------- Padrón
 
 @Serializable
 data class Afiliado(
@@ -183,8 +178,6 @@ data class HojaMunicipal(
     val retirados: List<String> = emptyList()
 )
 
-// ------------------------------------------------------------- Calendario
-
 @Serializable
 data class Entrega(
     val id: String = "",
@@ -202,12 +195,10 @@ data class Calendario(
     val entregas: List<Entrega> = emptyList()
 )
 
-// ----------------------------------------------------------------- Config
-
 @Serializable
 data class Calibracion(val offsetXmm: Double = 0.0, val offsetYmm: Double = 0.0)
 
-/** Encabezado de la última rendición, para proponerlo (sugerencias.js). */
+/** Encabezado de la última rendición, para proponerlo. */
 @Serializable
 data class UltimoCentro(
     val guardadoEn: String = "",
@@ -233,10 +224,10 @@ data class Config(
     fun precios() = PreciosMenu(precioMenuNormalCent, precioMenuAyudaSocialCent)
 }
 
-/** Los dos precios vigentes (preciosActuales() de estado.js). */
+/** Los dos precios vigentes. */
 data class PreciosMenu(val precioMenuNormalCent: Long?, val precioMenuAyudaSocialCent: Long?)
 
-/** Quien usa el teléfono (perfil.js). No va en los respaldos. */
+/** Quien usa el teléfono. No va en los respaldos. */
 data class Perfil(
     val nombre: String = "",
     val rol: String = "",        // "presidenta" | "tesorera" | "apoyo"
@@ -245,9 +236,7 @@ data class Perfil(
     val olla: String = ""          // la olla a la que pertenece quien usa el teléfono
 )
 
-// ----------------------------------------------------------- Respaldo
-
-/** El respaldo completo que exporta la web (armarRespaldo() en ui.js). */
+/** El respaldo completo, en el mismo formato que exporta la web. */
 @Serializable
 data class Respaldo(
     val exportadoEn: String = "",
@@ -257,8 +246,6 @@ data class Respaldo(
     val calendario: Calendario? = null,
     val config: Config? = null
 )
-
-// ---------------------------------------------------------- constructores
 
 fun nuevoEgreso() = Egreso(id = uuid())
 

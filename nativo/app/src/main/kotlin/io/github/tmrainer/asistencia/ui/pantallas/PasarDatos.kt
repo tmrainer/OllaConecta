@@ -1,10 +1,7 @@
-// PasarDatos.kt — pasar datos a otro teléfono por QR, y recibirlos
-// (ui-compartir.js), sin internet. Enviar: el padrón, la asistencia de los
-// días que se elijan o las entregas. Recibir: se lee el envío y, ANTES de
-// guardar, se muestra la comparación con lo de este teléfono: qué se agrega,
-// qué ya estaba y qué no coincide. Lo que no coincide se queda como aquí salvo
-// que se elija lo recibido. Así dos teléfonos no cruzan datos sin que nadie lo
-// vea. Guardar ofrece «Deshacer».
+// Pasar datos a otro teléfono por QR, y recibirlos, sin internet. Al recibir, ANTES de
+// guardar se muestra la comparación con lo de este teléfono; lo que no coincide se queda
+// como aquí salvo que se elija lo recibido: dos teléfonos no cruzan datos sin que nadie
+// lo vea. Guardar ofrece «Deshacer».
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import androidx.compose.foundation.background
@@ -72,8 +69,6 @@ import io.github.tmrainer.asistencia.ui.tema.tipos
 private const val AVISO_PRIVADO = "Lleva nombres y DNI: muéstralo solo al otro teléfono de la olla."
 private const val DONDE_RECIBIR = "En el otro teléfono: Tus datos → «Recibir por QR»."
 
-// ----------------------------------------------------------------- enviar
-
 /** Muestra el QR del padrón, de la asistencia de [fechas] o de las entregas; si no hay nada, lo dice. */
 fun enviarPorQr(ctx: Contexto, tipo: String, fechas: List<String> = emptyList()) {
     val estado = ctx.estado
@@ -139,8 +134,6 @@ private fun ElegirDias(ctx: Contexto, dias: List<Pair<String, Int>>) {
     }
 }
 
-// ---------------------------------------------------------------- recibir
-
 /** Abre la cámara, lee el envío y muestra la comparación antes de guardar. */
 fun recibirPorQr(ctx: Contexto) {
     ctx.abrirCapa { LeerQr(alRecibir = { paquete -> ctx.abrirCapa { CompararRecibido(ctx, paquete) } }, alCerrar = ctx::cerrarCapa) }
@@ -162,7 +155,7 @@ private val PALABRAS = mapOf(
     "menu" to mapOf("normal" to "Menú normal", "ayuda_social" to "Ayuda social")
 )
 
-/** Lo que se muestra de cada valor: en palabras, nunca la clave interna (enPalabras de la web). */
+/** Lo que se muestra de cada valor: en palabras, nunca la clave interna. */
 private fun enPalabras(campo: String, v: Any?): String {
     if (v == null || v == "" || (v is List<*> && v.isEmpty())) return "(vacío)"
     if (campo == "activo") return if (v == false || v == 0) "No" else "Sí"

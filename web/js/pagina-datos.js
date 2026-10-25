@@ -1,8 +1,5 @@
-// pagina-datos.js — controlador de datos.html: «Tus datos».
-//
-// Todo lo que toca a los datos, aparte de los ajustes del teléfono: dónde se
-// guardan (incluida la copia de seguridad de Google en el APK), la copia que
-// guarda la persona y «Borrar todo», al final y lejos de «Guardar una copia».
+// Controlador de datos.html («Tus datos»): dónde se guardan, la copia de la
+// persona y «Borrar todo», al final y lejos de «Guardar una copia».
 
 import { CLAVES, leer, hoyIso, cuantos, fechaLarga } from './modelo.js';
 import {
@@ -19,7 +16,6 @@ buscar('#barra-datos').append(barraDatos({ borrar: false }));
 buscar('#borrar-todo').append(botonBorrarTodo());
 bloqueCuenta(buscar('#cuenta-estado'));
 
-// ---- pasar a otro teléfono ----
 // Se lee lo guardado en el momento de tocar: siempre lo último.
 const botonQr = (texto, accion) => crearElemento('button', { type: 'button', clase: 'boton secundario', texto, onclick: accion });
 buscar('#enviar-qr').append(

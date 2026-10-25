@@ -1,9 +1,7 @@
-// Revisor.kt — pasa la app instalada por los chequeos del Accessibility Scanner
-// de Google (Accessibility Test Framework): tamaño de lo que se toca, contraste
-// del texto y de los íconos, nombres para TalkBack, texto cortado, elementos
-// duplicados. Recorre cada sección (y la ayuda del Inicio), baja por las
-// pantallas largas y anota lo que encuentra en /data/local/tmp/revisor.txt
-// (y en logcat, etiqueta «Revisor»). Solo mira y navega: no cambia datos.
+// Pasa la app instalada por los chequeos del Accessibility Scanner de Google
+// (Accessibility Test Framework) en cada sección y anota lo que encuentra en
+// /data/local/tmp/revisor.txt (y en logcat, etiqueta «Revisor»). Solo mira y
+// navega: no cambia datos.
 //
 //   ./gradlew :perfil:connectedNonMinifiedReleaseAndroidTest \
 //     -Pandroid.testInstrumentationRunnerArguments.class=io.github.tmrainer.asistencia.perfil.Revisor

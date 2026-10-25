@@ -23,7 +23,7 @@ const modelo = (() => {
 const CLAVES = {
   rendiciones: 'b1.rendiciones.v1',
   padron: 'b1.padron.v1',
-  insumos: 'b1.insumos.v1',       // reservada: catálogo de insumos (fase 6); hoy nada la usa
+  insumos: 'b1.insumos.v1',       // reservada: catálogo de insumos; hoy nada la usa
   calendario: 'b1.calendario.v1',
   config: 'b1.config.v1',
   respaldo: 'b1.respaldo.v1',    // { ultimoEn: 'AAAA-MM-DD' }: cuándo se exportó el último respaldo
@@ -33,8 +33,6 @@ const CLAVES = {
 const VERSION_ESQUEMA = 1;
 const VERSION_PADRON = 3;      // v3: raciones derivadas de la asistencia
 const VERSION_CALENDARIO = 1;
-
-// ---------------------------------------------------------------- utilidades
 
 function uuid() {
   if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
@@ -67,7 +65,6 @@ function pad2(n) {
   return String(n).padStart(2, '0');
 }
 
-// --------------------------------------------------------------------- dinero
 // Todo monto vive como ENTERO de céntimos. Nunca se usa coma flotante.
 
 /**
@@ -101,13 +98,9 @@ function aNumero(texto) {
   return Number(limpio);
 }
 
-// --------------------------------------------------------------------- fechas
-
 /**
  * Fecha de hoy en hora LOCAL, como 'AAAA-MM-DD'. No usa toISOString(), que
  * daría la fecha UTC (en Lima, ya "mañana" después de las 19:00).
- * Es la fecha por defecto de casi todo: el día de atención nuevo, el alta, y
- * la referencia de edad cuando no se pasa otra. No lee ni escribe datos guardados.
  * @returns {string}
  */
 function hoyIso() {
@@ -131,7 +124,6 @@ function aIso(fecha) {
 /**
  * ¿Tiene `valor` la FORMA 'AAAA-MM-DD'? Solo revisa el formato: '2024-02-31'
  * pasa. Para saber si la fecha existe, usar aFecha(), que devuelve null si no.
- * Se usa como guarda antes de comparar fechas como texto. No lee ni escribe datos.
  * @param {*} valor
  * @returns {boolean}
  */
@@ -139,7 +131,6 @@ function esIso(valor) {
   return typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor);
 }
 
-/** 'AAAA-MM-DD' a 'DD-MM-AA', como se escribe en el papel. */
 const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
   'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -168,8 +159,6 @@ const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
-
-// ------------------------------------------------------------ constructores
 
 function nuevoEgreso() {
   return {
@@ -242,11 +231,7 @@ function nuevoAfiliado() {
  *
  * Los precios son una COPIA del precio configurado al crear el día, para que el
  * histórico no cambie si mañana sube el menú. Editables por si ese día fue otro.
- *
  * Solo construye el objeto: NO lo agrega a `padron.atenciones` ni lo guarda.
- * Quien llama decide cuándo (ver asegurarHoyGuardado en ui-asistencia.js).
- * La fecha sale de hoyIso(); quien necesita otro día la sobrescribe.
- *
  * @param {{precioMenuNormalCent: ?number, precioMenuAyudaSocialCent: ?number}|null} precios
  *   normalmente preciosActuales() de estado.js; null deja los precios vacíos.
  * @returns {{id: string, fecha: string, asistencias: Array<{afiliadoId: string, tipoMenu: string}>,
@@ -376,7 +361,6 @@ function normalizarNombre(texto) {
     .trim();
 }
 
-// --------------------------------------------------------------- persistencia
 // Toda lectura tolera ausencia y corrupción. Ante duda se arranca vacío y se
 // avisa; nunca se borra en silencio lo que había.
 
@@ -385,8 +369,6 @@ const avisos = [];
 function avisosAlmacenamiento() {
   return avisos.slice();
 }
-
-// ------------------------------------- asistencia compacta en localStorage
 
 // Guardada como lista de marcas, la asistencia de 150 personas llenaba el
 // límite de Safari (~5 MB) en unos dos años, y con 300 en uno. Por eso cada día
@@ -565,8 +547,6 @@ function guardar(clave, valor) {
   }
 }
 
-// ------------------------------------------------------ la olla de la nube
-
 /**
  * A qué olla de la nube está unido este teléfono (ver sincronizacion.js).
  * `juntar` dice que lo que hay en este teléfono todavía no se juntó con lo de
@@ -603,8 +583,6 @@ function borrarTodo() {
   }
   return ok;
 }
-
-// ------------------------------------------------------ restaurar un respaldo
 
 /**
  * Revisa un respaldo antes de restaurarlo: qué trae y si tiene la forma que
@@ -660,8 +638,7 @@ function revisarRespaldo(datos) {
 /**
  * Escribe en este dispositivo TODAS las partes que trae el respaldo (padrón,
  * rendiciones, calendario y config), sea cual sea la página desde donde se
- * importe. Antes, cada página restauraba solo lo suyo y el resto se perdía sin
- * aviso. Si una escritura falla, lo dice: devuelve false.
+ * importe. Si una escritura falla, lo dice: devuelve false.
  * @param {Object} datos  respaldo ya revisado con revisarRespaldo()
  * @returns {boolean}
  */
@@ -678,8 +655,6 @@ function restaurarRespaldo(datos) {
   if (partes.includes('config')) ok = guardar(CLAVES.config, datos.config) && ok;
   return ok;
 }
-
-// --------------------------------------------------- respaldo con contraseña
 
 // El respaldo lleva nombres, documentos y asistencia de personas reales. Con
 // contraseña se cifra con AES-GCM (Web Crypto del navegador: sin librerías) y
@@ -759,7 +734,7 @@ const calculos = (() => {
 
 const { aFecha, aIso, esIso, hoyIso, MESES } = modelo;
 
-// ------------------------------------------------- Totales del Formato B-1
+// Totales del Formato B-1
 
 function totalRendicionGastos(rendicion) {
   const filas = (rendicion && rendicion.egresos) || [];
@@ -830,7 +805,7 @@ function descuadreFila(fila) {
   return { esperado, declarado: fila.montoTotalCent, diferencia };
 }
 
-// --------------------------------------------------------- Padrón
+// Padrón
 
 /**
  * ¿Estaba activa esta persona en la fecha `ref` ('AAAA-MM-DD' válida)?
@@ -926,8 +901,7 @@ function resumenEtario(padron, fechaRefIso) {
   return conteo;
 }
 
-// ------------------------------------------- Asistencia, raciones y precios
-//
+// Asistencia, raciones y precios.
 // Las raciones NO se escriben: se cuentan de la asistencia marcada, porque la
 // comida se prepara el mismo día según quién viene. El precio sí está fijado de
 // antemano y se copia a cada día nuevo.
@@ -940,10 +914,8 @@ function atencionesDelPeriodo(padron, inicioIso, finIso) {
 
 /**
  * Las asistencias marcadas de un día. Es la ÚNICA puerta de lectura de
- * `atencion.asistencias`: asistio, menuDe, desgloseDelDia, asistenciaPorAfiliado
- * y validarAtencion pasan por aquí. Quienes escriben ese arreglo están en
- * ui-asistencia.js (filaToque y marcarTodos).
- *
+ * `atencion.asistencias`; quienes lo escriben están en ui-asistencia.js.
+ * 
  * Devuelve el MISMO arreglo guardado, no una copia: no mutarlo desde aquí.
  * @param {?Object} at  una atención (un día) de `padron.atenciones`
  * @returns {Array<{afiliadoId: string, tipoMenu: 'normal'|'ayuda_social'}>}
@@ -954,8 +926,7 @@ function asistenciasDelDia(at) {
 }
 
 /**
- * ¿Está marcada esta persona en este día? Lee `at.asistencias` vía
- * asistenciasDelDia. No escribe nada.
+ * ¿Está marcada esta persona en este día?
  * @param {?Object} at  una atención (un día)
  * @param {string} afiliadoId
  * @returns {boolean}
@@ -1037,7 +1008,7 @@ function recaudacionDelDiaCent(at) {
   ];
   for (const [raciones, precio] of pares) {
     if (raciones === 0) continue;
-    if (!Number.isFinite(precio)) return null;   // falta el precio: no se estima
+    if (!Number.isFinite(precio)) return null;
     total += raciones * precio;
   }
   return total;
@@ -1113,17 +1084,10 @@ function conteoAsistenciaDelDia(at) {
 }
 
 /**
- * Días que asistió cada persona dentro de un periodo.
- * Devuelve [{ afiliadoId, dias, normal, ayudaSocial }] ordenado de más a menos.
- *
- * Lee `padron.atenciones` del periodo (atencionesDelPeriodo) y, de cada día,
- * `at.asistencias` (asistenciasDelDia). No escribe nada. Es el punto donde el
- * padrón exportado (PDF y Excel) lee lo que se marcó en la pantalla de asistencia
- * (excel-reportes.js y pdf-reportes.js, al exportar el padrón).
- *
+ * Días que asistió cada persona dentro de un periodo, de más a menos. Es por donde
+ * el padrón exportado (PDF y Excel) lee lo marcado en la pantalla de asistencia.
  * Solo aparece quien asistió al menos un día: los demás no tienen fila.
  * Los días migrados con `legado` no suman, porque no dicen quién vino.
- *
  * @param {{atenciones: Object[]}} padron  normalmente estado.padron
  * @param {string} inicioIso  'AAAA-MM-DD', incluido
  * @param {string} finIso     'AAAA-MM-DD', incluido
@@ -1157,21 +1121,15 @@ function afiliadosSinAsistencia(padron, inicioIso, finIso, activasAIso = finIso)
   return afiliadosActivos(padron, activasAIso).filter((a) => !conAsistencia.has(a.id));
 }
 
-// ------------------------------------------------- Reporte para el padrón
-//
-// Filas listas para copiar al formato de padrón que pide la Municipalidad.
-// Solo ordena y numera datos ya ingresados: no completa ni deduce ninguno.
+// Reporte para el padrón: solo ordena y numera datos ya ingresados; no
+// completa ni deduce ninguno.
 
 /**
  * Filas del reporte del padrón: personas activas a `fechaRefIso`, ordenadas por
- * apellidos y nombres, y numeradas desde 1.
- *
- * Lee `padron.afiliados` (vía afiliadosActivos). NO lee asistencias: los días
- * asistidos los agrega quien llama, con asistenciaPorAfiliado. No escribe nada.
- *
+ * apellidos y nombres, y numeradas desde 1. NO lee asistencias: los días los
+ * agrega quien llama, con asistenciaPorAfiliado.
  * Edad y grupo etario se calculan a `fechaRefIso`, no se leen de lo guardado
  * (salvo `grupoEtarioManual` cuando no hay fecha de nacimiento).
- *
  * @param {{afiliados: Object[]}} padron  normalmente estado.padron
  * @param {string} [fechaRefIso]  'AAAA-MM-DD'; si no es válida, se usa hoy.
  * @returns {Array<{n: number, afiliadoId: string, apellidoPaterno: string,
@@ -1210,8 +1168,7 @@ function filasPadron(padron, fechaRefIso) {
     });
 }
 
-// ----------------------------------------------------- Periodo propuesto
-// La app PROPONE; la usuaria acepta o cambia. Nunca se aplica sola.
+// Periodo propuesto. La app PROPONE; la usuaria acepta o cambia. Nunca se aplica sola.
 
 function proponerPeriodo(tipo, fechaRefIso) {
   const ref = aFecha(esIso(fechaRefIso) ? fechaRefIso : hoyIso());
@@ -1262,20 +1219,10 @@ return { totalRendicionGastos, gastosConSubsidio, aporteCentroAtencion, totales,
 })();
 // ---------------------------------------------------------------- xlsx.js
 const xlsx = (() => {
-// xlsx.js — leer y escribir archivos de Excel (.xlsx) sin librerías.
-//
-// Leer: la primera hoja, para importar un padrón (leerXlsx).
-// Escribir: los reportes que se exportan (armarXlsx; los arma excel-reportes.js).
-//
-// Antes había que abrir el Excel y «Guardar como» CSV: justo el paso donde se
-// traba quien tiene poca costumbre con la computadora. Un .xlsx es un ZIP con
-// XML adentro; el navegador ya trae lo necesario para abrirlo
-// (DecompressionStream y DOMParser), así que no se agrega ninguna dependencia
-// ni se manda nada a ningún lado.
-//
-// Devuelve el texto de la hoja separado por tabuladores, igual que lo que se
-// pega desde Excel: de ahí en adelante, la importación es la misma de siempre.
-// No lee el Excel antiguo (.xls), que es otro formato.
+// Leer y escribir .xlsx sin librerías: un .xlsx es un ZIP con XML y el navegador ya
+// trae DecompressionStream y DOMParser, así que no se manda nada a ningún lado.
+// Leer devuelve la primera hoja separada por tabuladores, igual que lo pegado desde
+// Excel. No lee el Excel antiguo (.xls), que es otro formato.
 
 const firma = (v, i) => v.getUint32(i, true);
 
@@ -1431,9 +1378,7 @@ function pareceXlsx(buffer) {
   return b[0] === 0x50 && b[1] === 0x4b && b[2] === 3 && b[3] === 4;
 }
 
-// ------------------------------------------------------------------ escribir
-//
-// Lo mínimo que Excel, Google Sheets y WPS (el del celular) abren sin quejarse:
+// Escribir: lo mínimo que Excel, Google Sheets y WPS (el del celular) abren sin quejarse:
 // texto en la propia celda (sin tabla de textos compartidos), negrita y
 // soles con dos decimales. El ZIP va sin comprimir: un reporte pesa pocos KB y
 // así no hace falta nada asíncrono.
@@ -1571,13 +1516,8 @@ return { leerXlsx, pareceXlsx, armarXlsx };
 })();
 // ---------------------------------------------------------------- excel-reportes.js
 const excelReportes = (() => {
-// excel-reportes.js — el padrón, la asistencia y el B-1 como Excel (.xlsx).
-//
-// Las mismas cifras que los PDF (pdf-reportes.js, pdf-b1.js), pero en celdas:
-// los números son números (se pueden sumar en la hoja) y los DNI, texto (no
-// pierden el 0 de adelante). Solo ordenan y suman lo que ya está guardado: no
-// completan ni deducen nada. Puro: recibe los datos y devuelve
-// los bytes (xlsx.js).
+// excel-reportes.js — el padrón, la asistencia y el B-1 como Excel (.xlsx), con las
+// mismas cifras que los PDF. Los DNI van como texto: no pierden el 0 de adelante.
 
 const { aDdMmAa, nombreCompleto, cuantos } = modelo;
 const {
@@ -1591,8 +1531,6 @@ const diaDeSemana = (iso) => { const [a, m, d] = iso.split('-').map(Number); ret
 const negrita = (v) => ({ v, negrita: true });
 const soles = (cent, conNegrita = false) => (Number.isFinite(cent) ? { v: cent / 100, soles: true, negrita: conNegrita } : '');
 const periodoTexto = (inicio, fin) => `del ${aDdMmAa(inicio)} al ${aDdMmAa(fin)}`;
-
-// ------------------------------------------------------------------ padrón
 
 // Los mismos títulos que entiende la importación (importar.js): el archivo se
 // puede volver a cargar en otro teléfono.
@@ -1643,8 +1581,6 @@ function excelDelPadron(padron, { fechaRef, inicio, fin, centro = '' }) {
     }
   ]);
 }
-
-// --------------------------------------------------------------- asistencia
 
 /**
  * Hoja «Resumen por día» (raciones por menú, sin inscribir, recaudado) y hoja
@@ -1701,8 +1637,6 @@ function excelDeAsistencia(padron, { inicio, fin, centro = '' }) {
     { nombre: 'Por persona', anchos: [5, 34, 12, ...dias.map(() => 9), 6], filas: porPersona }
   ]);
 }
-
-// --------------------------------------------------------------------- B-1
 
 const CANTIDAD = (e) => (e.cantidadVarios ? 'varios' : Number.isFinite(e.cantidad) ? e.cantidad : '');
 const PRECIO = (e) => (e.precioUnitarioVarios ? 'varios' : soles(e.precioUnitarioCent));

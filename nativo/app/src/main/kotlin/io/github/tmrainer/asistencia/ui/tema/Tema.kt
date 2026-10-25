@@ -1,7 +1,7 @@
-// Tema.kt — el sistema visual de estilos.css en Compose: colores con nombre
-// de uso (no de tono), la letra Atkinson Hyperlegible Next en tres grosores,
-// cinco tamaños de letra que crecen enteros con «letra grande», una escala de
-// espacios y tres radios. El modo oscuro solo cambia los valores de los colores.
+// El sistema visual: colores con nombre de uso (no de tono), la letra Atkinson
+// Hyperlegible Next en tres grosores, cinco tamaños de letra que crecen enteros con
+// «letra grande», una escala de espacios y tres radios. El modo oscuro solo cambia
+// los valores de los colores.
 package io.github.tmrainer.asistencia.ui.tema
 
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -70,7 +70,7 @@ val ATKINSON = FontFamily(
     Font(R.font.atkinson_next_700, FontWeight.Bold)
 )
 
-/** Los cinco tamaños de estilos.css, ya multiplicados por el tamaño de letra elegido. */
+/** Los cinco tamaños de letra, ya multiplicados por el tamaño de letra elegido. */
 class Tipos(private val factor: Float) {
     private fun t(em: Float): TextUnit = (16f * em * factor).sp
     val cifra = TextStyle(fontFamily = ATKINSON, fontWeight = FontWeight.Bold, fontSize = t(2.4f), lineHeight = t(2.5f))

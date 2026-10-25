@@ -1,13 +1,7 @@
-// EnvioUnacem.kt — el envío a UNACEM sin nube (envio.js y la parte de
-// «revisar()» de nube/apps-script/Codigo.js que corría de noche): la app
-// arma el correo (nucleo/envio) y lo abre en la app de correo del teléfono;
-// la dirigente lo manda desde su propio correo. Sin servidor ni cuenta.
-//
-// Lo que queda aquí: a qué correo va (lo pone la dirigente en Ajustes),
-// cuándo se preparó cada envío, y el recordatorio de las 9 de la noche si
-// hay marcas de hoy sin enviar (y el 15 y el último día del mes, el padrón).
-// La app no sabe si el correo de verdad salió: dice «lo preparaste a las…
-// en Gmail» y nada más.
+// El envío a UNACEM sin nube: la app arma el correo (nucleo/envio) y lo abre en la app
+// de correo del teléfono; la dirigente lo manda desde su propio correo. Sin servidor ni
+// cuenta. A las 9 de la noche recuerda si hay marcas de hoy sin enviar (y el 15 y el
+// último día del mes, el padrón). La app no sabe si el correo de verdad salió.
 package io.github.tmrainer.asistencia
 
 import android.app.AlarmManager
@@ -29,7 +23,7 @@ import java.time.format.DateTimeFormatter
 
 class Envios(private val context: Context) {
 
-    /** Desde esta hora (del teléfono) se recuerda lo que falte, como el envío automático de la nube. */
+    /** Desde esta hora (del teléfono) se recuerda lo que falte. */
     val horaRecordatorio = 21
 
     private val prefs = context.getSharedPreferences("envios", Context.MODE_PRIVATE)

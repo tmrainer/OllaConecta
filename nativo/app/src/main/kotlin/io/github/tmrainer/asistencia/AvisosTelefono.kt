@@ -1,12 +1,8 @@
-// AvisosTelefono.kt — avisos con la app cerrada (avisos-nativos.js): el
-// teléfono se los programa a sí mismo con AlarmManager, sin red. Qué avisos y
-// cuándo lo decide programaDeAvisos() (alertas, en :nucleo); aquí solo se
-// entregan a Android y se muestran cuando llega la hora.
+// Avisos con la app cerrada: el teléfono se los programa a sí mismo con AlarmManager,
+// sin red. Qué avisos y cuándo lo decide programaDeAvisos() (en :nucleo).
 //
-// Se reprograma todo cada vez que cambia el calendario (OllaConectaApp lo
-// observa), y al encender el teléfono o actualizar la app: Android borra las
-// alarmas en esos casos, y ReceptorAvisos arranca el proceso, que las vuelve a
-// poner al cargar el calendario.
+// Android borra las alarmas al encender el teléfono o actualizar la app: ReceptorAvisos
+// arranca el proceso, que las vuelve a poner al cargar el calendario.
 package io.github.tmrainer.asistencia
 
 import android.Manifest
@@ -30,7 +26,7 @@ import java.time.ZoneId
 
 object AvisosTelefono {
 
-    /** 9 de la mañana, como en el APK 1.7. */
+    /** 9 de la mañana. */
     const val HORA_DEL_AVISO = 9
 
     private const val CANAL_ENTREGAS = "entregas"

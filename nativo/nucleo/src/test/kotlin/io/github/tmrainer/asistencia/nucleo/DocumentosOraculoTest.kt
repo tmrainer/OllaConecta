@@ -1,17 +1,11 @@
-// DocumentosOraculoTest.kt — los Excel y los PDF que arma Kotlin son los
-// MISMOS bytes que arma la web con el respaldo ficticio y la misma fecha.
-// nativo/herramientas/oraculo-documentos.mjs escribe lo esperado en
-// src/test/resources/documentos/:
+// Los Excel y los PDF que arma Kotlin son los MISMOS bytes que arma la web con
+// el respaldo ficticio y la misma fecha. Lo esperado, en
+// src/test/resources/documentos/, lo escribe:
 //
 //   node nativo/herramientas/oraculo-documentos.mjs
 //
-// respaldo-documentos.json (lo escribe el mismo script) trae textos largos y
-// raros, para pasar por los caminos que el ficticio no toca: letra más chica,
-// dos renglones, corte con «…», letras fuera de WinAnsi.
-//
-// Los .tsv son lo que leerXlsx() de la web (en Chromium) lee de cada .xlsx:
-// los de la web, el padrón de ejemplo de herramientas/ y uno comprimido como
-// los que guarda Excel.
+// respaldo-documentos.json trae textos largos y raros para los caminos que el
+// ficticio no toca. Los .tsv son lo que leerXlsx() de la web lee de cada .xlsx.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDeAsistencia

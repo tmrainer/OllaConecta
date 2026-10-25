@@ -1,10 +1,5 @@
-// ui-envio.js — el botón «Enviar a UNACEM» y cómo va el envío de hoy, en
-// Asistencia (la de hoy) y en Padrón. Solo aparece si el teléfono está unido
-// a una olla y la cuenta entró; si no, la caja queda vacía.
-//
-// El botón deja la solicitud (envio.js) y la línea de estado sigue lo que la
-// nube dice de ella: en camino, pendiente, enviado, fallo. Sin señal, la
-// solicitud espera en el teléfono.
+// El botón «Enviar a UNACEM» y el estado del envío de hoy (en camino, pendiente, enviado,
+// fallo). Solo aparece con olla vinculada y cuenta abierta; sin señal, la solicitud espera.
 
 import { crearElemento, icono } from './ui.js';
 import { hayCuentas, quien, explicarError } from './cuenta.js';

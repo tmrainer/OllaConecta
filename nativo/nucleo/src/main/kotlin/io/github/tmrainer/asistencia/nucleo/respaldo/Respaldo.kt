@@ -1,8 +1,6 @@
-// Respaldo.kt — leer y escribir el MISMO archivo .json que exporta la web
-// («Guardar una copia»: armarRespaldo() en ui.js; revisarRespaldo() y
-// restaurarRespaldo() en modelo.js), para que una usuaria migre con su copia.
-// Dónde vive ese archivo en el teléfono es asunto de la capa de arriba: aquí
-// entra y sale texto.
+// Leer y escribir el MISMO archivo .json que exporta la web («Guardar una
+// copia»), para que una usuaria migre con su copia. Aquí entra y sale texto:
+// dónde vive el archivo en el teléfono es asunto de la capa de arriba.
 package io.github.tmrainer.asistencia.nucleo.respaldo
 
 import io.github.tmrainer.asistencia.nucleo.modelo.Calendario
@@ -30,8 +28,6 @@ import javax.crypto.Cipher
 import javax.crypto.Mac
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
-
-// ---------------------------------------------------------------- revisar
 
 data class RevisionRespaldo(val error: String?, val partes: List<String>, val resumen: String)
 
@@ -88,8 +84,6 @@ fun revisarRespaldo(datos: JsonElement?): RevisionRespaldo {
     return RevisionRespaldo(null, partes, textos.joinToString(", "))
 }
 
-// ------------------------------------------------------------------- leer
-
 sealed interface LecturaRespaldo {
     /** Un respaldo legible: solo trae las partes que el archivo traía. */
     data class Lista(val respaldo: Respaldo, val revision: RevisionRespaldo) : LecturaRespaldo
@@ -133,8 +127,6 @@ fun leerRespaldo(datos: JsonElement): LecturaRespaldo {
     }
 }
 
-// --------------------------------------------------------------- escribir
-
 /** El respaldo completo: todo lo que la app guarda, en un solo objeto. */
 fun armarRespaldo(
     rendiciones: List<Rendicion>,
@@ -148,8 +140,6 @@ fun armarRespaldo(
 /** El texto del .json, con la misma sangría de dos espacios que la web. */
 fun escribirRespaldo(respaldo: Respaldo): String = JSON.encodeToString(Respaldo.serializer(), respaldo)
 
-// --------------------------------------------------- respaldo con contraseña
-//
 // Mismo sobre que cifrarRespaldo() de la web: AES-GCM de 256 bits con una
 // clave derivada por PBKDF2-SHA256. Sin la contraseña no hay forma de abrirlo.
 // PBKDF2 va escrito a mano sobre HmacSHA256 porque el proveedor de Android 24

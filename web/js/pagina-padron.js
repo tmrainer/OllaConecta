@@ -59,15 +59,11 @@ function repintar() {
   refrescar();
 }
 
-// ------------------------------------------------------------------- arranque
-
 montarCabecera('padron', cuantos(estado.padron.afiliados.length, 'persona'));
 pintarAvisosAlmacenamiento(buscar('#avisos-sistema'));
 
 ctx.conteo = buscar('#conteo-afiliados');
 ctx.estadoTexto = buscar('#estado-guardado');
-
-// La próxima entrega la dicen el Inicio, Entregas y el B-1.
 
 const fRef = buscar('#fechaRef');
 fRef.value = ctx.fechaRef;

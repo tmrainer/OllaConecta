@@ -1,16 +1,10 @@
-// avisos-nativos.js — avisos de entrega con la app cerrada, solo en el APK.
-//
-// En el navegador no hace nada: un aviso con la app cerrada necesitaría un
-// servidor, y la app no tiene. Dentro del APK (Capacitor),
-// Android se programa los avisos a sí mismo, sin red. El complemento lo deja el
-// propio APK en window.Capacitor.Plugins: aquí no se importa ninguna librería.
-//
-// Qué avisos y cuándo lo decide programaDeAvisos() (alertas.js), que es pura y
-// tiene sus pruebas. Este módulo solo los entrega a Android.
+// avisos-nativos.js — avisos de entrega con la app cerrada, solo en el APK (Android
+// los programa sin red). En el navegador no hace nada: necesitaría un servidor.
+// El complemento lo deja el APK en window.Capacitor.Plugins: no se importa librería.
 
 import { hoyIso } from './modelo.js';
 
-const HORA_DEL_AVISO = 9;   // 9 de la mañana
+const HORA_DEL_AVISO = 9;
 
 function complemento() {
   const C = typeof window !== 'undefined' ? window.Capacitor : null;

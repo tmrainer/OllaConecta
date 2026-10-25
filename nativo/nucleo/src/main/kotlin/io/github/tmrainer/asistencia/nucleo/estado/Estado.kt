@@ -1,13 +1,5 @@
-// Estado.kt — los datos en memoria y su guardado. Porte de web/js/estado.js
-// (más lo que pagina-b1.js y pagina-calendario.js hacían por su cuenta con
-// las rendiciones y el calendario). No dibuja nada.
-//
-// Cada parte es un StateFlow: las pantallas (fase 3) lo observan y repintan.
-// Los cambios entran por cambiarX { … }, que marcan la clave como pendiente y
-// piden guardar 400 ms después del ÚLTIMO cambio: varios toques seguidos son
-// una sola escritura. Al ocultarse la app, la capa Android llama a
-// guardarPendiente(). Un fallo al escribir se ve en `guardado` (FALLO); nunca
-// se dice «Guardado» sin haber escrito.
+// Los datos en memoria y su guardado diferido. No dibuja nada.
+// Nunca se dice «Guardado» sin haber escrito: un fallo queda en `guardado` (FALLO).
 package io.github.tmrainer.asistencia.nucleo.estado
 
 import io.github.tmrainer.asistencia.nucleo.almacen.Almacen
@@ -79,8 +71,6 @@ class Estado(
 
     fun avisosAlmacenamiento(): List<String> = almacen.avisosAlmacenamiento()
 
-    // ------------------------------------------------------------- cargar
-
     /** Lee todo del almacén. Lo ausente o ilegible arranca vacío (y se avisa). */
     fun cargar(): Estado {
         _padron.value = migrarPadron(almacen.leer(Clave.PADRON))
@@ -123,8 +113,6 @@ class Estado(
         return arreglado
     }
 
-    // ------------------------------------------------------------ cambiar
-
     fun cambiarPadron(cambio: (Padron) -> Padron) {
         _padron.value = cambio(_padron.value)
         marcar(Clave.PADRON)
@@ -153,7 +141,7 @@ class Estado(
     /**
      * Editar una rendición: anota cuándo se cambió y, si es la que está en
      * curso, deja su encabezado en config.ultimoCentro para proponerlo la
-     * próxima vez (como pagina-b1.js). Si el id no existe, no hace nada.
+     * próxima vez. Si el id no existe, no hace nada.
      */
     fun cambiarRendicion(id: String, cambio: (Rendicion) -> Rendicion) {
         val lista = _rendiciones.value
@@ -167,8 +155,6 @@ class Estado(
             marcar(Clave.CONFIG)
         }
     }
-
-    // ------------------------------------------------------------ guardar
 
     private fun marcar(clave: Clave) {
         synchronized(pendientes) { pendientes.add(clave) }
@@ -230,8 +216,6 @@ class Estado(
         return ok
     }
 
-    // ----------------------------------------------------------- ayudas
-
     /** Precio vigente del menú, que se copia a cada día nuevo. */
     fun preciosActuales(): PreciosMenu = _config.value.precios()
 
@@ -241,15 +225,13 @@ class Estado(
         return Lapso(h.substring(0, 8) + "01", h)
     }
 
-    // ------------------------------------------------- copia de los datos
-
     /** El respaldo completo con lo que hay ahora (escribe antes lo pendiente). */
     fun armarCopia(): Respaldo {
         guardarPendiente()
         return armarRespaldo(_rendiciones.value, _padron.value, _calendario.value, _config.value, ahora())
     }
 
-    /** Anota que hoy (o `en`, la del APK 1.7) se guardó una copia, para el recordatorio. */
+    /** Anota que hoy (o en la fecha `en`) se guardó una copia, para el recordatorio. */
     fun registrarCopia(en: String = hoy()): Boolean =
         almacen.guardar(Clave.RESPALDO, buildJsonObject { put("ultimoEn", en) })
 

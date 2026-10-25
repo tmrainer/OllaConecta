@@ -1,10 +1,6 @@
-// alertas.js — cuenta regresiva hasta la próxima entrega del formato.
-// Funciones PURAS: sin DOM, sin estado, sin red.
-//
-// La app NO conoce el calendario oficial de la Municipalidad. Todo sale de dos
-// datos que escribe la usuaria: cada cuánto entrega, y UNA fecha de entrega que
-// ella conoce. A partir de ahí se cuentan las siguientes. Si la Municipalidad
-// cambia una fecha, la usuaria la corrige a mano.
+// alertas.js — cuenta regresiva hasta la próxima entrega del formato. Funciones puras.
+// La app NO conoce el calendario oficial: cuenta desde la periodicidad y UNA fecha
+// de entrega que escribe la usuaria.
 
 import { aFecha, aIso, esIso, hoyIso, diasEntre, aDdMmAa, cuantos } from './modelo.js';
 
@@ -70,9 +66,7 @@ function pasosHastaHoy(calendario, hoy) {
   const per = calendario.periodicidad || 'mensual';
   const base = calendario.fechaLimiteBase;
   let n = 0;
-  // Retrocede hasta quedar en la última fecha anterior a hoy.
   while (n > -2000 && avanzarPeriodo(base, per, n) > hoy) n -= 1;
-  // Avanza hasta la primera que no ha pasado.
   while (n < 2000 && avanzarPeriodo(base, per, n) < hoy) n += 1;
   return n;
 }
@@ -195,13 +189,10 @@ export function agendaEntregas(calendario, hoyRef, cuantas = 6) {
 }
 
 /**
- * Los avisos que el teléfono muestra solo, con la app cerrada (versión APK):
- * uno por cada día de aviso antes de cada una de las próximas entregas, y uno
- * el mismo día. Solo los que caen después de hoy y de entregas no marcadas
- * como entregadas. Sin red: el teléfono se los programa a sí mismo.
- *
- * `id` es un entero estable (fecha de entrega + días de anticipación): volver a
- * programar reemplaza el mismo aviso en vez de duplicarlo.
+ * Avisos que el teléfono se programa solo (APK, sin red): uno por día de aviso
+ * antes de cada entrega no marcada, y uno el mismo día; solo los posteriores a hoy.
+ * `id` es estable (fecha de entrega + días de anticipación): reprogramar
+ * reemplaza el aviso en vez de duplicarlo.
  * @param {Object} calendario  b1.calendario.v1
  * @param {string} [hoyRef]  'AAAA-MM-DD'; por defecto, hoy
  * @param {number} [cuantas=6]  cuántas entregas hacia adelante

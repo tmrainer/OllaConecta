@@ -1,19 +1,10 @@
-// Xlsx.kt — porte de web/js/xlsx.js: leer y escribir archivos de Excel (.xlsx)
-// sin librerías.
+// Leer y escribir archivos de Excel (.xlsx) sin librerías: la primera hoja,
+// para importar un padrón (leerXlsx), y los reportes (armarXlsx).
 //
-// Leer: la primera hoja, para importar un padrón (leerXlsx).
-// Escribir: los reportes que se exportan (armarXlsx; los arma ExcelReportes.kt).
-//
-// Un .xlsx es un ZIP con XML adentro. Como en la web, el ZIP se recorre a mano;
-// del JDK solo se usan Inflater (lo que en la web es DecompressionStream), CRC32
-// y el lector de XML (lo que en la web es DOMParser). Nada se manda a ningún lado.
-//
-// Devuelve el texto de la hoja separado por tabuladores, igual que lo que se
-// pega desde Excel. No lee el Excel antiguo (.xls), que es otro formato.
-//
-// Diferencia con la web: un XML mal formado da error («el archivo está
-// dañado»). El DOMParser del navegador no lanza: devuelve un documento con el
-// error adentro y la hoja sale vacía o a medias.
+// Un .xlsx es un ZIP con XML adentro: el ZIP se recorre a mano y del JDK solo
+// se usan Inflater, CRC32 y el lector de XML. Nada se manda a ningún lado.
+// No lee el Excel antiguo (.xls), que es otro formato. Un XML mal formado da
+// error («el archivo está dañado»).
 package io.github.tmrainer.asistencia.nucleo.documentos
 
 import org.w3c.dom.Document
@@ -260,9 +251,7 @@ fun leerXlsx(bytes: ByteArray): String {
 fun pareceXlsx(bytes: ByteArray): Boolean =
     bytes.size >= 4 && bytes[0] == 0x50.toByte() && bytes[1] == 0x4b.toByte() && bytes[2] == 3.toByte() && bytes[3] == 4.toByte()
 
-// ------------------------------------------------------------------ escribir
-//
-// Lo mínimo que Excel, Google Sheets y WPS (el del celular) abren sin quejarse:
+// Escribir: lo mínimo que Excel, Google Sheets y WPS (el del celular) abren sin quejarse:
 // texto en la propia celda (sin tabla de textos compartidos), negrita y
 // soles con dos decimales. El ZIP va sin comprimir y con fecha fija
 // (01-01-1980): un reporte pesa pocos KB y el mismo dato da los mismos bytes.
@@ -399,8 +388,6 @@ fun armarXlsx(hojas: List<HojaXlsx>): ByteArray {
     ) + hojas.mapIndexed { i, h -> "xl/worksheets/sheet${i + 1}.xml" to hojaXml(h) }
     return armarZip(archivos.map { (nombre, texto) -> nombre to texto.encodeToByteArray() })
 }
-
-// ------------------------------------------------- texto como en la web
 
 /** `trim()` de JavaScript: espacios Unicode y la marca U+FEFF; no los separadores U+001C a U+001F. */
 internal fun String.trimJs(): String = trim { esEspacioJs(it) }

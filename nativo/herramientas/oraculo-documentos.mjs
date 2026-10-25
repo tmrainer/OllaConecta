@@ -1,14 +1,12 @@
-// oraculo-documentos.mjs — arma con los módulos de la WEB (tal cual, sin
-// tocarlos) los Excel y los PDF del respaldo ficticio, con una fecha fija, y
-// los guarda en nucleo/src/test/resources/documentos/. DocumentosOraculoTest.kt
-// arma lo mismo en Kotlin y compara byte a byte.
+// Arma con los módulos de la WEB (tal cual, sin tocarlos) los Excel y los PDF del
+// respaldo ficticio, con una fecha fija, en nucleo/src/test/resources/documentos/.
+// DocumentosOraculoTest.kt arma lo mismo en Kotlin y compara byte a byte.
 //
 //   node nativo/herramientas/oraculo-documentos.mjs
 //
-// También lee con leerXlsx() de la web (en un Chromium sin ventana: hace falta
-// DOMParser) esos Excel, el padrón de ejemplo de herramientas/ y un .xlsx
-// comprimido con textos compartidos, y escribe lo leído en <archivo>.tsv. Sin
-// Chromium se avisa y los .tsv quedan como estaban. Chromium: el de Playwright
+// También lee esos Excel (y otros .xlsx de prueba) con leerXlsx() de la web, en un
+// Chromium sin ventana (hace falta DOMParser), y escribe lo leído en <archivo>.tsv.
+// Sin Chromium se avisa y los .tsv quedan como estaban. Chromium: el de Playwright
 // (~/.cache/ms-playwright), uno del sistema o CHROME=/ruta/a/chrome.
 //
 // Solo datos inventados (respaldo-ficticio.json). Es determinista.
@@ -37,7 +35,7 @@ const GENERADO = '20-10-26 18:40';
 const HOY = '2026-10-20';
 
 const datos = JSON.parse(readFileSync(join(RECURSOS, 'respaldo-ficticio.json'), 'utf8'));
-// El padrón como lo ve la app (igual que oraculo.mjs): migrado y con sinInscribir.
+// El padrón como lo ve la app: migrado y con sinInscribir.
 const padron = migrarPadron(datos.padron);
 const crudos = new Map((datos.padron.atenciones || []).map((at) => [at && at.id, at]));
 for (const at of padron.atenciones) {
@@ -131,9 +129,7 @@ Object.assign(archivos, {
 for (const [nombre, bytes] of Object.entries(archivos)) writeFileSync(join(DESTINO, nombre), bytes);
 console.log(`Escritos ${Object.keys(archivos).length} documentos en ${DESTINO}`);
 
-// ------------------------------------------------------ .xlsx para leer
-//
-// Como lo guarda Excel: comprimido, con textos compartidos (uno con varias
+// Un .xlsx como lo guarda Excel: comprimido, con textos compartidos (uno con varias
 // partes), una fecha con estilo, otra guardada como fecha (t="d"), libro desde
 // 1904, columnas salteadas, filas vacías, comillas y tabuladores.
 
@@ -190,8 +186,6 @@ writeFileSync(join(DESTINO, 'leer-variado.xlsx'), zipComprimido([
   ['xl/worksheets/sheet1.xml', `<?xml version="1.0"?><worksheet xmlns="${NS}"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>no es esta</t></is></c></row></sheetData></worksheet>`]
 ]));
 copyFileSync(join(RAIZ, 'herramientas', 'padron-de-ejemplo.xlsx'), join(DESTINO, 'padron-de-ejemplo.xlsx'));
-
-// ------------------------------------------- leerXlsx() en un Chromium
 
 function buscarChromium() {
   if (process.env.CHROME) return process.env.CHROME;

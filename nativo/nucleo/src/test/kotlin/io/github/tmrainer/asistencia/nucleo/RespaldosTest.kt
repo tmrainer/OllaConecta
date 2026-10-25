@@ -1,5 +1,5 @@
-// Grupo «Respaldos» de web/js/casos-prueba.js (revisarRespaldo), más la ida y
-// vuelta del archivo y el respaldo con contraseña cifrado por la web.
+// revisarRespaldo, la ida y vuelta del archivo y el respaldo con contraseña
+// cifrado por la web.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.modelo.JSON

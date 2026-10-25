@@ -1,17 +1,7 @@
-// xlsx.js — leer y escribir archivos de Excel (.xlsx) sin librerías.
-//
-// Leer: la primera hoja, para importar un padrón (leerXlsx).
-// Escribir: los reportes que se exportan (armarXlsx; los arma excel-reportes.js).
-//
-// Antes había que abrir el Excel y «Guardar como» CSV: justo el paso donde se
-// traba quien tiene poca costumbre con la computadora. Un .xlsx es un ZIP con
-// XML adentro; el navegador ya trae lo necesario para abrirlo
-// (DecompressionStream y DOMParser), así que no se agrega ninguna dependencia
-// ni se manda nada a ningún lado.
-//
-// Devuelve el texto de la hoja separado por tabuladores, igual que lo que se
-// pega desde Excel: de ahí en adelante, la importación es la misma de siempre.
-// No lee el Excel antiguo (.xls), que es otro formato.
+// Leer y escribir .xlsx sin librerías: un .xlsx es un ZIP con XML y el navegador ya
+// trae DecompressionStream y DOMParser, así que no se manda nada a ningún lado.
+// Leer devuelve la primera hoja separada por tabuladores, igual que lo pegado desde
+// Excel. No lee el Excel antiguo (.xls), que es otro formato.
 
 const firma = (v, i) => v.getUint32(i, true);
 
@@ -167,9 +157,7 @@ export function pareceXlsx(buffer) {
   return b[0] === 0x50 && b[1] === 0x4b && b[2] === 3 && b[3] === 4;
 }
 
-// ------------------------------------------------------------------ escribir
-//
-// Lo mínimo que Excel, Google Sheets y WPS (el del celular) abren sin quejarse:
+// Escribir: lo mínimo que Excel, Google Sheets y WPS (el del celular) abren sin quejarse:
 // texto en la propia celda (sin tabla de textos compartidos), negrita y
 // soles con dos decimales. El ZIP va sin comprimir: un reporte pesa pocos KB y
 // así no hace falta nada asíncrono.

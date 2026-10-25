@@ -4,7 +4,7 @@
 export const CLAVES = {
   rendiciones: 'b1.rendiciones.v1',
   padron: 'b1.padron.v1',
-  insumos: 'b1.insumos.v1',       // reservada: catálogo de insumos (fase 6); hoy nada la usa
+  insumos: 'b1.insumos.v1',       // reservada: catálogo de insumos; hoy nada la usa
   calendario: 'b1.calendario.v1',
   config: 'b1.config.v1',
   respaldo: 'b1.respaldo.v1',    // { ultimoEn: 'AAAA-MM-DD' }: cuándo se exportó el último respaldo
@@ -14,8 +14,6 @@ export const CLAVES = {
 export const VERSION_ESQUEMA = 1;
 export const VERSION_PADRON = 3;      // v3: raciones derivadas de la asistencia
 export const VERSION_CALENDARIO = 1;
-
-// ---------------------------------------------------------------- utilidades
 
 export function uuid() {
   if (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
@@ -48,7 +46,6 @@ function pad2(n) {
   return String(n).padStart(2, '0');
 }
 
-// --------------------------------------------------------------------- dinero
 // Todo monto vive como ENTERO de céntimos. Nunca se usa coma flotante.
 
 /**
@@ -82,13 +79,9 @@ export function aNumero(texto) {
   return Number(limpio);
 }
 
-// --------------------------------------------------------------------- fechas
-
 /**
  * Fecha de hoy en hora LOCAL, como 'AAAA-MM-DD'. No usa toISOString(), que
  * daría la fecha UTC (en Lima, ya "mañana" después de las 19:00).
- * Es la fecha por defecto de casi todo: el día de atención nuevo, el alta, y
- * la referencia de edad cuando no se pasa otra. No lee ni escribe datos guardados.
  * @returns {string}
  */
 export function hoyIso() {
@@ -112,7 +105,6 @@ export function aIso(fecha) {
 /**
  * ¿Tiene `valor` la FORMA 'AAAA-MM-DD'? Solo revisa el formato: '2024-02-31'
  * pasa. Para saber si la fecha existe, usar aFecha(), que devuelve null si no.
- * Se usa como guarda antes de comparar fechas como texto. No lee ni escribe datos.
  * @param {*} valor
  * @returns {boolean}
  */
@@ -120,7 +112,6 @@ export function esIso(valor) {
   return typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor);
 }
 
-/** 'AAAA-MM-DD' a 'DD-MM-AA', como se escribe en el papel. */
 const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
   'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -149,8 +140,6 @@ export const MESES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Setiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
-
-// ------------------------------------------------------------ constructores
 
 export function nuevoEgreso() {
   return {
@@ -223,11 +212,7 @@ export function nuevoAfiliado() {
  *
  * Los precios son una COPIA del precio configurado al crear el día, para que el
  * histórico no cambie si mañana sube el menú. Editables por si ese día fue otro.
- *
  * Solo construye el objeto: NO lo agrega a `padron.atenciones` ni lo guarda.
- * Quien llama decide cuándo (ver asegurarHoyGuardado en ui-asistencia.js).
- * La fecha sale de hoyIso(); quien necesita otro día la sobrescribe.
- *
  * @param {{precioMenuNormalCent: ?number, precioMenuAyudaSocialCent: ?number}|null} precios
  *   normalmente preciosActuales() de estado.js; null deja los precios vacíos.
  * @returns {{id: string, fecha: string, asistencias: Array<{afiliadoId: string, tipoMenu: string}>,
@@ -357,7 +342,6 @@ export function normalizarNombre(texto) {
     .trim();
 }
 
-// --------------------------------------------------------------- persistencia
 // Toda lectura tolera ausencia y corrupción. Ante duda se arranca vacío y se
 // avisa; nunca se borra en silencio lo que había.
 
@@ -366,8 +350,6 @@ const avisos = [];
 export function avisosAlmacenamiento() {
   return avisos.slice();
 }
-
-// ------------------------------------- asistencia compacta en localStorage
 
 // Guardada como lista de marcas, la asistencia de 150 personas llenaba el
 // límite de Safari (~5 MB) en unos dos años, y con 300 en uno. Por eso cada día
@@ -546,8 +528,6 @@ export function guardar(clave, valor) {
   }
 }
 
-// ------------------------------------------------------ la olla de la nube
-
 /**
  * A qué olla de la nube está unido este teléfono (ver sincronizacion.js).
  * `juntar` dice que lo que hay en este teléfono todavía no se juntó con lo de
@@ -584,8 +564,6 @@ export function borrarTodo() {
   }
   return ok;
 }
-
-// ------------------------------------------------------ restaurar un respaldo
 
 /**
  * Revisa un respaldo antes de restaurarlo: qué trae y si tiene la forma que
@@ -641,8 +619,7 @@ export function revisarRespaldo(datos) {
 /**
  * Escribe en este dispositivo TODAS las partes que trae el respaldo (padrón,
  * rendiciones, calendario y config), sea cual sea la página desde donde se
- * importe. Antes, cada página restauraba solo lo suyo y el resto se perdía sin
- * aviso. Si una escritura falla, lo dice: devuelve false.
+ * importe. Si una escritura falla, lo dice: devuelve false.
  * @param {Object} datos  respaldo ya revisado con revisarRespaldo()
  * @returns {boolean}
  */
@@ -659,8 +636,6 @@ export function restaurarRespaldo(datos) {
   if (partes.includes('config')) ok = guardar(CLAVES.config, datos.config) && ok;
   return ok;
 }
-
-// --------------------------------------------------- respaldo con contraseña
 
 // El respaldo lleva nombres, documentos y asistencia de personas reales. Con
 // contraseña se cifra con AES-GCM (Web Crypto del navegador: sin librerías) y

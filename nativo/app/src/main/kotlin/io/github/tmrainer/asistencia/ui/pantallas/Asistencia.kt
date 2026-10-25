@@ -1,8 +1,6 @@
-// Asistencia.kt — pasar lista (pagina-asistencia.js + ui-asistencia.js).
-//
-// Marcar a alguien es UN toque en su fila. El menú sale de cómo figura en el padrón
-// (habitual → normal, ayuda social → menú de ayuda social) y solo hace falta
-// tocarlo cuando ese día come otro. Sin desplegables.
+// Pasar lista. Marcar a alguien es UN toque en su fila. El menú sale de cómo figura
+// en el padrón (habitual → normal, ayuda social → menú de ayuda social) y solo hace
+// falta tocarlo cuando ese día come otro. Sin desplegables.
 //
 // «Asistencia de hoy» siempre apunta a hoy. El registro del día NO se crea al
 // abrir la pantalla: se crea cuando se marca a la primera persona.
@@ -128,7 +126,7 @@ import kotlinx.coroutines.withContext
 /** Lo que se busca de una persona: nombre sin tildes ni mayúsculas, y su DNI. */
 private fun claveBusqueda(p: Afiliado) = "${normalizarNombre(nombreCompleto(p))} ${p.numeroDocumento}"
 
-// Las curvas de .toque-marca en estilos.css: ease-out y la enfatizada de Material.
+// Curvas: ease-out y la enfatizada de Material.
 private val SALIDA = CubicBezierEasing(0f, 0f, .58f, 1f)
 private val ENFATIZADA = CubicBezierEasing(.2f, 0f, 0f, 1f)
 
@@ -323,7 +321,6 @@ fun PantallaAsistencia(ctx: Contexto) {
 
             item { Spacer(Modifier.height(Medidas.e4)); PanelHallazgos(hallazgos) }
 
-            // ---- otros días ----
             item {
                 TituloSeccion("Otros días", apoyo = true)
                 Pista("Para corregir o completar días pasados.", Modifier.padding(bottom = Medidas.e3))
@@ -358,7 +355,6 @@ fun PantallaAsistencia(ctx: Contexto) {
                 )
             }
 
-            // ---- precio del menú ----
             item {
                 Spacer(Modifier.height(Medidas.e5))
                 Column(Modifier.objetivoGuia("asistencia.precio")) {
@@ -370,7 +366,6 @@ fun PantallaAsistencia(ctx: Contexto) {
                 }
             }
 
-            // ---- resumen ----
             item {
                 Spacer(Modifier.height(Medidas.e5))
                 TituloSeccion("Resumen", apoyo = true)
@@ -474,7 +469,7 @@ fun FilaToque(
                     Text((if (grupo != null) etiquetaGrupoEtario(grupo) else "Sin grupo") + if (menu == "ayuda_social") " · Ayuda social" else "", style = tipos.chico, color = c.tintaSuave)
                 }
                 Spacer(Modifier.width(Medidas.e3))
-                // Como .toque-marca en la web: el círculo se llena y el ✓ crece en 150 ms.
+                // El círculo se llena y el ✓ crece en 150 ms.
                 val fondoMarca by animateColorAsState(if (presente) c.acento else Color.Transparent, tween(150, easing = SALIDA), label = "fondo")
                 val bordeMarca by animateColorAsState(if (presente) c.acento else c.contorno, tween(150, easing = SALIDA), label = "borde")
                 Box(

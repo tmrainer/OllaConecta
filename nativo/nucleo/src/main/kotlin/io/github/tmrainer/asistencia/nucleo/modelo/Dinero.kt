@@ -1,4 +1,3 @@
-// Dinero.kt — porte de la sección «dinero» de web/js/modelo.js.
 // Todo monto vive como ENTERO de céntimos (Long). Nunca coma flotante.
 package io.github.tmrainer.asistencia.nucleo.modelo
 

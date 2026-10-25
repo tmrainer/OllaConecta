@@ -1,8 +1,5 @@
-// Componentes.kt — las piezas que se repiten en todas las pantallas, con las
-// mismas formas que estilos.css: botones (principal, secundario, peligro,
-// diminuto), campos con su rótulo y pista, opciones en forma de ficha, chips,
-// pastillas, superficies de lista, estado vacío, avatar, avisos y el panel de
-// revisión. Ninguna calcula nada: reciben datos y dibujan.
+// Las piezas que se repiten en todas las pantallas. Ninguna calcula nada:
+// reciben datos y dibujan.
 package io.github.tmrainer.asistencia.ui.componentes
 
 import androidx.compose.ui.semantics.heading
@@ -75,8 +72,6 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 
-// ---------------------------------------------------------------- texto
-
 @Composable
 fun TituloSeccion(texto: String, apoyo: Boolean = false, modifier: Modifier = Modifier) {
     Text(
@@ -101,8 +96,6 @@ fun Seccion(titulo: String, pista: String? = null, apoyo: Boolean = false, modif
         contenido()
     }
 }
-
-// -------------------------------------------------------------- botones
 
 enum class TipoBoton { PRINCIPAL, SECUNDARIO, PELIGRO }
 
@@ -133,8 +126,9 @@ fun Boton(
     Button(
         onClick = onClick,
         enabled = habilitado,
-        // 48 dp como mínimo también en los chicos (Android: áreas táctiles de 48 × 48 dp).
-        modifier = modifier.defaultMinSize(minHeight = 48.dp),
+        // 56 dp los normales: 48 es el mínimo de Android, y a quien recién empieza o ve
+        // menos le cuesta menos acertar uno más grande. Los chicos, 48 dp como mínimo.
+        modifier = modifier.defaultMinSize(minHeight = if (diminuto) 48.dp else 56.dp),
         shape = RoundedCornerShape(999.dp),
         border = BorderStroke(1.5.dp, if (habilitado) bordeColor else bordeColor.copy(alpha = .45f)),
         colors = ButtonDefaults.buttonColors(
@@ -148,7 +142,7 @@ fun Boton(
     }
 }
 
-/** Botón de texto subrayado (enlace-ir). */
+/** Botón de texto subrayado. */
 @Composable
 fun Enlace(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     TextButton(onClick = onClick, modifier = modifier, contentPadding = PaddingValues(horizontal = Medidas.e1, vertical = 6.dp)) {
@@ -183,8 +177,6 @@ fun Acciones(modifier: Modifier = Modifier, contenido: @Composable () -> Unit) {
     // 12 dp entre botones: con dedos menos precisos, no se toca el de al lado.
     FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e3), verticalArrangement = Arrangement.spacedBy(Medidas.e3)) { contenido() }
 }
-
-// --------------------------------------------------------------- campos
 
 /**
  * Campo de texto con su rótulo arriba, pista abajo y, si hay, el error al
@@ -350,10 +342,8 @@ fun CampoFecha(
 /** Un dato de hoy en ISO, para los campos de fecha que nacen vacíos. */
 fun hoyLocalIso(): String = aIso(LocalDate.now())
 
-// ------------------------------------------------------------- opciones
-
 /**
- * Opciones en forma de ficha (como .opcion en la web): se ven todas de una
+ * Opciones en forma de ficha: se ven todas de una
  * vez y se elige con un toque. Para una sola elección o varias.
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -399,8 +389,6 @@ fun Ficha(texto: String, elegida: Boolean, onClick: () -> Unit, modifier: Modifi
 @Composable
 fun Leyenda(texto: String, obligatorio: Boolean = false) = Rotulo(texto, obligatorio)
 
-// --------------------------------------------------------- chips y pastillas
-
 /** «Etiqueta: valor», con el valor en negrita. */
 @Composable
 fun Chip(etiqueta: String, valor: String, modifier: Modifier = Modifier) {
@@ -443,8 +431,6 @@ fun Pastilla(texto: String, tono: TonoPastilla, icono: String? = null, modifier:
         Text(texto, style = tipos.chicoFuerte, color = color)
     }
 }
-
-// --------------------------------------------------------------- listas
 
 /** Una lista es UNA superficie con filas separadas por una línea fina. */
 @Composable
@@ -501,8 +487,6 @@ fun EstadoVacio(icono: String, titulo: String, texto: String? = null, boton: Pai
     }
 }
 
-// --------------------------------------------------------------- avisos
-
 /** Franja de aviso del sistema (almacenamiento, no se guardó). */
 @Composable
 fun AvisoSistema(texto: String, modifier: Modifier = Modifier, boton: Pair<String, () -> Unit>? = null) {
@@ -533,7 +517,7 @@ fun FranjaEstado(texto: String, tono: TonoPastilla, modifier: Modifier = Modifie
 }
 
 /**
- * Panel de revisión (pintarPanel en ui.js): lo que falta se cuenta aparte y en
+ * Panel de revisión: lo que falta se cuenta aparte y en
  * tono neutro («Faltan 12 datos»); «por corregir» es lo mal escrito. Sin
  * hallazgos no se muestra nada. El detalle se pliega; de a 50.
  */

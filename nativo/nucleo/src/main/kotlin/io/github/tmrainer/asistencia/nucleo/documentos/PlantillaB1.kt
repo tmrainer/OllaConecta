@@ -1,20 +1,14 @@
-// PlantillaB1.kt — porte de web/js/plantilla-b1.js: dónde cae cada dato en la
-// hoja oficial del Formato B-1.
+// Dónde cae cada dato en la hoja oficial del Formato B-1: ÚNICA fuente de
+// coordenadas (recalibrar es cambiar números aquí, nunca en las pantallas).
+// Todo en mm desde la esquina superior izquierda de una A4 vertical; `yMm` es
+// el borde de arriba de la caja y el texto se apoya abajo, sobre la punteada.
 //
-// ÚNICA fuente de coordenadas: recalibrar es cambiar números
-// aquí, nunca tocar las pantallas. Todo en milímetros desde la esquina superior
-// izquierda de una hoja A4 vertical (210 × 297 mm). `yMm` es el borde de arriba
-// de la caja; el texto se apoya abajo, sobre la línea punteada del papel.
+// Los números son los de la web tal cual: DocumentosOraculoTest exige el mismo
+// PDF byte a byte.
 //
-// Mientras la web siga viva, los números se copian de plantilla-b1.js tal cual
-// (lo prueba DocumentosOraculoTest: mismo PDF byte a byte).
-//
-// ESTIMADO: medido sobre una foto de la hoja en blanco, enderezada a A4 con su
-// perspectiva corregida (las 4 esquinas del papel), no sobre la plantilla
-// física con regla. Las líneas de la tabla salieron rectas y a ±0,5 mm entre sí,
-// pero la escala absoluta depende de las esquinas de la foto.
-// DECISIÓN ABIERTA: se cierra midiendo la hoja física o un escaneo
-// plano a 300 ppp; entonces `estimado` pasa a false.
+// ESTIMADO: medido sobre una foto de la hoja en blanco enderezada a A4, no
+// sobre la hoja física con regla. DECISIÓN ABIERTA: se cierra midiendo
+// la hoja física o un escaneo plano a 300 ppp; entonces `estimado` pasa a false.
 package io.github.tmrainer.asistencia.nucleo.documentos
 
 /** La caja de un dato. `align`: "left" | "center" | "right". */
@@ -78,7 +72,7 @@ val PLANTILLA_B1 = PlantillaB1(
     egresos = EgresosB1(
         primeraFilaYMm = 123.3,
         altoFilaMm = 3.876,
-        filas = 17, // FILAS_EGRESOS: contadas en la hoja (antes, provisional)
+        filas = 17, // contadas en la hoja
         columnas = linkedMapOf(
             "fechaCompra" to ColumnaB1(15.1, 17.4, "center"),
             "descripcion" to ColumnaB1(32.5, 40.3, "left"),

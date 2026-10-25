@@ -1,10 +1,6 @@
-// HojaB1.kt — porte de web/js/hoja-b1.js: qué texto va en cada lugar de la
-// hoja oficial del B-1.
-//
-// Puro: recibe una rendición y devuelve los textos ya escritos como en el
-// papel (fechas DD-MM-AA, soles con dos decimales, «varios»). No sabe de
-// posiciones: eso está en PlantillaB1.kt. No inventa nada: lo que falta en la
-// rendición queda vacío en la hoja.
+// Qué texto va en cada lugar de la hoja oficial del B-1, ya escrito como en el
+// papel (fechas DD-MM-AA, soles con dos decimales, «varios»). Las posiciones
+// están en PlantillaB1.kt. No inventa nada: lo que falta queda vacío.
 //
 // Si hay más compras que renglones, van en una segunda hoja (o más), con el
 // encabezado repetido y los tres totales solo en la última.
@@ -30,7 +26,7 @@ data class FilaEgreso(
     val precioUnitario: String,
     val montoTotal: String
 ) {
-    /** El texto de una columna por su clave, como `fila[col]` en la web. */
+    /** El texto de una columna por su clave. */
     operator fun get(columna: String): String = when (columna) {
         "fechaCompra" -> fechaCompra
         "descripcion" -> descripcion

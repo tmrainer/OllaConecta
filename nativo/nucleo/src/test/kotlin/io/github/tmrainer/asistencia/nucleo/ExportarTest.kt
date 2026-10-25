@@ -1,9 +1,5 @@
-// Grupo «Exportar» de web/js/casos-prueba.js (Excel del padrón, la asistencia
-// y el B-1), más la ida y vuelta armarXlsx -> leerXlsx.
-//
-// El primer caso de la web termina pasando lo leído por prepararImportacion()
-// (importar.js), que todavía no está portado: aquí se comprueba la fila tal
-// como la recibiría la importación.
+// Excel del padrón, la asistencia y el B-1, más la ida y vuelta
+// armarXlsx -> leerXlsx.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.documentos.CABECERA_PADRON

@@ -1,7 +1,6 @@
-// Lectura.kt — qué lee «Leer esta pantalla en voz alta» (leerPantalla() de
-// ui.js): el título de la cabecera y lo que cada pantalla marcó, como
-// data-leer en la web. Una pieza marcada se anota mientras está en pantalla
-// y se borra al salir; se lee en el orden en que apareció.
+// Qué lee «Leer esta pantalla en voz alta»: el título de la cabecera y lo que cada
+// pantalla marcó. Una pieza marcada se anota mientras está en pantalla y se borra al
+// salir; se lee en el orden en que apareció.
 package io.github.tmrainer.asistencia.ui.componentes
 
 import androidx.compose.runtime.Composable

@@ -1,10 +1,7 @@
-// ReportesOlla.kt — los reportes que Paola presenta, en PDF y en Excel:
-// - del día: qué se cocinó, raciones preparadas y servidas, y quiénes recibieron;
-// - del mes: la asistencia de cada persona, las raciones del mes día por día,
-//   los insumos del B-1 comprados en el mes y, aparte, el gasto propio.
-//
-// Solo ordena y suma lo ya ingresado: lo que no se anotó sale como «no se
-// anotó», nunca se completa. Puro: recibe los datos y devuelve los bytes.
+// Los reportes de la olla, en PDF y en Excel: del día (qué se cocinó, raciones
+// y quiénes recibieron) y del mes (asistencia por persona, raciones día por día,
+// insumos del B-1 y gasto propio). Solo ordena y suma lo ya ingresado: lo que
+// no se anotó sale como «no se anotó», nunca se completa.
 package io.github.tmrainer.asistencia.nucleo.documentos
 
 import io.github.tmrainer.asistencia.nucleo.calculos.afiliadosActivos
@@ -30,8 +27,6 @@ import kotlin.math.min
 
 private const val NO_ANOTADO = "(no se anotó)"
 private val ORIGEN = mapOf("subsidio" to "Subsidio", "ayuda_social" to "Ayuda social", "aporte_propio" to "Aporte propio")
-
-// ---------------------------------------------------------------- los datos
 
 /** Quien recibió ración ese día. */
 data class AsistenteDelDia(val n: Int, val nombre: String, val documento: String, val menu: String)
@@ -141,8 +136,6 @@ fun reporteDelMes(padron: Padron, rendiciones: List<Rendicion>, mes: String): Re
         gastosPropios = gastos, gastoPropioCent = gastos.sumOf { it.montoCent ?: 0L }
     )
 }
-
-// ---------------------------------------------------------------- en PDF
 
 private fun encabezado(centro: String, resto: String) = listOf(centro.trim(), resto).filter { it.isNotEmpty() }.joinToString(" · ")
 
@@ -263,8 +256,6 @@ fun pdfDelMes(padron: Padron, rendiciones: List<Rendicion>, mes: String, centro:
     return doc.bytes("Reporte del mes ${r.etiqueta}")
 }
 
-// ---------------------------------------------------------------- en Excel
-
 private fun n(v: Any?) = Celda(v, negrita = true)
 private fun soles(cent: Long?): Any = if (cent != null) Celda(cent / 100.0, soles = true) else ""
 
@@ -323,8 +314,6 @@ fun excelDelMes(padron: Padron, rendiciones: List<Rendicion>, mes: String, centr
         HojaXlsx("Gasto propio", gastos, listOf(12, 40, 12))
     ))
 }
-
-// ------------------------------------- las pendientes, para llevar a la Municipalidad
 
 /**
  * Quienes la olla inscribió y falta registrar en la Municipalidad, para

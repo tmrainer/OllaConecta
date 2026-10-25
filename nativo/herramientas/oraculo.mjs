@@ -1,4 +1,4 @@
-// oraculo.mjs — calcula con los módulos de la WEB (tal cual, sin tocarlos) lo
+// Calcula con los módulos de la WEB (tal cual, sin tocarlos) lo
 // que el núcleo Kotlin debe dar sobre un respaldo, y lo escribe al lado como
 // <respaldo>.esperado.json. OraculoTest.kt compara campo a campo.
 //
@@ -44,8 +44,6 @@ if (datos.cifrado) {
 
 const revision = revisarRespaldo(datos);
 const salida = { generadoEn: hoyIso(), hoy, revision };
-
-// ------------------------------------------------------------------ padrón
 
 let padronVivo = null;   // el padrón como lo ve la app: migrado y con sinInscribir
 if (revision.partes.includes('padron')) {
@@ -96,8 +94,6 @@ if (revision.partes.includes('padron')) {
   };
 }
 
-// ------------------------------------------------------------ rendiciones
-
 if (revision.partes.includes('rendiciones')) {
   const padron = padronVivo;
   salida.rendiciones = datos.rendiciones.map((r) => ({
@@ -113,8 +109,6 @@ if (revision.partes.includes('rendiciones')) {
   salida.sugerenciasRuc = Object.fromEntries(nombres.map((n) => [n, sugerirRucProveedor(datos.rendiciones, n)]));
   salida.descripcionesUsadas = descripcionesUsadas(datos.rendiciones);
 }
-
-// ----------------------------------------------------- calendario y config
 
 if (revision.partes.includes('calendario')) {
   const c = datos.calendario;

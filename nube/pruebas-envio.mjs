@@ -1,7 +1,6 @@
-// pruebas-envio.mjs — prueba el script de Apps Script (apps-script/Codigo.js
-// con reportes.js recién armado) contra el emulador de Firestore.
-//
-//   npm run pruebas      (levanta el emulador, corre esto y lo apaga)
+// Prueba el script de Apps Script (apps-script/Codigo.js con reportes.js
+// recién armado) contra el emulador de Firestore. Se corre con
+// `npm run pruebas`, que levanta el emulador, corre esto y lo apaga.
 //
 // El script corre tal cual, en un contexto aislado donde lo que Apps Script
 // da (UrlFetchApp, MailApp, Utilities, ScriptApp, Logger) está simulado:
@@ -18,7 +17,6 @@ import * as Fs from 'firebase/firestore';
 
 Fs.setLogLevel('silent');
 
-// ---- el script, recién armado
 const armado = spawnSync(process.execPath, ['apps-script/armar.mjs'], { cwd: new URL('.', import.meta.url), encoding: 'utf8' });
 if (armado.status !== 0) { console.error(armado.stderr); process.exit(1); }
 
@@ -54,7 +52,6 @@ function pedirConCurl(url, { method = 'get', payload, headers = {} }) {
   return { getResponseCode: () => Number(r.stdout.slice(corte + 1)), getContentText: () => r.stdout.slice(0, corte) };
 }
 
-// ---- la nube
 const pruebas = await initializeTestEnvironment({
   projectId: 'demo-ollaconecta',
   firestore: { rules: fs.readFileSync(new URL('./firestore.rules', import.meta.url), 'utf8'), host: '127.0.0.1', port: 8080 }
@@ -88,7 +85,6 @@ await pruebas.withSecurityRulesDisabled(async (ctx) => {
   await Fs.setDoc(Fs.doc(db, 'ollas/flores/dias/2026-10-17'), dia('2026-10-17', {}, { sinInscribir: { normal: 2, ayudaSocial: 0 } }));
 });
 
-// ---- ayudas
 let pasan = 0; const fallos = [];
 function comprobar(nombre, ok, detalle = '') {
   if (ok) { pasan++; console.log(`  ✓ ${nombre}`); } else { fallos.push(nombre); console.log(`  ✗ ${nombre}${detalle ? `\n    ${detalle}` : ''}`); }
@@ -114,7 +110,6 @@ function entradasZip(b) {
 const ultimo = () => correos[correos.length - 1];
 const hoja = (correo, n = 1) => entradasZip(correo.attachments[0].bytes).get(`xl/worksheets/sheet${n}.xml`) || '';
 
-// ============================================================ 1. sin correo
 console.log('Sin correo de UNACEM no sale nada');
 reloj = lima('2026-10-14', 10);
 await pedir('asistencia', '2026-10-14');
@@ -123,7 +118,6 @@ comprobar('no se mandó ningún correo', correos.length === 0);
 comprobar('la solicitud sigue pendiente', (await envios('2026-10-14'))[0].estado === 'pendiente');
 comprobar('y el registro dice por qué', registro.some((t) => t.includes('Falta el correo')));
 
-// ============================================================ 2. manual
 console.log('Quien coordina pone el correo; lo pedido desde la app sale');
 await Fs.setDoc(Fs.doc(coordina, 'ajustes/envio'), { correo: 'prueba@gmail.com', ...firma('coordina') });
 revisar();
@@ -140,7 +134,6 @@ comprobar('la solicitud quedó «enviado», con a quién y el archivo', e.estado
 revisar();
 comprobar('volver a revisar no la manda de nuevo', correos.length === 1);
 
-// ============================================================ 3. la noche
 console.log('De noche sale solo lo que nadie pidió');
 reloj = lima('2026-10-14', 21, 30);
 revisar();
@@ -171,7 +164,6 @@ revisar();
 comprobar('un día con gente sin inscribir sí la manda', correos.length === 4 && ultimo().body.includes('Raciones: 2'), ultimo().body);
 comprobar('y la hoja los cuenta en «Sin inscribir»', hoja(ultimo()).includes('Sin inscribir'));
 
-// ============================================================ 4. fallos
 console.log('Si el correo no sale, se reintenta y después se anota el fallo');
 reloj = lima('2026-10-16', 11);
 await pedir('padron', '2026-10-16', '2026-10-01', '2026-10-16');

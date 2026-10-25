@@ -1,6 +1,5 @@
-// Iconos.kt — los mismos trazos SVG de ui.js (TRAZOS), dibujados como
-// vectores: nítidos a cualquier tamaño y siempre acompañados de una palabra.
-// Trazo de 2,2 con puntas redondas sobre una caja de 24.
+// Los íconos como vectores: nítidos a cualquier tamaño y siempre acompañados de una
+// palabra. Trazo de 2,2 con puntas redondas sobre una caja de 24.
 package io.github.tmrainer.asistencia.ui.componentes
 
 import androidx.compose.foundation.Image
@@ -47,7 +46,7 @@ private val TRAZOS = mapOf(
     "lapiz" to "M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"
 )
 
-// La sección en la que estás lleva el ícono RELLENO (RELLENOS en ui.js): la
+// La sección en la que estás lleva el ícono RELLENO: la
 // silueta en el color del ícono y los detalles calados en el color de la píldora.
 //   lleno: relleno y borde · mancha: solo relleno · linea: solo borde
 //   calado / hueco: borde / relleno del color de la píldora · fino: calado delgado
@@ -72,7 +71,7 @@ private val RELLENOS = mapOf(
 
 private val vectores = HashMap<String, ImageVector>()
 
-/** El vector de un ícono por nombre; uno desconocido da el de «aviso», como en la web. */
+/** El vector de un ícono por nombre; uno desconocido da el de «aviso». */
 fun vectorIcono(nombre: String, trazo: Float = 2.2f): ImageVector = vectores.getOrPut("$nombre $trazo") {
     val d = TRAZOS[nombre] ?: TRAZOS.getValue("aviso")
     ImageVector.Builder(name = nombre, defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f)
@@ -84,7 +83,7 @@ fun vectorIcono(nombre: String, trazo: Float = 2.2f): ImageVector = vectores.get
         .build()
 }
 
-/** Sin color, toma el del texto de alrededor (currentColor en la web). */
+/** Sin color, toma el del texto de alrededor. */
 @Composable
 fun Icono(nombre: String, tam: Dp = 16.dp, color: Color = LocalContentColor.current, modifier: Modifier = Modifier, trazo: Float = 2.2f) {
     Icon(imageVector = vectorIcono(nombre, trazo), contentDescription = null, tint = color, modifier = modifier.size(tam))

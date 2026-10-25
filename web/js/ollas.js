@@ -1,8 +1,5 @@
 // ollas.js — lo que hace quien coordina: crear ollas, invitar y quitar gente.
-//
-// Lo usa coordinacion.html. Quien coordina el proyecto ve todas las ollas;
-// una presidenta, solo la suya (puede invitar y quitar a su gente). Las
-// reglas de nube/firestore.rules son las que lo imponen; aquí solo se pide.
+// Las reglas de nube/firestore.rules son las que lo imponen; aquí solo se pide.
 
 import { firebase, quien } from './cuenta.js';
 

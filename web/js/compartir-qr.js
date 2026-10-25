@@ -1,22 +1,12 @@
-// compartir-qr.js — pasar el padrón, la asistencia de uno o varios días o las
-// entregas de un teléfono a otro con códigos QR, sin internet ni servidor.
-//
-// Funciones PURAS (sin DOM ni estado), salvo que comprimir usa
-// CompressionStream, del propio navegador: nada sale del teléfono.
-//
-// Quien recibe NUNCA guarda a ciegas: primero se compara lo recibido con lo
-// que ya hay (compararPadron, compararAsistencia, compararEntregas) y la
-// interfaz muestra qué se agrega, qué es igual y qué no coincide. Lo que no
-// coincide queda como está salvo que la persona elija lo recibido; las
-// aplicar...() solo hacen lo elegido y devuelven objetos nuevos.
-//
+// compartir-qr.js — pasar el padrón, la asistencia o las entregas de un teléfono a
+// otro con códigos QR, sin internet ni servidor. Quien recibe NUNCA guarda a ciegas:
+// primero se compara (comparar...) y las aplicar...() solo hacen lo elegido.
 // Formato de cada QR (modo alfanumérico, el más compacto con letras):
 //   «P3» · tipo (P padrón, A asistencia, E entregas) · id del envío (4)
 //   · parte (2 cifras) · total (2 cifras) · trozo · «:» de cierre
 // El contenido es JSON comprimido (deflate) y escrito en base45 (RFC 9285),
 // que usa justo las letras que el QR guarda en modo alfanumérico. El «:» del
-// final protege los espacios del trozo si un lector recorta el texto. El id
-// une las partes de un mismo envío: dos envíos no se mezclan.
+// final protege los espacios del trozo si un lector recorta el texto.
 // También se leen los QR de antes (solo cifras, lista-qr.js).
 
 import { asistenciasDelDia, afiliadosActivos, sinInscribirDelDia, TRAMOS_ETARIOS } from './calculos.js';
@@ -34,8 +24,6 @@ const POR_PARTE = 1400;
 // agarra al vuelo mientras cambian (camara-qr.js).
 const POR_CUADRO = 900;
 const MAX_PARTES = 99;
-
-// ------------------------------------------------------------------ base45
 
 export function aBase45(bytes) {
   let s = '';
@@ -73,8 +61,6 @@ export function deBase45(texto) {
 async function pasarPor(flujo, bytes) {
   return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(flujo)).arrayBuffer());
 }
-
-// ------------------------------------------------------- partes del envío
 
 function idCorto() {
   const v = new Uint8Array(4);
@@ -150,8 +136,6 @@ export async function juntarPartesQr(partes) {
     return null;
   }
 }
-
-// ------------------------------------------------- qué lleva cada envío
 
 const esFecha = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const esTexto = (s) => typeof s === 'string' && s.length <= 200;
@@ -255,8 +239,6 @@ export function paqueteDeEntregas(calendario) {
   };
 }
 
-// --------------------------------------------------------------- padrón
-
 export const CAMPOS_PERSONA = [
   ['apellidoPaterno', 'Apellido paterno'], ['apellidoMaterno', 'Apellido materno'], ['nombres', 'Nombres'],
   ['tipoDocumento', 'Tipo de documento'], ['fechaNacimiento', 'Fecha de nacimiento'],
@@ -339,8 +321,6 @@ export function aplicarPadron(padron, eleccion) {
   }
   return { ...padron, afiliados };
 }
-
-// ----------------------------------------------------------- asistencia
 
 /**
  * Compara día por día. Solo se pueden sumar personas que están en este
@@ -442,8 +422,6 @@ export function aplicarAsistencia(padron, comparacion, eleccion, preciosPorDefec
   }
   return { ...padron, atenciones };
 }
-
-// ------------------------------------------------------------- entregas
 
 const CAMPOS_ENTREGAS = [
   ['periodicidad', 'Cada cuánto se entrega'], ['fechaLimiteBase', 'Una fecha de entrega'], ['diasDeAviso', 'Días de aviso']

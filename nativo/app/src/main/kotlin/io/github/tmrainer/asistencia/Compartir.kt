@@ -1,12 +1,9 @@
-// Compartir.kt — entregar un archivo que arma la app (compartir-archivo.js):
-// el PDF o el Excel exportado va al menú «Compartir» del teléfono (WhatsApp,
-// Drive, Gmail…), y el correo a UNACEM se abre en la app de correo con el
-// destinatario, el asunto, el texto y el Excel ya puestos. Nada sale del
-// teléfono hasta que la persona elige a dónde y toca «Enviar».
+// Entregar un archivo que arma la app: el PDF o el Excel va al menú «Compartir» del
+// teléfono, y el correo a UNACEM se abre en la app de correo con todo ya puesto.
+// Nada sale del teléfono hasta que la persona elige a dónde y toca «Enviar».
 //
 // El archivo se escribe en la caché (cache/compartir, lo único que ve el
-// FileProvider) y se borra el de la vez anterior. Android avisa qué app se
-// eligió (ReceptorEleccion): con eso se anota el B-1 exportado o el envío.
+// FileProvider) y se borra el de la vez anterior.
 package io.github.tmrainer.asistencia
 
 import android.app.PendingIntent
@@ -26,7 +23,7 @@ const val MIME_PDF = "application/pdf"
 
 /** Qué anotar cuando la persona elige a dónde mandar el archivo. */
 sealed class AlElegir {
-    /** El B-1 exportado: va a sus `generaciones`, como en la web. */
+    /** El B-1 exportado: va a sus `generaciones`. */
     data class B1(val rendicionId: String, val formato: String) : AlElegir()
     /** El correo a UNACEM de ese día: «asistencia» o «padron». */
     data class Envio(val tipo: String, val fecha: String) : AlElegir()

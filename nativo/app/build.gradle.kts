@@ -85,7 +85,7 @@ dependencies {
     implementation("androidx.profileinstaller:profileinstaller:1.4.1")
     baselineProfile(project(":perfil"))
 
-    // La cámara (leer el DNI y los QR), autorizada el 24-10-2026: CameraX para el
+    // La cámara (leer el DNI y los QR): CameraX para el
     // visor y ML Kit de los servicios de Google Play para leer. Los modelos los
     // instala el teléfono (com.google.mlkit.vision.DEPENDENCIES): no pesan en el APK.
     val camerax = "1.4.1"

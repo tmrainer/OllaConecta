@@ -1,28 +1,17 @@
-// sincronizacion.js — el padrón y la asistencia de la olla, también en la nube.
+// El padrón, la asistencia y el precio del menú, también en Firestore. El teléfono
+// sigue con localStorage: lo que cambia se empuja y lo que avisa la nube se escribe
+// aquí. Sin señal, Firestore guarda los empujes y los manda cuando vuelve.
 //
-// Segunda parte del sistema central. El teléfono
-// sigue trabajando con localStorage, como siempre: esto se le suma. Cada vez
-// que estado.js escribe, lo que cambió se EMPUJA a Firestore; cada vez que
-// Firestore avisa de un cambio, lo que hay en la nube se escribe en el
-// teléfono y la página se repinta. Sin señal, Firestore guarda los empujes en
-// el teléfono y los manda cuando vuelve.
-//
-// En la nube, cada persona del padrón es un documento y cada día de
-// asistencia es otro, con una entrada por persona marcada:
 //   ollas/{olla}/personas/{id}        el afiliado tal cual, más actualizadoPor/En
 //   ollas/{olla}/dias/{fecha}         los campos del día, más marcas: { [afiliadoId]: { tipoMenu, por, en } }
 //   ollas/{olla}/ajustes/precios      el precio del menú (config), más actualizadoPor/En
-// Así dos teléfonos sin señal pueden marcar el mismo día: cada marca es un
-// campo aparte y Firestore las junta en vez de pisarse. Lo que se compara para
-// saber qué empujar es `base`: lo último que teléfono y nube tuvieron igual.
+// Cada marca es un campo aparte: así dos teléfonos sin señal pueden marcar el mismo
+// día sin pisarse. `base` es lo último que teléfono y nube tuvieron igual.
 //
-// Al unirse a la olla (o tras recuperar una copia o recibir por QR), lo del
-// teléfono se JUNTA con lo de la nube: se sube solo lo que la nube no tiene,
-// nunca se borra ni se pisa lo que ya estaba. Para eso hace falta ver antes
-// lo que la nube tiene de verdad (una foto del servidor, no de la caché).
-//
-// Días sin fecha (recién agregados) o con una fecha repetida no suben: viven
-// solo en este teléfono hasta que se corrijan. El B-1 y las entregas no suben.
+// Al unirse a la olla (o tras recuperar una copia o recibir por QR), lo del teléfono
+// se JUNTA con la nube: se sube solo lo que falta, nunca se borra ni se pisa; por eso
+// hace falta una foto del servidor, no de la caché.
+// Días sin fecha o con fecha repetida no suben; el B-1 y las entregas tampoco.
 
 import { firebase, quien } from './cuenta.js';
 import { estado, cargar, guardarPendiente, preciosActuales } from './estado.js';
@@ -43,8 +32,6 @@ const nube = {
   listos: new Set(),      // qué escuchas ya avisaron una vez
   delServidor: false      // ya se vio una foto del servidor (no solo de la caché)
 };
-
-// ---------------------------------------------------------------- comparar
 
 function ordenar(v) {
   if (Array.isArray(v)) return v.map(ordenar);
@@ -101,8 +88,6 @@ function iguales(a, b) {
   for (const [f, d] of a.dias) { const e = b.dias.get(f); if (!e || e.json !== d.json || !mismasMarcas(d.marcas, e.marcas)) return false; }
   return true;
 }
-
-// ----------------------------------------------------------- de la nube
 
 function personaDe(doc) {
   const { actualizadoPor, actualizadoEn, ...datos } = doc.data();
@@ -168,8 +153,6 @@ function aplicar(alRecargar) {
   cargar();
   alRecargar();
 }
-
-// ------------------------------------------------------------ a la nube
 
 function firma() {
   return { actualizadoPor: ctx.uid, actualizadoEn: ctx.Fs.serverTimestamp() };
@@ -264,8 +247,6 @@ function juntar() {
   }
   return lote.enviar();
 }
-
-// --------------------------------------------------------------- escuchar
 
 let enlacePruebas = null;
 /** Solo para nube/pruebas-sincronizacion.mjs: esta conexión en vez de la cuenta de Google. */

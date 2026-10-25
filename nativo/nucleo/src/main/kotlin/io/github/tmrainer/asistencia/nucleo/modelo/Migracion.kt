@@ -1,6 +1,5 @@
-// Migracion.kt — migrarPadron() de web/js/modelo.js: cualquier versión → v3.
-// Trabaja sobre el JSON crudo porque las versiones viejas traen campos que el
-// modelo actual ya no tiene (racionesServidas, racionesNormales…).
+// Migración del padrón de cualquier versión a la v3, sobre el JSON crudo: las
+// versiones viejas traen campos que el modelo ya no tiene (racionesServidas…).
 package io.github.tmrainer.asistencia.nucleo.modelo
 
 import kotlinx.serialization.json.Json
@@ -38,9 +37,6 @@ private inline fun <reified T> JsonObject.decodificar(): T? =
  * - v2 → v3: las raciones ya no se escriben, se cuentan de la asistencia. Los
  *   días que traían cuentas escritas a mano y no tienen asistencia marcada
  *   conservan esas cifras en `legado`.
- *
- * Diferencia con la web: aquí `sinInscribir` se conserva; la web lo perdía al
- * restaurar un respaldo.
  */
 fun migrarPadron(datos: JsonElement?): Padron {
     val obj = datos as? JsonObject ?: return padronVacio()
@@ -97,5 +93,5 @@ fun migrarPadron(datos: JsonElement?): Padron {
 /** Atajo para pasar un padrón ya tipado por la migración (idempotente). */
 fun migrarPadron(padron: Padron): Padron = migrarPadron(JSON.encodeToJsonElement(Padron.serializer(), padron))
 
-/** Lo que la web llama `datos.padron === null`: en Kotlin, JsonNull también es «no trae». */
+/** Ausente o JsonNull: en los dos casos la parte «no viene». */
 internal fun JsonElement?.esNulo(): Boolean = this == null || this is JsonNull

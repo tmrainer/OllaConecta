@@ -11,7 +11,6 @@ import { compartirArchivo } from './compartir-archivo.js';
 
 /**
  * El primer elemento que coincide con un selector CSS (querySelector).
- * No lee ni escribe datos de la aplicación: solo consulta el DOM.
  * @param {string} sel  selector CSS
  * @param {ParentNode} [raiz=document]  dónde buscar
  * @returns {?Element}  null si no hay coincidencia
@@ -21,7 +20,6 @@ export const buscar = (sel, raiz = document) => raiz.querySelector(sel);
 /**
  * Crea un elemento DOM con sus propiedades e hijos en una sola llamada.
  * No lo inserta en la página: lo devuelve para que quien llama lo agregue.
- * No lee ni escribe datos de la aplicación.
  *
  * Cómo se interpreta cada clave de `props`:
  * - `clase`  -> `className`
@@ -169,8 +167,6 @@ export function aplicarHallazgos(panel, hallazgos, alIrA) {
   }
 }
 
-// ------------------------------------------------------------------ navegación
-
 // La asistencia es la raíz: es la tarea diaria, y quien abre la dirección sin
 // más debe caer en ella, no en un formulario que se llena una vez al mes.
 // Ícono y palabra siempre juntos: un ícono solo es un acertijo para quien
@@ -251,9 +247,8 @@ export function montarCabecera(claveActiva, subtitulo) {
     PAGINAS.push({ href: './pruebas.html', texto: 'Pruebas', clave: 'pruebas' });
   }
 
-  // La cabecera ya está en el HTML: solo se rellena. Cuando la construía aquí
-  // y la insertaba al principio, el contenido ya pintado saltaba 111 px hacia
-  // abajo (Lighthouse medía un CLS de 0,258).
+  // La cabecera ya está en el HTML: solo se rellena. Armarla aquí hacía saltar
+  // hacia abajo el contenido ya pintado (CLS).
   const nav = buscar('.cabecera .nav');
   if (!nav) return;
   // El menú viene escrito en el HTML de cada página (así existe desde el
@@ -271,8 +266,8 @@ export function montarCabecera(claveActiva, subtitulo) {
       crearElemento('span', { clase: 'nav-texto', texto: p.texto })
     ]));
   }
-  // El menú viene en el HTML; antes del primer cuadro (el módulo bloquea el
-  // pintado) se le agrega a cada ícono su versión rellena.
+  // Antes del primer cuadro (el módulo bloquea el pintado) se le agrega a cada
+  // ícono del menú su versión rellena.
   for (const a of nav.querySelectorAll('.nav-enlace')) {
     const p = PAGINAS.find((x) => new URL(x.href, location.href).pathname === new URL(a.href, location.href).pathname);
     if (p) rellenarIconoNav(a.querySelector('.nav-icono svg'), p.icono);
@@ -290,8 +285,7 @@ export function montarCabecera(claveActiva, subtitulo) {
     // worker ni ofrecer instalarla. Sí, los avisos con la app cerrada.
     document.documentElement.classList.add('app-nativa');
     // Íconos claros en la barra de estado: la cabecera es verde oscuro en los
-    // dos modos. (Por defecto siguen al tema del teléfono y en modo claro se
-    // veían oscuros sobre oscuro.)
+    // dos modos, y por defecto seguirían al tema del teléfono.
     sincronizarBarras();
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', sincronizarBarras);
     reprogramarAvisos(leer(CLAVES.calendario, null));
@@ -303,10 +297,8 @@ export function montarCabecera(claveActiva, subtitulo) {
   pedirAlmacenPersistente();
 }
 
-// ------------------------------------------------- barra del título y menú ⋮
-//
-// Como en cualquier app: arriba, dónde estás (el título de la pantalla) y una
-// flecha para volver al Inicio; lo que se usa poco va en el menú ⋮.
+// Barra del título y menú ⋮: arriba, dónde estás y una flecha para volver al
+// Inicio; lo que se usa poco va en el menú ⋮.
 
 function montarBarraTitulo(claveActiva) {
   const barra = buscar('.cabecera-titulo');
@@ -367,10 +359,8 @@ function montarBarraTitulo(claveActiva) {
   if (botonVoz) botonVoz.addEventListener('click', leerPantalla);
 }
 
-// ------------------------------------------------------------ leer en voz alta
-//
-// Para quien lee con dificultad: la voz del propio teléfono (sin internet en
-// Android). Lee el título y lo que la página marcó con data-leer.
+// Leer en voz alta, para quien lee con dificultad: la voz del propio teléfono (sin
+// internet en Android). Lee el título y lo que la página marcó con data-leer.
 
 /**
  * Pantalla vacía: un dibujo grande, qué es este lugar y, si hay, un solo
@@ -431,8 +421,6 @@ export function leerPantalla() {
     alert('Este equipo no puede leer en voz alta.');
   }
 }
-
-// ------------------------------------------------------- primer uso (¿cómo se usa?)
 
 const CLAVE_BIENVENIDA = 'pi3.bienvenidaVista';
 
@@ -575,13 +563,9 @@ function avisarVersionNueva() {
   ]));
 }
 
-// ---------------------------------------------------- instalar con un toque
-//
-// Instalada (ícono en la pantalla de inicio), el navegador protege los datos
-// y no los borra solo. Antes había que encontrar «Agregar a pantalla de
-// inicio» en el menú del navegador; donde el navegador lo permite (Chrome y
-// Edge, en Android y en computadora), la app ofrece su propio botón. En
-// Safari no existe: ahí queda la instrucción del menú.
+// Instalar con un toque: instalada, el navegador protege los datos y no los borra
+// solo. Donde se puede (Chrome y Edge) la app ofrece su propio botón; en Safari
+// queda la instrucción del menú.
 
 let pedidoInstalar = null;
 const CLAVE_POSTERGAR = 'pi3.instalar.postergadoHasta';   // de este equipo, no es un dato
@@ -706,7 +690,7 @@ export function esAnchoCelular() {
   return matchMedia('(max-width: 619px)').matches;
 }
 
-// ------------------------------------------- aviso de la próxima entrega
+// Aviso de la próxima entrega
 
 const TEXTO_NIVEL = {
   vencida: 'Entrega vencida',
@@ -752,7 +736,7 @@ export function bannerAlerta(alerta, { mostrarEnlace = true, pedirConfigurar = t
   return caja;
 }
 
-// --------------------------------------------- dónde se guardan los datos
+// Dónde se guardan los datos
 
 /**
  * «Dónde se guardan» (página Tus datos): cada lugar donde quedan los datos,
@@ -812,8 +796,6 @@ function textoProteccion() {
   if (pedidoInstalar) return 'Para que el teléfono no borre tus datos, instala la aplicación.';
   return 'Para que el teléfono no borre tus datos: menú del navegador → «Agregar a pantalla de inicio».';
 }
-
-// -------------------------------------------------- barra de datos (respaldos)
 
 /**
  * Barra de respaldos: exportar, importar (con o sin contraseña) y borrar todo.
@@ -1009,8 +991,6 @@ export async function exportarTodo(contrasena) {
   if (recordatorio) recordatorio.remove();
 }
 
-// ------------------------------------------- panel de validación compartido
-
 const ICONO_HALLAZGO = { error: 'error', advertencia: 'aviso' };
 
 /**
@@ -1150,8 +1130,6 @@ export function marcarCampo(elemento, hallazgos) {
   control.setAttribute('aria-describedby', [msg.id, ...pistas].join(' '));
 }
 
-// ---------------------------------------------- sugerencias
-
 /**
  * Muestra una propuesta FUERA del campo. No la escribe: solo deja un botón.
  * Al aceptarla, el campo queda marcado como "propuesto" hasta que se edite.
@@ -1170,11 +1148,8 @@ export function cajaSugerencia(propuesta, alAceptar) {
   ]);
 }
 
-// ------------------------------------------------- aviso abajo, con «Deshacer»
-//
-// Las apps que la gente ya usa no preguntan «¿Está segura?» para todo: hacen
-// la acción, la dicen abajo y ofrecen deshacerla. Quien se equivoca lo
-// arregla con un toque, y quien no, no tiene que leer una ventana.
+// Aviso abajo con «Deshacer», en vez de preguntar «¿Está segura?» para todo: quien
+// se equivoca lo arregla con un toque, y quien no, no tiene que leer una ventana.
 
 let relojAviso = null;
 
@@ -1213,11 +1188,8 @@ export function vibrar(ms = 20) {
   try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { /* sin vibración */ }
 }
 
-// ------------------------------------------------ «se leyó», sobre la cámara
-//
-// Como en las apps de pago con QR: al reconocer un DNI o un código, el visor
-// se pone verde un instante con un ✓. Translúcido (se sigue viendo la imagen)
-// y solo dentro del visor. Con «reducir movimiento», aparece sin animarse.
+// «Se leyó»: al reconocer un DNI o un código, el visor se pone verde un instante
+// con un ✓, translúcido y solo dentro del visor. Con «reducir movimiento», sin animarse.
 
 const DURACION_DESTELLO = 550;
 
@@ -1244,11 +1216,8 @@ export function modoDepuracion() {
   } catch (e) { return false; }
 }
 
-// ------------------------------------------------------- iniciales en círculo
-//
-// Como los contactos de WhatsApp: se reconoce a la persona sin leer el nombre
-// entero. El color dice el grupo de edad (y la palabra sigue al lado: el
-// color nunca es lo único que lo dice).
+// Iniciales en círculo: el color dice el grupo de edad, y la palabra sigue al lado
+// porque el color nunca es lo único que lo dice.
 
 const COLOR_GRUPO = { nino: 'nino', adolescente: 'adolescente', adulto: 'adulto', adulto_mayor: 'mayor' };
 
@@ -1259,8 +1228,6 @@ export function avatarPersona(persona, grupo) {
     clase: `avatar ${COLOR_GRUPO[grupo] || 'sin-grupo'}`, 'aria-hidden': 'true', texto: iniciales
   });
 }
-
-// ------------------------------------------------------- avisos del navegador
 
 /**
  * Avisos del almacenamiento arriba de la página: si no se puede leer o
@@ -1283,8 +1250,7 @@ export function pintarAvisosAlmacenamiento(contenedor, { recordatorio: conRecord
 
 /**
  * Dice si lo último quedó guardado. Si falló (almacenamiento lleno o
- * bloqueado), lo dice dónde se ve y no solo abajo: antes la app seguía
- * mostrando «Guardado» aunque nada se hubiera escrito.
+ * bloqueado), lo dice donde se ve, no solo abajo.
  * @param {boolean} ok
  */
 export function mostrarGuardado(ok) {
@@ -1364,8 +1330,6 @@ function recordatorioRespaldo() {
 }
 
 export { leer, guardar, CLAVES };
-
-// ----------------------------------------- repintar sin perder lo abierto
 
 /**
  * Repinta con `pintar()` conservando lo que la persona tenía en pantalla: las

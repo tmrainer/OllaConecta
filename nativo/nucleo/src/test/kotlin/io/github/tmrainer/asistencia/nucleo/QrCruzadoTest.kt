@@ -1,12 +1,7 @@
-// QrCruzadoTest.kt — el QR del núcleo contra el de la WEB.
-// nativo/herramientas/qr-cruzado.mjs corre los módulos de la web (Node 22) y
-// escribe qr-cruzado.json: matrices de qrcode-generator y los envíos del
-// respaldo ficticio (JSON y textos de los QR). Aquí se exige:
-//  - la misma matriz, módulo por módulo;
-//  - el mismo JSON de cada paquete, y leer los QR que armó la web;
-//  - que la web lea los QR que arma Kotlin: se escriben en
-//    build/qr-cruzado/partes-kotlin.json y, si hay Node 22 o más nuevo, se le
-//    pasan a qr-cruzado.mjs --verificar. Sin Node, esa parte se salta y lo dice.
+// El QR del núcleo contra el de la web. nativo/herramientas/qr-cruzado.mjs
+// escribe qr-cruzado.json (matrices y envíos del respaldo ficticio); aquí se
+// exige la misma matriz, el mismo JSON de cada paquete y que cada lado lea los
+// QR del otro (la parte con Node se salta, y lo dice, si no hay Node 22+).
 // Los bytes de deflate pueden diferir entre zlib de Node y el del JDK: por eso
 // se compara lo descomprimido (el JSON), no el texto base45.
 package io.github.tmrainer.asistencia.nucleo

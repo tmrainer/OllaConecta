@@ -24,7 +24,7 @@ function h(severidad, campo, mensaje) {
 const soloDigitos = (v) => /^\d+$/.test(String(v || ''));
 const vacio = (v) => String(v === null || v === undefined ? '' : v).trim() === '';
 
-// ------------------------------------------------------------ Encabezado
+// Encabezado
 
 function validarEncabezado(r) {
   const hs = [];
@@ -71,7 +71,7 @@ function validarEncabezado(r) {
   return hs;
 }
 
-// --------------------------------------------------------------- Ingresos
+// Ingresos
 
 function validarIngresos(r) {
   const hs = [];
@@ -96,7 +96,7 @@ function validarIngresos(r) {
   return hs;
 }
 
-// ---------------------------------------------------------------- Egresos
+// Egresos
 
 function filaTieneAlgo(f) {
   return !vacio(f.fechaCompra) || !vacio(f.descripcion) || !vacio(f.rucProveedor) ||
@@ -177,7 +177,7 @@ function validarEgresos(r) {
   return hs;
 }
 
-// --------------------------------------------------------------- Conjunto
+// Conjunto
 
 function validarConjunto(r) {
   const hs = [];
@@ -221,7 +221,7 @@ function validarConjunto(r) {
     hs.push(h(ERROR, 'dniTesorera', 'El DNI de la tesorera debe tener 8 dígitos.'));
   }
 
-  const FILAS_EGRESOS = 17; // provisional
+  const FILAS_EGRESOS = 17;
   const conDatos = (r.egresos || []).filter(filaTieneAlgo).length;
   if (conDatos > FILAS_EGRESOS) {
     hs.push(h(AVISO, 'egresos',
@@ -241,7 +241,7 @@ export function validarRendicion(rendicion) {
   ];
 }
 
-// ----------------------------------------------------------------- Padrón
+// Padrón
 
 function agrupar(mapa, clave, valor) {
   const lista = mapa.get(clave);
@@ -250,9 +250,8 @@ function agrupar(mapa, clave, valor) {
 
 /**
  * Índice del padrón para validar sin comparar a cada persona con todas las
- * demás: con cientos de personas y un año de asistencia, eso hacía que cada
- * toque tardara segundos en un celular modesto. Se arma una vez por pasada de
- * validación; no se guarda, así que nunca queda viejo.
+ * demás (con cientos de personas, eso tardaba segundos por toque en un celular).
+ * Se arma por pasada de validación y no se guarda, así que nunca queda viejo.
  * @param {?{afiliados: Object[], atenciones: Object[]}} padron
  */
 export function indicePadron(padron) {
@@ -277,7 +276,6 @@ export function validarAfiliado(afiliado, padron, indice = indicePadron(padron))
   if (vacio(a.apellidoPaterno)) hs.push(h(ERROR, campo, 'Falta el apellido paterno.'));
   if (vacio(a.nombres)) hs.push(h(ERROR, campo, 'Faltan los nombres.'));
 
-  // El número de documento es OBLIGATORIO (decisión del equipo).
   if (vacio(a.numeroDocumento)) {
     hs.push(h(ERROR, campo, 'Falta el número de documento. Es obligatorio para el padrón.'));
   } else {
@@ -341,7 +339,7 @@ export function validarAfiliado(afiliado, padron, indice = indicePadron(padron))
   return hs;
 }
 
-// --------------------------------------------------------------- Raciones
+// Raciones
 
 export function validarAtencion(atencion, padron, indice = indicePadron(padron)) {
   const hs = [];
@@ -383,7 +381,6 @@ export function validarAtencion(atencion, padron, indice = indicePadron(padron))
       'a contarse de ahí.'));
   }
 
-  // --- asistencia ---
   const asistencias = asistenciasDelDia(at);
   const vistos = new Set();
 
@@ -418,8 +415,6 @@ export function validarAtencion(atencion, padron, indice = indicePadron(padron))
   return hs;
 }
 
-// --------------------------------------------------- Precio del menú (config)
-
 export function validarPreciosMenu(config, hayRaciones = true) {
   const hs = [];
   if (!config) return hs;
@@ -439,8 +434,6 @@ export function validarPreciosMenu(config, hayRaciones = true) {
   }
   return hs;
 }
-
-// ------------------------------------------------- Calendario de entregas
 
 export function validarCalendario(calendario) {
   const hs = [];

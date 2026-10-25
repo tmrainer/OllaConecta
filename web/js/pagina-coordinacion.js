@@ -1,10 +1,5 @@
 // pagina-coordinacion.js — controlador de coordinacion.html: ollas y personas.
-//
-// Quien coordina el proyecto ve todas las ollas, crea nuevas e invita o quita
-// gente en cualquiera. Una presidenta ve solo su olla y hace lo mismo con su
-// gente. Nadie más tiene nada que hacer aquí: se le dice y se le manda a Tus
-// datos. Cada cambio se vuelve a pedir a Firestore, para mostrar lo que quedó
-// de verdad y no lo que se intentó.
+// Cada cambio se vuelve a pedir a Firestore, para mostrar lo que quedó de verdad.
 
 import { buscar, crearElemento, montarCabecera, pintarAvisosAlmacenamiento } from './ui.js';
 import { hayCuentas, quien, pertenencia, explicarError, ROLES_OLLA } from './cuenta.js';
@@ -24,8 +19,6 @@ function conError(estado, e) {
   estado.textContent = explicarError(e);
   estado.classList.add('es-error');
 }
-
-// ---------------------------------------------------------------- una olla
 
 /** Integrantes e invitaciones de una olla, con invitar y quitar. */
 async function fichaOlla(olla, yo) {
@@ -94,8 +87,6 @@ async function fichaOlla(olla, yo) {
   return bloque;
 }
 
-// --------------------------------------------------- todas las ollas (coordina)
-
 async function vistaCoordinacion(yo) {
   const bloque = crearElemento('section', { clase: 'bloque', 'aria-labelledby': 'titulo-ollas' }, [
     crearElemento('h2', { id: 'titulo-ollas', texto: 'Ollas' })
@@ -141,8 +132,6 @@ async function vistaCoordinacion(yo) {
   raiz.append(bloque, fichas, await bloqueEnvioUnacem());
 }
 
-// --------------------------------------------------- el correo de UNACEM
-
 /** A qué correo manda el script (ajustes/envio). Para probar, el propio. */
 async function bloqueEnvioUnacem() {
   const bloque = crearElemento('section', { clase: 'bloque', 'aria-labelledby': 'titulo-envio' }, [
@@ -172,8 +161,6 @@ async function bloqueEnvioUnacem() {
   );
   return bloque;
 }
-
-// ------------------------------------------------------------------ arranque
 
 async function pintar() {
   const aviso = (titulo, texto) => raiz.append(crearElemento('section', { clase: 'bloque' }, [

@@ -1,13 +1,10 @@
-// generar-ficticio.mjs — arma un respaldo FICTICIO con la forma exacta que
-// exporta la web (armarRespaldo() en ui.js), usando los propios módulos de
-// web/js, y lo guarda en nucleo/src/test/resources. Todo es inventado:
-// nombres genéricos, DNI 0000xxxx, RUC 1000000000x.
+// Arma un respaldo FICTICIO con la forma exacta que exporta la web, usando los propios
+// módulos de web/js. Todo es inventado: nombres genéricos, DNI 0000xxxx, RUC 1000000000x.
 //
 //   node nativo/herramientas/generar-ficticio.mjs
 //
-// Escribe respaldo-ficticio.json y respaldo-ficticio-protegido.json
-// (contraseña «prueba-1234»), cifrado con el mismo cifrarRespaldo() de la web.
-// Es determinista: la misma semilla da el mismo archivo.
+// Escribe en nucleo/src/test/resources respaldo-ficticio.json y
+// respaldo-ficticio-protegido.json (contraseña «prueba-1234»). Es determinista.
 
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -36,8 +33,6 @@ const NOMBRES = ['Ana María', 'José', 'Ñusta', 'Rosa', 'Luz', 'Ángel', 'Ósc
   'Carmen', 'Rubén', 'Inés', 'Úrsula', 'Zoila', 'Elías'];
 
 const HOY = '2026-10-20';
-
-// ------------------------------------------------------------------ padrón
 
 const afiliados = [];
 const nacimientoConEdad = (edad) => `${2026 - edad}-${String(entre(1, 12)).padStart(2, '0')}-${String(entre(1, 28)).padStart(2, '0')}`;
@@ -76,8 +71,6 @@ afiliados[13].fechaNacimiento = '2026-12-31';                                   
 afiliados[14].nota = 'Trae a sus dos hijos';
 afiliados[15].fechaNacimiento = '1966-10-20';                                        // cumple 60 justo HOY
 
-// ------------------------------------------------------------- atenciones
-
 const PRECIOS = { precioMenuNormalCent: 300, precioMenuAyudaSocialCent: 100 };
 const atenciones = [];
 const fechas = [];
@@ -112,8 +105,6 @@ atenciones.push(Object.assign(nuevaAtencion(PRECIOS), { id: id('d'), fecha: aten
 atenciones[25].asistencias.push({ afiliadoId: afiliados[11].id, tipoMenu: 'normal' });
 
 const padron = Object.assign(padronVacio(), { afiliados, atenciones });
-
-// ------------------------------------------------------------ rendiciones
 
 function egreso(i, extra) {
   return Object.assign(nuevoEgreso(), {
@@ -164,8 +155,6 @@ r2.egresos = [egreso(30, { fechaCompra: '2026-08-20', cantidad: 2, precioUnitari
 
 const rendiciones = [r1, r2];   // la primera es la que está en curso
 
-// ------------------------------------------------- calendario y config
-
 const calendario = Object.assign(calendarioVacio(), {
   periodicidad: 'mensual', fechaLimiteBase: '2026-09-15', diasDeAviso: [7, 3, 1],
   entregas: [
@@ -179,8 +168,6 @@ const config = Object.assign(configVacia(), {
   precioMenuNormalCent: 300, precioMenuAyudaSocialCent: 100,
   ultimoCentro: instantaneaCentro(r1)
 });
-
-// ------------------------------------------------------------- escribir
 
 const respaldo = {
   exportadoEn: `${HOY}T15:00:00.000Z`,

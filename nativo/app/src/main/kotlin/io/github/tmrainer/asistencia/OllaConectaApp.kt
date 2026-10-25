@@ -1,8 +1,5 @@
-// OllaConectaApp.kt — la Application de la app nativa. Crea el Estado sobre
-// la carpeta de datos del teléfono (filesDir) y lo carga al arrancar; las
-// pantallas lo observan desde aquí. Cada vez que cambia el calendario (también
-// al arrancar, al recuperar una copia o al traer los datos del 1.7) vuelve a
-// programar los avisos del teléfono.
+// La Application: crea el Estado sobre la carpeta de datos del teléfono y lo carga al
+// arrancar. Cada vez que cambia el calendario vuelve a programar los avisos del teléfono.
 package io.github.tmrainer.asistencia
 
 import android.app.Application
@@ -48,7 +45,7 @@ class OllaConectaApp : Application() {
         // lo que la copia de seguridad de Google o el WebView dejen en filesDir.
         val almacen = Almacen(File(filesDir, "datos"))
         estado = Estado(almacen, CoroutineScope(SupervisorJob() + Dispatchers.IO)).cargar()
-        // Consolida una migración o una reparación de lo leído (como guardarYa() al abrir una página).
+        // Consolida una migración o una reparación de lo leído.
         estado.guardarYa()
         preferencias = Preferencias(this)
         // Varios cambios seguidos del calendario reprograman los avisos una sola vez.
@@ -56,7 +53,7 @@ class OllaConectaApp : Application() {
         envios.programarRecordatorio()
     }
 
-    /** El B-1 exportado (registrarExportacion de pagina-b1.js): los últimos 20 van en la copia. */
+    /** El B-1 exportado: los últimos 20 van en la copia. */
     fun anotarB1Exportado(rendicionId: String, formato: String) {
         estado.cambiarRendicion(rendicionId) { r ->
             r.copy(generaciones = (r.generaciones + Generacion(en = ahoraIso(), formato = formato, totalCent = totales(r).total, como = "compartido")).takeLast(20))

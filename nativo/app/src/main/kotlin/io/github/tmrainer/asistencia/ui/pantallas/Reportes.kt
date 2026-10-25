@@ -1,4 +1,4 @@
-// Reportes.kt — los reportes para presentar: el
+// Los reportes para presentar: el
 // del día (menú, raciones y quiénes recibieron) y el del mes (asistencia por
 // persona, raciones, insumos del B-1 y, aparte, el gasto propio), en PDF y
 // Excel. El archivo se arma al tocar y va al menú «Compartir» del teléfono.

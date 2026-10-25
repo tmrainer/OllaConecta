@@ -1,6 +1,5 @@
-// Exportar.kt — los mismos dos botones, «PDF» y «Excel», en Asistencia,
-// Padrón y B-1 (ui-reportes.js), y el bloque «Enviar a UNACEM» (ui-envio.js).
-// Nada se muestra antes en pantalla: el archivo se arma al tocar, fuera del
+// Los botones «PDF» y «Excel» de Asistencia, Padrón y B-1, y el bloque «Enviar a
+// UNACEM». Nada se muestra antes en pantalla: el archivo se arma al tocar, fuera del
 // hilo de la pantalla, y va al menú «Compartir» del teléfono o al correo.
 package io.github.tmrainer.asistencia.ui.componentes
 
@@ -40,10 +39,11 @@ class Documento(val bytes: ByteArray, val nombre: String, val titulo: String, va
  * «Exportar en PDF» y «Exportar en Excel». Cada función arma el archivo al
  * tocar, fuera del hilo de la pantalla; devuelve null si no se puede (y ya
  * dijo por qué). [puede] corre antes, en la pantalla: puede avisar y llevar
- * a lo que falta (el B-1 incompleto).
+ * a lo que falta (el B-1 incompleto). [pdfPrincipal]: el PDF es lo que se
+ * hace en esa pantalla (mandar el B-1): va relleno, el único de la pantalla.
  */
 @Composable
-fun BotonesExportar(pdf: () -> Documento?, excel: () -> Documento?, modifier: Modifier = Modifier, puede: () -> Boolean = { true }) {
+fun BotonesExportar(pdf: () -> Documento?, excel: () -> Documento?, modifier: Modifier = Modifier, puede: () -> Boolean = { true }, pdfPrincipal: Boolean = false) {
     val context = LocalContext.current
     val avisos = LocalAvisos.current
     val alcance = rememberCoroutineScope()
@@ -62,7 +62,7 @@ fun BotonesExportar(pdf: () -> Documento?, excel: () -> Documento?, modifier: Mo
         }
     }
     Acciones(modifier) {
-        Boton("Exportar en PDF", { entregar(pdf, MIME_PDF, "pdf") }, icono = "archivo", habilitado = !armando)
+        Boton("Exportar en PDF", { entregar(pdf, MIME_PDF, "pdf") }, icono = "archivo", habilitado = !armando, tipo = if (pdfPrincipal) TipoBoton.PRINCIPAL else TipoBoton.SECUNDARIO)
         Boton("Exportar en Excel", { entregar(excel, MIME_XLSX, "xlsx") }, icono = "archivo", habilitado = !armando)
     }
 }

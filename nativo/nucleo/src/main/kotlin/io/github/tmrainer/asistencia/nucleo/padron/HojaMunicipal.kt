@@ -1,15 +1,7 @@
-// HojaMunicipal.kt — el padrón de la olla y la hoja de la Municipalidad.
-// La olla puede inscribir a quien llega: queda «pendiente»
-// hasta que la lleven a la Municipalidad y aparezca en la hoja. Cada hoja que
-// entrega la Municipalidad es una actualización: se compara por DNI y se ve
-// quién entra, quién vuelve, quién sigue, a quién confirma la hoja (las
-// pendientes que ya figuran) y quién sale. Una pendiente que todavía no
-// figura no sale: sigue pendiente.
-//
-// Nada se aplica solo: compararConHoja() arma la comparación; aplicarHoja()
-// hace lo que la persona eligió. Quien sale queda de baja con el motivo «no
-// figura en la hoja municipal del …» (las bajas no borran). Cada carga
-// queda anotada en `padron.hojasMunicipales`.
+// El padrón de la olla frente a la hoja de la Municipalidad. Quien la olla
+// inscribe queda «pendiente» hasta que figure en una hoja; cada hoja se compara
+// por DNI. Nada se aplica solo: compararConHoja() arma la comparación y
+// aplicarHoja() hace lo que la persona eligió. Las bajas no borran.
 package io.github.tmrainer.asistencia.nucleo.padron
 
 import io.github.tmrainer.asistencia.nucleo.importar.FilaImportada

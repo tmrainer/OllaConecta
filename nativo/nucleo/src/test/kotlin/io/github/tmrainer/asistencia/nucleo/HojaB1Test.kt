@@ -1,5 +1,5 @@
-// Grupo «Hoja oficial del B-1» de web/js/casos-prueba.js, más el dibujo de la
-// hoja como datos (LienzoTrazos) para la vista previa en pantalla.
+// Hoja oficial del B-1, más el dibujo de la hoja como datos (LienzoTrazos)
+// para la vista previa en pantalla.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.documentos.FILAS_EGRESOS
@@ -16,7 +16,7 @@ import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelB1
 import io.github.tmrainer.asistencia.nucleo.modelo.nuevoEgreso
 import kotlin.test.Test
 
-/** Los bytes de un PDF como texto, un Char por byte (como en la web). */
+/** Los bytes de un PDF como texto, un Char por byte. */
 fun comoTexto(bytes: ByteArray): String = String(bytes, Charsets.ISO_8859_1)
 
 class HojaB1Test {
@@ -88,8 +88,6 @@ class HojaB1Test {
         ok(texto.substring(xref, xref + 4) == "xref", "la tabla xref está donde dice")
         ok(anchoMm("MMMM", 10.0) > anchoMm("iiii", 10.0), "mide el ancho de las letras")
     }
-
-    // ------------------------------------------- la hoja como datos (pantalla)
 
     @Test
     fun `La hoja dibujada como datos es la misma del PDF, dentro de la A4`() {

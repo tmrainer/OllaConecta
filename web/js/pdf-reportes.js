@@ -1,11 +1,5 @@
-// pdf-reportes.js — el padrón y la asistencia como PDF, para guardar o mandar
-// por WhatsApp y usar de guía.
-//
-// No hay un formato oficial a la vista para estos dos: son
-// tablas claras, numeradas y con totales, que dicen arriba «Copia de
-// referencia». Solo ordenan y suman lo que ya está en el padrón y en la
-// asistencia: no completan ni deducen nada. Puro: recibe los datos y devuelve
-// los bytes (pdf.js).
+// El padrón y la asistencia como PDF de referencia: tablas numeradas y con totales.
+// Solo ordenan y suman lo que ya está en los datos: no completan ni deducen nada.
 
 import { aDdMmAa, formatearSoles, nombreCompleto } from './modelo.js';
 import {
@@ -91,8 +85,6 @@ function documento({ titulo, subtitulo, generado }) {
 
 const periodoTexto = (inicio, fin) => `del ${aDdMmAa(inicio)} al ${aDdMmAa(fin)}`;
 
-// ------------------------------------------------------------------ padrón
-
 /**
  * Las personas activas, numeradas y ordenadas por apellido, con los días que
  * vinieron en el periodo, y al final cuántas hay por grupo de edad.
@@ -135,8 +127,6 @@ export function pdfDelPadron(padron, { fechaRef, inicio, fin, centro = '', gener
   }
   return doc.bytes('Padrón de personas');
 }
-
-// --------------------------------------------------------------- asistencia
 
 const MAX_DIAS_PLANILLA = 31;
 

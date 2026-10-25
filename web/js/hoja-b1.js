@@ -1,12 +1,6 @@
-// hoja-b1.js — qué texto va en cada lugar de la hoja oficial del B-1.
-//
-// Puro: recibe una rendición y devuelve los textos ya escritos como en el
-// papel (fechas DD-MM-AA, soles con dos decimales, «varios»). No sabe de
-// posiciones: eso está en plantilla-b1.js. No inventa nada: lo que falta en la
-// rendición queda vacío en la hoja.
-//
-// Si hay más compras que renglones, van en una segunda hoja (o más), con el
-// encabezado repetido y los tres totales solo en la última.
+// hoja-b1.js — qué texto va en cada lugar de la hoja oficial del B-1 (posiciones: plantilla-b1.js).
+// Si hay más compras que renglones, van en más hojas, con el encabezado repetido
+// y los tres totales solo en la última.
 
 import { aDdMmAa, formatearSoles } from './modelo.js';
 import { totales } from './calculos.js';

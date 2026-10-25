@@ -1,13 +1,7 @@
-// preferencias.js — las preferencias de este equipo, antes del primer cuadro.
-//
-// Script clásico y chico, cargado en el <head> antes de dibujar: el modo
-// (claro u oscuro), el tamaño de letra y el botón de voz se aplican desde el
-// principio, sin saltos en cada cambio de pantalla (si los pusiera el módulo
-// de la página, se vería primero el aspecto por defecto).
-//
-// Se eligen en Ajustes (pagina-ajustes.js), que vuelve a llamar a
-// window.aplicarPreferencias() después de cada cambio. No son datos de la olla:
-// viven en localStorage con claves «pi3.*» y no van en las copias.
+// Script clásico cargado en el <head>: aplica tema, letra y botón de voz antes del
+// primer cuadro, para que no se vea primero el aspecto por defecto. Ajustes vuelve a
+// llamar a window.aplicarPreferencias() tras cada cambio. Son del teléfono, no de la
+// olla: no van en las copias.
 //
 //   pi3.tema         'auto' | 'claro' | 'oscuro'      (auto: el del teléfono)
 //   pi3.letra        'normal' | 'grande' | 'muy-grande'

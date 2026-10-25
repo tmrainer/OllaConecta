@@ -1,9 +1,5 @@
-// Fechas.kt — porte de la sección «fechas» de web/js/modelo.js.
 // Las fechas se guardan en ISO 'AAAA-MM-DD' y se muestran en 'DD-MM-AA'.
-//
-// Diferencia con la web, a propósito: aFecha('2024-02-31') en JavaScript rueda
-// al 2 de marzo; aquí devuelve null. Una fecha que no existe no se corrige
-// sola.
+// Una fecha que no existe ('2024-02-31') da null: no se corrige sola.
 package io.github.tmrainer.asistencia.nucleo.modelo
 
 import java.time.LocalDate
