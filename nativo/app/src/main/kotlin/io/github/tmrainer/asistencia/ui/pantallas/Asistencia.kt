@@ -180,14 +180,6 @@ fun PantallaAsistencia(ctx: Contexto) {
         }
     }
 
-    fun cambiarMenu(at: Atencion, persona: Afiliado) {
-        cambiarDia(at) { a ->
-            a.copy(asistencias = a.asistencias.map { x ->
-                if (x.afiliadoId == persona.id) x.copy(tipoMenu = if (x.tipoMenu == "ayuda_social") "normal" else "ayuda_social") else x
-            })
-        }
-    }
-
     fun marcarTodos(at: Atencion, personas: List<Afiliado>, marcar: Boolean) {
         val antes = at
         cambiarDia(at) { a -> if (marcar) a.copy(legado = null, asistencias = asistenciasConTodos(a, personas)) else a.copy(asistencias = emptyList()) }
@@ -273,8 +265,7 @@ fun PantallaAsistencia(ctx: Contexto) {
                         grupo = grupoEtario(persona, hoy),
                         primera = persona.id == visibles.first().id,
                         ultima = persona.id == visibles.last().id,
-                        alTocar = { alternar(atHoy, persona) },
-                        alCambiarMenu = { cambiarMenu(atHoy, persona) }
+                        alTocar = { alternar(atHoy, persona) }
                     )
                 }
                 item {
@@ -334,7 +325,6 @@ fun PantallaAsistencia(ctx: Contexto) {
                     alAbrir = { diaAbierto = if (diaAbierto == at.id) null else at.id },
                     cambiar = { cambio -> cambiarDia(at, cambio) },
                     alternar = { p -> alternar(at, p) },
-                    cambiarMenu = { p -> cambiarMenu(at, p) },
                     marcarTodos = { personas, marcar -> marcarTodos(at, personas, marcar) },
                     quitarDia = {
                         val pos = padron.atenciones.indexOfFirst { it.id == at.id }
@@ -430,11 +420,15 @@ private fun BarraHoy(at: Atencion, activos: Int) {
     }
 }
 
-/** Una fila, un toque: avatar, nombre y grupo, el ✓ a la derecha; el menú solo si está marcada. */
+/**
+ * Una fila, un toque: avatar, nombre, grupo y menú, el ✓ a la derecha. El menú
+ * solo se muestra: sale del registro de la persona (su tipo en el padrón), no
+ * se cambia aquí.
+ */
 @Composable
 fun FilaToque(
     persona: Afiliado, presente: Boolean, menu: String, grupo: String?, primera: Boolean, ultima: Boolean,
-    alTocar: () -> Unit, alCambiarMenu: () -> Unit
+    alTocar: () -> Unit
 ) {
     val c = colores
     val forma = RoundedCornerShape(
@@ -446,7 +440,7 @@ fun FilaToque(
         Row(Modifier.fillMaxWidth().defaultMinSize(minHeight = 64.dp), verticalAlignment = Alignment.CenterVertically) {
             Row(
                 Modifier.weight(1f).clickable(role = Role.Checkbox, onClick = alTocar)
-                    .semantics { contentDescription = "$nombre, ${if (presente) "marcada" else "sin marcar"}" }
+                    .semantics { contentDescription = "$nombre, ${if (menu == "ayuda_social") "ayuda social, " else ""}${if (presente) "marcada" else "sin marcar"}" }
                     .defaultMinSize(minHeight = 64.dp).padding(Medidas.e4, 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -454,7 +448,7 @@ fun FilaToque(
                 Spacer(Modifier.width(Medidas.e3))
                 Column(Modifier.weight(1f)) {
                     Text(nombre, style = tipos.textoFuerte, color = c.tinta)
-                    Text(if (grupo != null) etiquetaGrupoEtario(grupo) else "Sin grupo", style = tipos.chico, color = c.tintaSuave)
+                    Text((if (grupo != null) etiquetaGrupoEtario(grupo) else "Sin grupo") + if (menu == "ayuda_social") " · Ayuda social" else "", style = tipos.chico, color = c.tintaSuave)
                 }
                 Spacer(Modifier.width(Medidas.e3))
                 Box(
@@ -462,18 +456,6 @@ fun FilaToque(
                         .border(2.dp, if (presente) c.acento else c.contorno, CircleShape),
                     contentAlignment = Alignment.Center
                 ) { if (presente) Icono("ok", 18.dp, Color.White) }
-            }
-            if (presente) {
-                val social = menu == "ayuda_social"
-                Box(
-                    Modifier.padding(end = Medidas.e3).clip(RoundedCornerShape(999.dp))
-                        .background(if (social) c.seleccion else c.superficie)
-                        .border(1.dp, if (social) c.acentoTexto else c.contorno, RoundedCornerShape(999.dp))
-                        .clickable(role = Role.Button, onClick = alCambiarMenu)
-                        .semantics { contentDescription = "Menú de $nombre: ${if (social) "ayuda social" else "normal"}. Tocar para cambiarlo." }
-                        .defaultMinSize(minHeight = 48.dp).padding(horizontal = Medidas.e3),
-                    contentAlignment = Alignment.Center
-                ) { Text(if (social) "Social" else "Normal", style = tipos.chicoFuerte, color = if (social) c.titulo else c.tintaSuave) }
             }
         }
         if (!ultima) Separador()
@@ -519,7 +501,7 @@ private fun BotonPaso(texto: String, descripcion: String, onClick: () -> Unit) {
 private fun FichaDia(
     at: Atencion, padron: Padron, abierta: Boolean, primera: Boolean, ultima: Boolean,
     alAbrir: () -> Unit, cambiar: ((Atencion) -> Atencion) -> Unit,
-    alternar: (Afiliado) -> Unit, cambiarMenu: (Afiliado) -> Unit,
+    alternar: (Afiliado) -> Unit,
     marcarTodos: (List<Afiliado>, Boolean) -> Unit, quitarDia: () -> Unit
 ) {
     val c = colores
@@ -580,7 +562,7 @@ private fun FichaDia(
                     Superficie {
                         lista.forEachIndexed { i, p ->
                             FilaToque(p, p.id in marcados, menus[p.id] ?: menuPorDefecto(p), grupoEtario(p, at.fecha.ifEmpty { hoyIso() }),
-                                i == 0, i == lista.size - 1, { alternar(p) }, { cambiarMenu(p) })
+                                i == 0, i == lista.size - 1, { alternar(p) })
                         }
                     }
                 }
