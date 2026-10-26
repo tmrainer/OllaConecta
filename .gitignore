@@ -12,6 +12,8 @@
 !nativo/nucleo/src/test/resources/*.json
 # PDF que arma la web con esos datos inventados (nativo/herramientas/oraculo-documentos.mjs).
 !nativo/nucleo/src/test/resources/documentos/*.pdf
+# Íconos y pantalla de inicio de la app nativa: sin datos personales.
+!nativo/app/src/main/res/**/*.png
 
 # Firebase (nube/): sus .json sí van; google-services.json del APK sigue fuera.
 !nube/*.json
