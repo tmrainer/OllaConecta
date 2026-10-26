@@ -20,4 +20,5 @@ jobs:
       - name: Prueba de humo (incluye las aserciones de pruebas.html)
         env:
           CHROME: /usr/bin/google-chrome   # viene instalado en ubuntu-latest
+          TZ: America/Lima  # la hora de la app
         run: node herramientas/humo.mjs
