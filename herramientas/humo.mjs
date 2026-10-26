@@ -765,7 +765,9 @@ async function correr(base, cdp) {
     await p.eval(`(() => {
       const iso = (d) => \`\${d.getFullYear()}-\${String(d.getMonth() + 1).padStart(2, '0')}-\${String(d.getDate()).padStart(2, '0')}\`;
       const base = new Date(); base.setDate(base.getDate() + 5);
-      const antes = new Date(base); antes.setMonth(antes.getMonth() - 1);
+      // Un mes antes, con el día recortado al último del mes (31-10 → 30-09), como la app.
+      const finMesAnterior = new Date(base.getFullYear(), base.getMonth(), 0).getDate();
+      const antes = new Date(base.getFullYear(), base.getMonth() - 1, Math.min(base.getDate(), finMesAnterior));
       localStorage.setItem('b1.calendario.v1', JSON.stringify({ periodicidad: 'mensual', fechaLimiteBase: iso(base),
         diasDeAviso: [3], entregas: [{ fechaLimite: iso(antes), estado: 'entregada' }] }));
       return 1; })()`);
