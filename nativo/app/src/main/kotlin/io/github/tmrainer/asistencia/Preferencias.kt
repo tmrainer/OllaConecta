@@ -75,6 +75,14 @@ class Preferencias(context: Context) {
 
     fun marcarBienvenidaVista() { _bienvenidaVista.value = true; prefs.edit().putBoolean("bienvenidaVista", true).apply() }
 
+    /** «Borrar todo»: como recién instalada. Al volver, la app pide de nuevo quién eres (PrimerUso). */
+    fun borrarTodo() {
+        prefs.edit().clear().apply()
+        _tema.value = Tema.AUTO; _letra.value = Letra.NORMAL
+        _perfil.value = Perfil(); _perfilOmitido.value = false; _bienvenidaVista.value = false
+        _vozBoton.value = false; _vozLenta.value = false
+    }
+
     /** Las guías generales ya vistas (la del B-1): después, «Ayuda» va directo a la del paso. */
     fun guiaVista(clave: String): Boolean = prefs.getBoolean("guia.$clave", false)
     fun marcarGuiaVista(clave: String) { prefs.edit().putBoolean("guia.$clave", true).apply() }

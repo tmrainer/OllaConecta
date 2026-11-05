@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.tmrainer.asistencia.OllaConectaApp
 import io.github.tmrainer.asistencia.nucleo.modelo.JSON
 import io.github.tmrainer.asistencia.nucleo.modelo.cuantos
 import io.github.tmrainer.asistencia.nucleo.modelo.fechaLarga
@@ -45,6 +46,7 @@ import io.github.tmrainer.asistencia.ui.GUIA_DATOS
 import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
+import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
@@ -204,7 +206,7 @@ fun PantallaDatos(ctx: Contexto) {
 
             Spacer(Modifier.height(Medidas.e5))
             Text("Borrar todo", style = tipos.seccion, color = c.error, modifier = Modifier.padding(bottom = Medidas.e3))
-            Pista("Borra de este teléfono el padrón, la asistencia, el B-1 y las entregas. No se puede deshacer.", Modifier.padding(bottom = Medidas.e3))
+            Pista("Deja la app como recién instalada: borra el padrón, la asistencia, el B-1, las entregas, tu perfil y los ajustes. No se puede deshacer.", Modifier.padding(bottom = Medidas.e3))
             Boton("Borrar todo", { confirmandoBorrar = true }, Modifier.objetivoGuia("datos.borrar"), tipo = TipoBoton.PELIGRO)
         }
     }
@@ -260,8 +262,17 @@ fun PantallaDatos(ctx: Contexto) {
         AlertDialog(
             onDismissRequest = { confirmandoBorrar = false }, containerColor = c.superficie,
             title = { Text("¿Borrar todo?", style = tipos.seccion, color = c.titulo) },
-            text = { Text("Se borrará de este equipo: el padrón (${cuantos(padron.afiliados.size, "persona")}), la asistencia, el formato B-1 y las entregas.\n\nNo se puede deshacer. ¿Guardaste una copia?", style = tipos.texto, color = c.tinta) },
-            confirmButton = { Boton("Borrar todo", { confirmandoBorrar = false; estado.borrarTodo(); avisos.mostrar("Se borró todo.") }, tipo = TipoBoton.PELIGRO) },
+            text = { Text("Se borrará de este equipo: el padrón (${cuantos(padron.afiliados.size, "persona")}), la asistencia, el formato B-1, las entregas, quién eres y los ajustes. La app vuelve a empezar, como recién instalada.\n\nNo se puede deshacer. ¿Guardaste una copia?", style = tipos.texto, color = c.tinta) },
+            confirmButton = { Boton("Borrar todo", {
+                confirmandoBorrar = false
+                // Todo: los datos, lo de este teléfono (perfil, ajustes, guías vistas) y lo del envío a UNACEM.
+                // Sin perfil, la app vuelve a la bienvenida; detrás queda el Inicio.
+                estado.borrarTodo()
+                ctx.preferencias.borrarTodo()
+                (contexto.applicationContext as OllaConectaApp).envios.borrarTodo()
+                ctx.ir(Ruta.INICIO)
+                avisos.mostrar("Se borró todo.")
+            }, tipo = TipoBoton.PELIGRO) },
             dismissButton = { Boton("Cancelar", { confirmandoBorrar = false }) }
         )
     }

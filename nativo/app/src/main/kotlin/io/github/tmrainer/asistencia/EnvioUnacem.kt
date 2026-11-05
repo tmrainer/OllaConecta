@@ -45,6 +45,13 @@ class Envios(private val context: Context) {
         programarRecordatorio()
     }
 
+    /** «Borrar todo»: sin correo ni envíos anotados, y el recordatorio como al instalar. */
+    fun borrarTodo() {
+        prefs.edit().clear().apply()
+        _correo.value = ""; _recordar.value = true; _cambios.value += 1
+        programarRecordatorio()
+    }
+
     /** ¿Hay un correo bien escrito a dónde mandar? */
     fun hayCorreo(): Boolean = pareceCorreo(_correo.value)
 
