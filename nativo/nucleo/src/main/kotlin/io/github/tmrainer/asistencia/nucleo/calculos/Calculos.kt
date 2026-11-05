@@ -75,6 +75,26 @@ fun gastoPorOrigen(rendicion: Rendicion): GastoPorOrigen {
 
 data class Descuadre(val esperado: Long, val declarado: Long, val diferencia: Long)
 
+/** Cantidad × precio unitario de la fila, en céntimos (redondeo de descuadreFila); null si falta uno o es «varios». */
+fun totalDeLaFila(fila: Egreso): Long? {
+    if (fila.cantidadVarios || fila.precioUnitarioVarios) return null
+    val cantidad = fila.cantidad ?: return null
+    val precio = fila.precioUnitarioCent ?: return null
+    return (cantidad * precio).roundToLong()
+}
+
+/**
+ * La fila [despues] de cambiar su cantidad o su precio: el monto total sigue a
+ * cantidad × precio si estaba vacío o si era el cálculo de [antes]. Un total que la
+ * usuaria escribió distinto (el de su boleta) no se toca. Decisión del 26-10-2026:
+ * el total se calcula solo, y la pantalla dice que es calculado (AGENTS.md §2).
+ */
+fun conTotalCalculado(antes: Egreso, despues: Egreso): Egreso {
+    val nuevo = totalDeLaFila(despues) ?: return despues
+    val previo = antes.montoTotalCent
+    return if (previo == null || previo == totalDeLaFila(antes)) despues.copy(montoTotalCent = nuevo) else despues
+}
+
 /** Comprobación de fila: cantidad x precio unitario frente al monto total. */
 fun descuadreFila(fila: Egreso?): Descuadre? {
     if (fila == null) return null

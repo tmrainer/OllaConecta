@@ -2,6 +2,7 @@
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.calculos.aporteCentroAtencion
+import io.github.tmrainer.asistencia.nucleo.calculos.conTotalCalculado
 import io.github.tmrainer.asistencia.nucleo.calculos.descuadreFila
 import io.github.tmrainer.asistencia.nucleo.calculos.duracionPeriodo
 import io.github.tmrainer.asistencia.nucleo.calculos.gastoPorOrigen
@@ -99,6 +100,20 @@ class TotalesTest {
         ok(d != null && d.esperado == 1000L && d.declarado == 1200L, "debe reportar ambos números")
         igual(descuadreFila(Egreso(cantidadVarios = true, cantidad = 2.0, precioUnitarioCent = 500, montoTotalCent = 9999)), null)
         igual(descuadreFila(Egreso(cantidad = 2.0, precioUnitarioCent = 500, montoTotalCent = 1001)), null, "tolerancia de 1 céntimo")
+    }
+
+    @Test
+    fun `el total se calcula solo, pero no pisa el que escribió la usuaria`() {
+        val conCantidad = Egreso(cantidad = 10.0)
+        igual(conTotalCalculado(Egreso(), conCantidad).montoTotalCent, null, "sin precio no hay cálculo")
+        val calculado = conTotalCalculado(conCantidad, conCantidad.copy(precioUnitarioCent = 450))
+        igual(calculado.montoTotalCent, 4500L, "vacío: 10 × 4.50")
+        igual(conTotalCalculado(calculado, calculado.copy(cantidad = 12.0)).montoTotalCent, 5400L, "era el cálculo: lo sigue")
+        igual(conTotalCalculado(Egreso(cantidad = 0.75), Egreso(cantidad = 0.75, precioUnitarioCent = 333)).montoTotalCent, 250L, "redondea como descuadreFila")
+        val deLaBoleta = calculado.copy(montoTotalCent = 4400)
+        igual(conTotalCalculado(deLaBoleta, deLaBoleta.copy(cantidad = 12.0)).montoTotalCent, 4400L, "lo escribió ella: no se toca")
+        val varios = Egreso(cantidadVarios = true, precioUnitarioVarios = true, montoTotalCent = 9000)
+        igual(conTotalCalculado(varios, varios.copy(cantidad = 2.0, precioUnitarioCent = 100)).montoTotalCent, 9000L, "varios: no se calcula")
     }
 }
 

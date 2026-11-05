@@ -122,8 +122,9 @@ function validarEgresos(r) {
 
     if (!esIso(f.fechaCompra)) hs.push(h(ERROR, campo, `Compra ${n}: falta la fecha.`));
     if (vacio(f.descripcion)) hs.push(h(ERROR, campo, `Compra ${n}: falta la descripción.`));
-    if (vacio(f.rucProveedor)) hs.push(h(ERROR, campo, `Compra ${n}: falta el RUC del proveedor.`));
-    if (vacio(f.boletaSerie) || vacio(f.boletaCorrelativo)) {
+    // RUC y boleta no son obligatorios: en el mercado muchas veces no dan
+    // comprobante (25-10-2026). Una boleta a medias sí es un error.
+    if (vacio(f.boletaSerie) !== vacio(f.boletaCorrelativo)) {
       hs.push(h(ERROR, campo, `Compra ${n}: falta la serie o el correlativo de la boleta.`));
     }
     if (!Number.isFinite(f.montoTotalCent)) {
@@ -201,7 +202,7 @@ function validarConjunto(r) {
   }
   if (Number.isFinite(r.montoSubsidioCent) && porOrigen.subsidio > r.montoSubsidioCent) {
     hs.push(h(AVISO, 'totales',
-      'Las compras marcadas como pagadas con el subsidio suman más que el subsidio recibido.'));
+      'Las compras pagadas con el subsidio suman más que el subsidio recibido: la diferencia sale como «Aporte del centro de atención».'));
   }
   if (!vacio(r.nombrePresidentaFirma) && !vacio(r.nombrePresidenta) &&
       normalizarNombre(r.nombrePresidentaFirma) !== normalizarNombre(r.nombrePresidenta)) {

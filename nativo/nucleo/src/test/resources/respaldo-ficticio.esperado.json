@@ -1,5 +1,5 @@
 {
-  "generadoEn": "2026-10-20",
+  "generadoEn": "2026-10-25",
   "hoy": "2026-10-20",
   "revision": {
     "error": null,
@@ -2672,12 +2672,6 @@
           "falta": false
         },
         {
-          "severidad": "error",
-          "campo": "egreso.e-0118",
-          "mensaje": "Compra 8: falta el RUC del proveedor.",
-          "falta": true
-        },
-        {
           "severidad": "advertencia",
           "campo": "totales",
           "mensaje": "Queda S/ 349.67 del subsidio sin rendir. El formato no tiene un renglón para ese saldo: consulta en la Municipalidad qué corresponde hacer.",
@@ -2691,7 +2685,7 @@
         }
       ],
       "conteo": {
-        "errores": 2,
+        "errores": 1,
         "advertencias": 6
       }
     },
