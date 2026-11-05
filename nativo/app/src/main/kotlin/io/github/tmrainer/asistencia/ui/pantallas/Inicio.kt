@@ -60,8 +60,8 @@ fun PantallaInicio(ctx: Contexto) {
     val c = colores
     val hoy = hoyIso()
 
-    // El nombre del B-1; mientras no lo tenga, la olla que dijo quien usa el teléfono.
-    val centro = config.ultimoCentro?.nombreCentro?.trim().orEmpty().ifEmpty { perfil.olla.trim() }
+    // El nombre de la olla (datos de la olla); si no, el del último B-1 o el que dijo quien usa el teléfono.
+    val centro = config.olla.nombre.trim().ifEmpty { config.ultimoCentro?.nombreCentro?.trim().orEmpty().ifEmpty { perfil.olla.trim() } }
     val hayDatos = padron.afiliados.isNotEmpty()
 
     Column(Modifier.fillMaxWidth()) {

@@ -69,8 +69,9 @@ import io.github.tmrainer.asistencia.nucleo.modelo.formatearSoles
 import io.github.tmrainer.asistencia.nucleo.modelo.hoyIso
 import io.github.tmrainer.asistencia.nucleo.modelo.nuevaRendicion
 import io.github.tmrainer.asistencia.nucleo.modelo.nuevoEgreso
-import io.github.tmrainer.asistencia.nucleo.sugerencias.sugerenciasEncabezado
-import io.github.tmrainer.asistencia.nucleo.sugerencias.sugerenciasPerfil
+import io.github.tmrainer.asistencia.nucleo.sugerencias.conDatosDeLaOlla
+import io.github.tmrainer.asistencia.nucleo.sugerencias.sugerenciasB1
+import io.github.tmrainer.asistencia.nucleo.sugerencias.sugerenciasOlla
 import io.github.tmrainer.asistencia.nucleo.validaciones.Hallazgo
 import io.github.tmrainer.asistencia.nucleo.validaciones.Severidad
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarRendicion
@@ -168,8 +169,16 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
     val avisos = LocalAvisos.current
     val alcance = rememberCoroutineScope()
 
-    // rendiciones[0] es el B-1 en curso. Sin ninguno, se crea uno vacío.
-    LaunchedEffect(rendiciones.isEmpty()) { if (rendiciones.isEmpty()) estado.cambiarRendiciones { listOf(nuevaRendicion()) } }
+    // Campos puestos desde los datos de la olla o aceptados de una sugerencia, marcados hasta que se editen.
+    val propuestos = remember { mutableStateOf(setOf<String>()) }
+    // rendiciones[0] es el B-1 en curso. Sin ninguno, se crea uno con los datos de la olla ya puestos (y marcados).
+    LaunchedEffect(rendiciones.isEmpty()) {
+        if (rendiciones.isEmpty()) {
+            val (nueva, puestos) = conDatosDeLaOlla(nuevaRendicion(), estado.config.value)
+            estado.cambiarRendiciones { listOf(nueva) }
+            propuestos.value = puestos
+        }
+    }
     var verId by remember { mutableStateOf<String?>(null) }
     val indice = maxOf(0, rendiciones.indexOfFirst { it.id == verId })
     val rendicion = rendiciones.getOrNull(indice) ?: return
@@ -205,8 +214,6 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
             if (avisosPorAceptar.none { clave(it) in siguen } || pasoDe(avisosPorAceptar[0].campo) != pasoActual) { avisosPorAceptar = emptyList(); avisoPasos = "" }
         } else if (avisoPasos.isNotEmpty() && hallazgos.none { it.severidad == Severidad.ERROR && pasoDe(it.campo) == pasoActual }) avisoPasos = ""
     }
-    // Campos aceptados de una sugerencia, marcados hasta que se editen.
-    val propuestos = remember { mutableStateOf(setOf<String>()) }
     val desplazamiento = rememberScrollState()
     var egresoAbierto by remember { mutableStateOf<String?>(null) }
     var confirmarMes by remember { mutableStateOf(false) }
@@ -331,7 +338,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                 when (pasoActual) {
                     1 -> PasoCentro(rendicion, hallazgos, config, perfil, propuestos, ::cambiar)
                     2 -> PasoPeriodo(rendicion, hallazgos, ::cambiar)
-                    3 -> PasoIngresos(rendicion, hallazgos, ::cambiar)
+                    3 -> PasoIngresos(rendicion, hallazgos, config, propuestos, ::cambiar)
                     4 -> PasoCompras(rendicion, hallazgos, egresoAbierto, { egresoAbierto = it }, ::cambiar, ::cambiarEgreso)
                     else -> PasoRevisar(
                         rendicion, rendiciones, indice, hallazgos, ::irACampo, abrir = { verId = it }, empezarMes = { confirmarMes = true },
@@ -377,9 +384,10 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
             confirmButton = {
                 Boton("Empezar", {
                     confirmarMes = false
-                    // Solo cada cuánto se entrega: lo demás lo propone la app desde el mes anterior.
-                    val nueva = nuevaRendicion().copy(periodo = nuevaRendicion().periodo.copy(tipo = rendicion.periodo.tipo))
+                    // Cada cuánto se entrega, del mes anterior; el encabezado, las firmas y el subsidio, de los datos de la olla (marcados).
+                    val (nueva, puestos) = conDatosDeLaOlla(nuevaRendicion().copy(periodo = nuevaRendicion().periodo.copy(tipo = rendicion.periodo.tipo)), estado.config.value)
                     estado.cambiarRendiciones { listOf(nueva) + it }
+                    propuestos.value = puestos
                     verId = null
                     irAPaso(1)
                 }, tipo = TipoBoton.PRINCIPAL)
@@ -422,11 +430,13 @@ private fun PasoCentro(
     TituloSeccion("Centro de atención")
     Pista("Cópialos de tu B-1 anterior o de tu resolución. Todos son obligatorios.", Modifier.padding(bottom = Medidas.e3))
 
-    // Una sugerencia NUNCA se aplica sola: solo se ofrece. Lo del perfil manda: es lo más actual.
-    val props = sugerenciasEncabezado(config) + sugerenciasPerfil(perfil)
+    // La app es solo para ollas comunes: el tipo va fijo.
+    LaunchedEffect(r.id, r.tipoCentro) { if (r.tipoCentro != "olla_comun") cambiar { it.copy(tipoCentro = "olla_comun") } }
+    // Lo que falte se ofrece (no se aplica solo): los datos de la olla mandan; después el B-1 anterior y el perfil.
+    val props = sugerenciasB1(config, perfil)
     val valorDe = { campo: String -> when (campo) {
-        "tipoCentro" -> r.tipoCentro; "nombreCentro" -> r.nombreCentro; "codigoPca" -> r.codigoPca; "nombrePresidenta" -> r.nombrePresidenta
-        "dniPresidenta" -> r.dniPresidenta; "celular" -> r.celular; else -> ""
+        "nombreCentro" -> r.nombreCentro; "codigoPca" -> r.codigoPca; "distrito" -> r.distrito; "nombrePresidenta" -> r.nombrePresidenta
+        "dniPresidenta" -> r.dniPresidenta; "celular" -> r.celular; else -> "x"
     } }
     // Las firmas no se piden: no se proponen.
     val pendientes = props.filter { (campo, _) -> campo !in CAMPOS_FIRMA && valorDe(campo).trim().isEmpty() }
@@ -437,26 +447,28 @@ private fun PasoCentro(
                 cambiar { x ->
                     var y = x
                     for ((campo, p) in pendientes) y = when (campo) {
-                        "tipoCentro" -> y.copy(tipoCentro = p.valor); "nombreCentro" -> y.copy(nombreCentro = p.valor); "codigoPca" -> y.copy(codigoPca = p.valor)
+                        "nombreCentro" -> y.copy(nombreCentro = p.valor); "codigoPca" -> y.copy(codigoPca = p.valor); "distrito" -> y.copy(distrito = p.valor)
                         "nombrePresidenta" -> y.copy(nombrePresidenta = p.valor); "dniPresidenta" -> y.copy(dniPresidenta = p.valor); "celular" -> y.copy(celular = p.valor)
                         else -> y
                     }
                     y
                 }
-                propuestos.value = propuestos.value + pendientes.keys.filter { it != "tipoCentro" }
+                propuestos.value = propuestos.value + pendientes.keys
             })
         }
     }
     val marca = { campo: String -> if (campo in propuestos.value) "Dato propuesto — revísalo" else null }
     fun escribir(campo: String, f: (Rendicion) -> Rendicion) { propuestos.value = propuestos.value - campo; cambiar(f) }
 
-    Leyenda("Tipo de centro (marca uno)")
-    Box(Modifier.objetivoGuia("b1.tipo")) { Opciones(listOf("comedor" to "Comedor", "olla_comun" to "Olla común"), { it == r.tipoCentro }, { v -> cambiar { it.copy(tipoCentro = v) } }) }
+    Leyenda("Tipo de centro")
+    FranjaEstado("Olla común. La app es para ollas comunes: en la hoja sale marcado.", TonoPastilla.OK, Modifier.objetivoGuia("b1.tipo"), icono = "casa")
     hs.errorDe("tipoCentro")?.let { Text(it, style = tipos.chico, color = c.error) }
     Spacer(Modifier.height(Medidas.e3))
     Campo("Nombre del centro de atención", r.nombreCentro, { v -> escribir("nombreCentro") { it.copy(nombreCentro = v) } }, Modifier.objetivoGuia("b1.nombreCentro"), pista = marca("nombreCentro") ?: "Como lo registró la Municipalidad.", error = hs.errorDe("nombreCentro"), placeholder = "Ej.: Olla común Virgen de Fátima", obligatorio = true)
     Spacer(Modifier.height(Medidas.e3))
-    Campo("Código de PCA N.º", r.codigoPca, { v -> escribir("codigoPca") { it.copy(codigoPca = v) } }, pista = marca("codigoPca") ?: "El código que te dio la Municipalidad.", error = hs.errorDe("codigoPca"), aviso = hs.avisoDe("codigoPca"), placeholder = "Ej.: 0123", obligatorio = true, soloDigitos = true)
+    Campo("Código del Sistema Informático del PCA N.º", r.codigoPca, { v -> escribir("codigoPca") { it.copy(codigoPca = v) } }, pista = marca("codigoPca") ?: "El código que te dio la Municipalidad.", error = hs.errorDe("codigoPca"), aviso = hs.avisoDe("codigoPca"), placeholder = "Ej.: 098", obligatorio = true, soloDigitos = true)
+    Spacer(Modifier.height(Medidas.e3))
+    Campo("Distrito", r.distrito, { v -> escribir("distrito") { it.copy(distrito = v) } }, pista = marca("distrito") ?: "El de la Municipalidad que recibe el B-1.", placeholder = "Ej.: Pachacámac", capitalizar = true)
     Spacer(Modifier.height(Medidas.e3))
     Campo("Nombre de la presidenta", r.nombrePresidenta, { v -> escribir("nombrePresidenta") { it.copy(nombrePresidenta = v) } }, pista = marca("nombrePresidenta") ?: "Nombres y apellidos, como en su DNI.", error = hs.errorDe("nombrePresidenta"), obligatorio = true)
     Spacer(Modifier.height(Medidas.e3))
@@ -511,10 +523,31 @@ private fun PasoPeriodo(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) 
 }
 
 @Composable
-private fun PasoIngresos(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) -> Rendicion) -> Unit) {
+private fun PasoIngresos(
+    r: Rendicion, hs: List<Hallazgo>, config: io.github.tmrainer.asistencia.nucleo.modelo.Config,
+    propuestos: androidx.compose.runtime.MutableState<Set<String>>, cambiar: ((Rendicion) -> Rendicion) -> Unit
+) {
+    val c = colores
     TituloSeccion("Ingresos")
+    // El subsidio de los datos de la olla: se ofrece si el campo está vacío; no se aplica solo.
+    val propuesta = sugerenciasOlla(config)["montoSubsidio"]
+    if (r.montoSubsidioCent == null && propuesta != null) {
+        BloqueSuave(Modifier.padding(bottom = Medidas.e3)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text("Subsidio ${propuesta.procedencia}", style = tipos.chicoNegrita, color = c.acentoTexto)
+                    Text("S/ ${propuesta.valor}", style = tipos.textoNegrita, color = c.tinta)
+                }
+                Boton("Usar este monto", {
+                    cambiar { it.copy(montoSubsidioCent = config.olla.montoSubsidioCent) }
+                    propuestos.value = propuestos.value + "montoSubsidio"
+                }, diminuto = true, tipo = TipoBoton.PRINCIPAL)
+            }
+        }
+    }
     Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-        CampoSoles("Monto del subsidio (S/)", r.montoSubsidioCent, { v -> cambiar { it.copy(montoSubsidioCent = v) } }, Modifier.weight(1f).objetivoGuia("b1.monto"), pista = "Lo que te dio la Municipalidad para este periodo.", error = hs.errorDe("montoSubsidio"), obligatorio = true)
+        CampoSoles("Monto del subsidio (S/)", r.montoSubsidioCent, { v -> propuestos.value = propuestos.value - "montoSubsidio"; cambiar { it.copy(montoSubsidioCent = v) } }, Modifier.weight(1f).objetivoGuia("b1.monto"),
+            pista = if ("montoSubsidio" in propuestos.value) "Dato propuesto — revísalo" else "Lo que te dio la Municipalidad para este periodo.", error = hs.errorDe("montoSubsidio"), obligatorio = true)
         // Se recibe antes de la primera compra y de la rendición.
         val primeraCompra = r.egresos.map { it.fechaCompra }.filter(::esIso).minOrNull() ?: ""
         CampoFecha("Fecha de la asignación", r.fechaAsignacion, { v -> cambiar { it.copy(fechaAsignacion = v) } }, Modifier.weight(1f).objetivoGuia("b1.fechaAsignacion"), pista = "El día que recibiste ese dinero.", error = hs.errorDe("fechaAsignacion"), aviso = hs.avisoDe("fechaAsignacion"), obligatorio = true,
@@ -626,17 +659,24 @@ private fun PasoCompras(
     val t = totales(r)
     Superficie(Modifier.padding(top = Medidas.e4).objetivoGuia("b1.totales")) {
         Column(Modifier.padding(Medidas.e4, Medidas.e3)) {
-            FilaTotal("Gastos con el subsidio económico", t.conSubsidio?.let { "S/ ${formatearSoles(it)}" })
+            // Los renglones de la hoja (Pachacámac 2026). El subsidio se gasta entero: lo que
+            // se gasta de más es aporte de la olla, y lo rendido con el subsidio es el total.
+            FilaTotal("Monto total de compra", t.total?.let { "S/ ${formatearSoles(it)}" })
+            Separador()
+            FilaTotal("Monto de declaración jurada (registrar, de corresponder)", null)
             Separador()
             // "Registrar de corresponder": si es cero, el renglón va vacío.
-            FilaTotal("Aporte del centro de atención (registrar de corresponder)", t.aporte?.takeIf { it != 0L }?.let { "S/ ${formatearSoles(it)}" })
+            FilaTotal("Aporte del centro de atención (lo que pusieron de más)", t.aporte?.takeIf { it != 0L }?.let { "S/ ${formatearSoles(it)}" })
             Separador()
-            FilaTotal("Total de rendición de gastos", t.total?.let { "S/ ${formatearSoles(it)}" }, destacado = true)
-            Text("Se suman solos de tus compras.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
+            FilaTotal("Total de rendición de gastos", t.conSubsidio?.let { "S/ ${formatearSoles(it)}" }, destacado = true)
+            Text("Se suman solos de tus compras. El aporte sale solo cuando las compras pasan el subsidio.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
+            // De dónde salió el dinero de cada compra solo llega importado (ninguna pantalla lo pide):
+            // se muestra cuando hay otro origen además del subsidio. Si todo es subsidio, el chip
+            // repetía la fila de arriba con el rótulo «Subsidio», que en «Revisar» es lo recibido.
             val po = gastoPorOrigen(r)
-            Chips(Modifier.padding(top = Medidas.e2)) {
-                if (po.subsidio != 0L) Chip("Subsidio", "S/ ${formatearSoles(po.subsidio)}")
-                if (po.ayudaSocial != 0L) Chip("Ayuda social", "S/ ${formatearSoles(po.ayudaSocial)}")
+            if (po.ayudaSocial != 0L || po.aportePropio != 0L) Chips(Modifier.padding(top = Medidas.e2)) {
+                if (po.subsidio != 0L) Chip("Con el subsidio", "S/ ${formatearSoles(po.subsidio)}")
+                if (po.ayudaSocial != 0L) Chip("Con ayuda social", "S/ ${formatearSoles(po.ayudaSocial)}")
                 if (po.aportePropio != 0L) Chip("Aporte propio", "S/ ${formatearSoles(po.aportePropio)}")
             }
             for (m in hs.filter { it.campo == "totales" }) Text(m.mensaje, style = tipos.chico, color = if (m.severidad == Severidad.ERROR) c.error else c.aviso, modifier = Modifier.padding(top = Medidas.e2))
@@ -690,6 +730,7 @@ private fun PasoRevisar(
             Chip("Subsidio", "S/ ${formatearSoles(r.montoSubsidioCent)}")
             Chip("Compras", "S/ ${formatearSoles(t.total)}")
             Chip("Aporte de la olla", "S/ ${formatearSoles(t.aporte)}")
+            Chip("Se rinde", "S/ ${formatearSoles(t.conSubsidio)}")
         }
     }
     Spacer(Modifier.height(Medidas.e4))

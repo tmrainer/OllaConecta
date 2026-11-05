@@ -25,6 +25,9 @@ class SugerenciasTest {
         igual(sugerenciasPerfil(base.copy(rol = "apoyo")).size, 0)
         igual(sugerenciasPerfil(Perfil(nombre = "", rol = "presidenta", dni = "", celular = "")).size, 0, "sin datos no propone vacíos")
         igual(sugerenciasPerfil(null).size, 0)
+        // La olla del perfil propone el nombre del centro, también para apoyo.
+        igual(sugerenciasPerfil(base.copy(rol = "apoyo", olla = "Olla Los Ñandúes"))["nombreCentro"]?.valor, "Olla Los Ñandúes")
+        igual(sugerenciasPerfil(base.copy(rol = "presidenta", olla = "Olla Los Ñandúes"))["nombreCentro"]?.procedencia, "de tu perfil")
     }
 
     @Test

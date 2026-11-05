@@ -1,5 +1,6 @@
 // Lo que es de este teléfono: quién lo usa, el modo claro u oscuro, el tamaño de la
-// letra, la voz y a qué correo va el envío a UNACEM. No va en las copias.
+// letra, la voz y a qué correo va el envío a UNACEM (no va en las copias); y los
+// datos de la olla (Config: sí van en la copia), que se piden al empezar.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import androidx.compose.foundation.Image
@@ -84,6 +85,24 @@ fun PantallaAjustes(ctx: Contexto) {
                 Campo("Tu olla", perfil.olla, { prefs.guardarPerfil(perfil.copy(olla = it)) }, capitalizar = true)
                 Spacer(Modifier.height(10.dp))
                 Campo("Tu celular (opcional)", perfil.celular, { prefs.guardarPerfil(perfil.copy(celular = it)) }, soloDigitos = true, maxLargo = 9)
+            }
+
+            Spacer(Modifier.height(Medidas.e5))
+            Column(Modifier.objetivoGuia("ajustes.olla")) {
+                val config by ctx.estado.config.collectAsStateWithLifecycle()
+                fun cambiarOlla(f: (io.github.tmrainer.asistencia.nucleo.modelo.DatosOlla) -> io.github.tmrainer.asistencia.nucleo.modelo.DatosOlla) =
+                    ctx.estado.cambiarConfig { it.copy(olla = f(it.olla)) }
+                TituloSeccion("Datos de la olla")
+                Pista("Se escriben una vez y la app los propone en el B-1, en el padrón de la Municipalidad y en la asistencia. Van en la copia de tus datos.", Modifier.padding(bottom = Medidas.e3))
+                CamposOlla(config.olla, ::cambiarOlla)
+                Spacer(Modifier.height(Medidas.e4))
+                TituloSeccion("La directiva", apoyo = true)
+                Spacer(Modifier.height(Medidas.e2))
+                CamposDirectiva(config.olla, ::cambiarOlla)
+                Spacer(Modifier.height(Medidas.e4))
+                TituloSeccion("Subsidio y precios", apoyo = true)
+                Spacer(Modifier.height(Medidas.e2))
+                CamposSubsidioYPrecios(config) { f -> ctx.estado.cambiarConfig(f) }
             }
 
             Spacer(Modifier.height(Medidas.e5))

@@ -214,11 +214,40 @@ data class UltimoCentro(
     val dniTesorera: String = ""
 )
 
+/** Una dirigente de la olla: nombre, DNI y (si hace falta) celular. */
+@Serializable
+data class Dirigente(
+    val nombre: String = "",
+    val dni: String = "",
+    val celular: String = ""
+)
+
+/**
+ * Los datos de la olla, que se piden una vez (primer uso o Ajustes) y se
+ * reutilizan: encabezado y firmas del B-1, formato municipal del padrón, subsidio.
+ */
+@Serializable
+data class DatosOlla(
+    val nombre: String = "",
+    val codigoPca: String = "",
+    val direccion: String = "",
+    val distrito: String = "",
+    val presidenta: Dirigente = Dirigente(),
+    val tesorera: Dirigente = Dirigente(),
+    val secretaria: Dirigente = Dirigente(),
+    val fiscal: Dirigente = Dirigente(),
+    /** El subsidio que la Municipalidad asigna cada periodo (se propone en el B-1). */
+    val montoSubsidioCent: Long? = null
+) {
+    fun vacia(): Boolean = this == DatosOlla()
+}
+
 @Serializable
 data class Config(
     val version: Int = VERSION_ESQUEMA,
     val calibracion: Calibracion = Calibracion(),
     val ultimoCentro: UltimoCentro? = null,
+    val olla: DatosOlla = DatosOlla(),
     // Precio del menú, que el centro ya tiene fijado. Se copia a cada día nuevo.
     val precioMenuNormalCent: Long? = null,
     val precioMenuAyudaSocialCent: Long? = null

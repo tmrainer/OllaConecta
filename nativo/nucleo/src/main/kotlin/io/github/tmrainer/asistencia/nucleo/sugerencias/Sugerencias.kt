@@ -3,10 +3,12 @@
 package io.github.tmrainer.asistencia.nucleo.sugerencias
 
 import io.github.tmrainer.asistencia.nucleo.modelo.Config
+import io.github.tmrainer.asistencia.nucleo.modelo.DatosOlla
 import io.github.tmrainer.asistencia.nucleo.modelo.Perfil
 import io.github.tmrainer.asistencia.nucleo.modelo.Rendicion
 import io.github.tmrainer.asistencia.nucleo.modelo.UltimoCentro
 import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
+import io.github.tmrainer.asistencia.nucleo.modelo.formatearSoles
 import io.github.tmrainer.asistencia.nucleo.modelo.normalizarNombre
 
 /** Un valor propuesto y de dónde sale. Sin procedencia no se muestra. */
@@ -40,6 +42,64 @@ fun sugerenciasEncabezado(config: Config?): Map<String, Propuesta> {
     return out
 }
 
+/** Lo que se propone en el B-1 desde los datos de la olla (Config.olla), por campo de la rendición. */
+fun camposDeLaOlla(olla: DatosOlla): List<Pair<String, String>> = listOf(
+    "nombreCentro" to olla.nombre,
+    "codigoPca" to olla.codigoPca,
+    "distrito" to olla.distrito,
+    "nombrePresidenta" to olla.presidenta.nombre,
+    "dniPresidenta" to olla.presidenta.dni,
+    "celular" to olla.presidenta.celular,
+    "nombrePresidentaFirma" to olla.presidenta.nombre,
+    "dniPresidentaFirma" to olla.presidenta.dni,
+    "nombreTesorera" to olla.tesorera.nombre,
+    "dniTesorera" to olla.tesorera.dni
+)
+
+/**
+ * Encabezado, firmas y subsidio a partir de los datos de la olla que se
+ * pidieron al empezar (o en Ajustes). Mandan sobre la rendición anterior:
+ * son los más actuales y los escribió la propia usuaria.
+ */
+fun sugerenciasOlla(config: Config?): Map<String, Propuesta> {
+    val olla = config?.olla ?: return emptyMap()
+    val proc = "de los datos de tu olla"
+    val out = LinkedHashMap<String, Propuesta>()
+    for ((c, v) in camposDeLaOlla(olla)) propuesta(v, proc)?.let { out[c] = it }
+    olla.montoSubsidioCent?.let { out["montoSubsidio"] = Propuesta(formatearSoles(it), proc) }
+    return out
+}
+
+/** Lo propuesto para el B-1, de todas las fuentes: la olla manda; después la rendición anterior y el perfil. */
+fun sugerenciasB1(config: Config?, perfil: Perfil?): Map<String, Propuesta> =
+    sugerenciasEncabezado(config) + sugerenciasPerfil(perfil) + sugerenciasOlla(config)
+
+/**
+ * Un B-1 nuevo con los datos de la olla ya puestos (encabezado, firmas y el
+ * subsidio), para no volver a escribirlos cada mes. Devuelve la rendición y
+ * los campos que llenó: la pantalla los marca «propuesto — revísalo».
+ * La olla es siempre «olla común».
+ */
+fun conDatosDeLaOlla(r: Rendicion, config: Config?): Pair<Rendicion, Set<String>> {
+    val olla = config?.olla ?: return r.copy(tipoCentro = "olla_comun") to emptySet()
+    var x = r.copy(tipoCentro = "olla_comun")
+    val puestos = LinkedHashSet<String>()
+    for ((campo, valor) in camposDeLaOlla(olla)) {
+        val v = valor.trim()
+        if (v.isEmpty()) continue
+        x = when (campo) {
+            "nombreCentro" -> x.copy(nombreCentro = v); "codigoPca" -> x.copy(codigoPca = v); "distrito" -> x.copy(distrito = v)
+            "nombrePresidenta" -> x.copy(nombrePresidenta = v); "dniPresidenta" -> x.copy(dniPresidenta = v); "celular" -> x.copy(celular = v)
+            "nombrePresidentaFirma" -> x.copy(nombrePresidentaFirma = v); "dniPresidentaFirma" -> x.copy(dniPresidentaFirma = v)
+            "nombreTesorera" -> x.copy(nombreTesorera = v); "dniTesorera" -> x.copy(dniTesorera = v)
+            else -> x
+        }
+        puestos.add(campo)
+    }
+    olla.montoSubsidioCent?.let { x = x.copy(montoSubsidioCent = it); puestos.add("montoSubsidio") }
+    return x to puestos
+}
+
 /**
  * Encabezado y firmas a partir del perfil de quien usa el teléfono: la
  * presidenta propone sus datos en los campos de presidenta y la tesorera en
@@ -48,7 +108,8 @@ fun sugerenciasEncabezado(config: Config?): Map<String, Propuesta> {
 fun sugerenciasPerfil(perfil: Perfil?): Map<String, Propuesta> {
     if (perfil == null) return emptyMap()
     val proc = "de tu perfil"
-    val campos: List<Pair<String, String>> = when (perfil.rol) {
+    // La olla del perfil es el centro de atención, sea cual sea el rol.
+    val campos: List<Pair<String, String>> = listOf("nombreCentro" to perfil.olla) + when (perfil.rol) {
         "presidenta" -> listOf(
             "nombrePresidenta" to perfil.nombre, "dniPresidenta" to perfil.dni, "celular" to perfil.celular,
             "nombrePresidentaFirma" to perfil.nombre, "dniPresidentaFirma" to perfil.dni
