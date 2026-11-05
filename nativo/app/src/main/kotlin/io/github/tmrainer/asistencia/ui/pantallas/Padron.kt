@@ -21,6 +21,11 @@ import androidx.compose.foundation.layout.Arrangement
 import io.github.tmrainer.asistencia.nucleo.envio.correoDelPadron
 import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDelPadron
+import io.github.tmrainer.asistencia.nucleo.documentos.excelLibroDeSocias
+import io.github.tmrainer.asistencia.nucleo.documentos.excelPadronMunicipal
+import io.github.tmrainer.asistencia.nucleo.documentos.pdfLibroDeSocias
+import io.github.tmrainer.asistencia.nucleo.documentos.pdfFichaSocia
+import io.github.tmrainer.asistencia.nucleo.documentos.pdfPadronMunicipal
 import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelPadron
 import io.github.tmrainer.asistencia.ui.componentes.horaAhora
 import io.github.tmrainer.asistencia.ui.componentes.Documento
@@ -71,7 +76,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.tmrainer.asistencia.nucleo.calculos.CONDICIONES
+import io.github.tmrainer.asistencia.nucleo.calculos.PARENTESCOS
 import io.github.tmrainer.asistencia.nucleo.calculos.TIPOS_AFILIADO
+import io.github.tmrainer.asistencia.nucleo.calculos.familiaresDe
 import io.github.tmrainer.asistencia.nucleo.calculos.TRAMOS_ETARIOS
 import io.github.tmrainer.asistencia.nucleo.calculos.afiliadosActivos
 import io.github.tmrainer.asistencia.nucleo.calculos.edadEnFecha
@@ -87,6 +95,7 @@ import io.github.tmrainer.asistencia.nucleo.modelo.nombreCompleto
 import io.github.tmrainer.asistencia.nucleo.modelo.normalizarNombre
 import io.github.tmrainer.asistencia.nucleo.modelo.nuevoAfiliado
 import io.github.tmrainer.asistencia.nucleo.validaciones.Hallazgo
+import io.github.tmrainer.asistencia.nucleo.validaciones.faltaFotoDni
 import io.github.tmrainer.asistencia.nucleo.validaciones.Severidad
 import io.github.tmrainer.asistencia.nucleo.validaciones.indicePadron
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarAfiliado
@@ -122,11 +131,72 @@ import io.github.tmrainer.asistencia.ui.tema.Medidas
 import io.github.tmrainer.asistencia.ui.tema.colores
 import io.github.tmrainer.asistencia.ui.tema.tipos
 import kotlinx.coroutines.Dispatchers
+import io.github.tmrainer.asistencia.Fotos
+import io.github.tmrainer.asistencia.ui.camara.CamaraFoto
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private val FILTROS = listOf("activos" to "Activas", "pendientes" to "Faltan en la Municipalidad", "incompletas" to "Les faltan datos", "ayuda_social" to "Ayuda social", "bajas" to "De baja", "todas" to "Todas")
+private val FILTROS = listOf("activos" to "Activas", "pendientes" to "Faltan en la Municipalidad", "incompletas" to "Les faltan datos", "sin_foto" to "Sin foto del DNI", "socias" to "Socias", "ayuda_social" to "Ayuda social", "bajas" to "De baja", "todas" to "Todas")
+
+/** El archivo para compartir: letras y números, sin barras. */
+private fun nombreDeArchivo(t: String) = t.replace(Regex("[^\\p{L}\\p{N} ._-]"), "").trim().ifEmpty { "ficha" }
+
+/**
+ * La foto del DNI: la que hay (o la recién tomada) y el botón para tomarla o
+ * cambiarla. [foto] recién tomada manda sobre [nombreFoto] guardada.
+ */
+@Composable
+private fun CampoFoto(
+    ctx: Contexto, titulo: String, pista: String, nombreFoto: String, foto: android.graphics.Bitmap?, obligatorio: Boolean, error: String?,
+    retrato: Boolean = false, alTomar: (android.graphics.Bitmap) -> Unit
+) {
+    val c = colores
+    val contexto = LocalContext.current
+    val guardada = remember(nombreFoto, foto) { if (foto == null && nombreFoto.isNotEmpty()) Fotos.cargar(contexto, nombreFoto) else null }
+    val mostrar = foto ?: guardada
+    Leyenda(titulo, obligatorio = obligatorio)
+    Pista(pista, Modifier.padding(top = 4.dp, bottom = Medidas.e2))
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+        Box(Modifier.width(if (retrato) 60.dp else 96.dp).height(if (retrato) 80.dp else 60.dp).clip(RoundedCornerShape(Medidas.rS)).background(c.superficie2), contentAlignment = Alignment.Center) {
+            if (mostrar != null) Image(mostrar.asImageBitmap(), contentDescription = titulo, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+            else Icono(if (retrato) "personas" else "camara", 26.dp, c.tintaSuave)
+        }
+        Boton(if (mostrar != null) "Tomar otra" else "Tomar la foto", { ctx.abrirCapa { CamaraFoto(alCerrar = ctx::cerrarCapa, alTomar = alTomar, titulo = titulo, retrato = retrato) } }, icono = "camara", diminuto = true)
+    }
+    if (error != null) Text(error, style = tipos.chico, color = c.error, modifier = Modifier.padding(top = 4.dp))
+}
+
+private const val PISTA_DNI = "Sale sola al leer el DNI con la cámara; si no, tómala aquí. Queda solo en este teléfono: no viaja en la copia, por QR ni en ningún archivo."
+private const val PISTA_PERSONA = "Se recorta sola de la foto del DNI; si salió mal, tómala aquí. Sale en el PDF del padrón de socias y en la ficha; no viaja en la copia ni por QR."
+
+/** Elegir a la socia de la que es familiar: se busca por nombre o DNI entre las socias activas. */
+@Composable
+private fun ElegirSocia(padron: io.github.tmrainer.asistencia.nucleo.modelo.Padron, titularId: String, excluir: String, alElegir: (String) -> Unit) {
+    val c = colores
+    val socias = remember(padron.afiliados) { padron.afiliados.filter { it.activo && it.condicion == "socia" && it.id != excluir }.sortedWith { a, b -> ORDEN_NOMBRES.compare(nombreCompleto(a), nombreCompleto(b)) } }
+    val elegida = socias.firstOrNull { it.id == titularId } ?: padron.afiliados.firstOrNull { it.id == titularId }
+    var busca by remember { mutableStateOf("") }
+    Leyenda("¿De qué socia es familiar?", obligatorio = true)
+    if (elegida != null) {
+        Row(Modifier.padding(top = Medidas.e2), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+            Text(nombreCompleto(elegida), style = tipos.textoFuerte, color = c.titulo, modifier = Modifier.weight(1f))
+            Boton("Cambiar", { alElegir("") }, diminuto = true)
+        }
+        return
+    }
+    if (socias.isEmpty()) { Pista("Todavía no hay socias inscritas. Inscribe primero a la socia.", Modifier.padding(top = 4.dp)); return }
+    Spacer(Modifier.height(Medidas.e2))
+    Campo("Buscar a la socia", busca, { busca = it }, placeholder = "Nombre o DNI")
+    val aguja = normalizarNombre(busca)
+    val vistas = socias.filter { aguja.isEmpty() || normalizarNombre(nombreCompleto(it)).contains(aguja) || it.numeroDocumento.contains(busca.trim()) }.take(6)
+    Acciones(Modifier.padding(top = Medidas.e2)) { for (sc in vistas) Boton(nombreCompleto(sc), { alElegir(sc.id) }, diminuto = true) }
+    if (socias.size > vistas.size) Pista("Escribe para encontrarla: hay ${socias.size} socias.", Modifier.padding(top = 4.dp))
+}
 
 @Composable
 fun PantallaPadron(ctx: Contexto) {
@@ -135,6 +205,8 @@ fun PantallaPadron(ctx: Contexto) {
     val guardado by estado.guardado.collectAsStateWithLifecycle()
     val c = colores
     val avisos = LocalAvisos.current
+    val contextoApp = LocalContext.current
+    val config by estado.config.collectAsStateWithLifecycle()
 
     var busqueda by remember { mutableStateOf("") }
     var filtro by remember { mutableStateOf("activos") }
@@ -164,6 +236,8 @@ fun PantallaPadron(ctx: Contexto) {
                 "activos" -> a.activo
                 "bajas" -> !a.activo
                 "ayuda_social" -> a.activo && a.tipoAfiliado == "caso_social"
+                "socias" -> a.activo && a.condicion == "socia"
+                "sin_foto" -> faltaFotoDni(a)
                 "incompletas" -> (erroresPor[a.id] ?: 0) > 0
                 "pendientes" -> a.activo && a.registroMunicipal == "pendiente"
                 else -> true
@@ -204,8 +278,10 @@ fun PantallaPadron(ctx: Contexto) {
                         val pendientes = padron.afiliados.count { it.activo && it.registroMunicipal == "pendiente" }
                         // Sin pendientes, el filtro desaparece: no se queda elegido y escondido.
                         if (filtro == "pendientes" && pendientes == 0) filtro = "activos"
-                        Box(Modifier.objetivoGuia("padron.filtros")) { Opciones(FILTROS.filter { it.first != "pendientes" || pendientes > 0 }.map { (v, t) ->
-                            v to when { v == "incompletas" && incompletas > 0 -> "$t ($incompletas)"; v == "pendientes" -> "$t ($pendientes)"; else -> t }
+                        val sinFoto = padron.afiliados.count(::faltaFotoDni)
+                        if (filtro == "sin_foto" && sinFoto == 0) filtro = "activos"
+                        Box(Modifier.objetivoGuia("padron.filtros")) { Opciones(FILTROS.filter { (it.first != "pendientes" || pendientes > 0) && (it.first != "sin_foto" || sinFoto > 0) }.map { (v, t) ->
+                            v to when { v == "incompletas" && incompletas > 0 -> "$t ($incompletas)"; v == "pendientes" -> "$t ($pendientes)"; v == "sin_foto" -> "$t ($sinFoto)"; else -> t }
                         }, { it == filtro }, { filtro = it }) }
                         val conteo = resumenEtario(padron, fechaRef)
                         Chips(Modifier.padding(top = Medidas.e3)) {
@@ -237,6 +313,7 @@ fun PantallaPadron(ctx: Contexto) {
                     // La primera fila es la que muestra la guía («Las personas de la olla»).
                     Box(if (a.id == visibles.first().id) Modifier.objetivoGuia("padron.lista") else Modifier) {
                         FilaPersona(
+                            ctx = ctx, padron = padron,
                             a = a, fechaRef = fechaRef, errores = erroresPor[a.id] ?: 0, abierta = abierta == a.id,
                             primera = a.id == visibles.first().id, ultima = a.id == visibles.last().id,
                             alAbrir = { abierta = if (abierta == a.id) null else a.id },
@@ -245,10 +322,13 @@ fun PantallaPadron(ctx: Contexto) {
                             fechaUltimaHoja = hojaActual?.fecha,
                             borrar = {
                                 val pos = padron.afiliados.indexOfFirst { it.id == a.id }
+                                // La foto del DNI se borra con la persona; si se deshace, vuelve sin foto (se pide otra vez).
+                                if (a.fotoDni.isNotEmpty()) Fotos.borrar(contextoApp, a.fotoDni)
+                                if (a.fotoPersona.isNotEmpty()) Fotos.borrar(contextoApp, a.fotoPersona)
                                 estado.cambiarPadron { p -> p.copy(afiliados = p.afiliados.filter { it.id != a.id }) }
                                 abierta = null
                                 avisos.mostrar("Borraste a ${nombreCompleto(a)}") {
-                                    estado.cambiarPadron { p -> p.copy(afiliados = p.afiliados.toMutableList().also { it.add(maxOf(0, minOf(pos, it.size)), a) }) }
+                                    estado.cambiarPadron { p -> p.copy(afiliados = p.afiliados.toMutableList().also { it.add(maxOf(0, minOf(pos, it.size)), a.copy(fotoDni = "", fotoPersona = "")) }) }
                                 }
                             }
                         )
@@ -256,8 +336,8 @@ fun PantallaPadron(ctx: Contexto) {
                 }
                 item {
                     Spacer(Modifier.height(Medidas.e5))
-                    TituloSeccion("Exportar el padrón", apoyo = true)
-                    Pista("Las personas activas, con los días que vinieron entre estas fechas.", Modifier.padding(bottom = Medidas.e3))
+                    TituloSeccion("Lista del padrón", apoyo = true)
+                    Pista("Las personas activas con su foto y los días que vinieron entre estas fechas. Más abajo, las dos versiones del padrón: el libro de socias y el formato municipal.", Modifier.padding(bottom = Medidas.e3))
                     Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                         CampoFecha("Días asistidos, desde", repInicio, { if (it.isNotEmpty()) repInicio = it }, Modifier.weight(1f))
                         CampoFecha("Hasta", repFin, { if (it.isNotEmpty()) repFin = it }, Modifier.weight(1f))
@@ -269,11 +349,42 @@ fun PantallaPadron(ctx: Contexto) {
                         avisos.mostrar("El padrón está vacío: inscribe a alguien o carga la hoja.")
                         return true
                     }
+                    // El PDF lleva la foto de cada persona (la del libro), si la tiene; el Excel no puede llevarlas.
+                    fun fotosDeLasPersonas(): (String) -> ByteArray? {
+                        val porId = estado.padron.value.afiliados.associate { it.id to it.fotoPersona }
+                        val cache = HashMap<String, ByteArray?>()
+                        return { id -> cache.getOrPut(id) { porId[id]?.takeIf { it.isNotEmpty() }?.let { Fotos.bytesParaPdf(contextoApp, it) } } }
+                    }
                     BotonesExportar(
-                        pdf = { if (vacio()) null else Documento(pdfDelPadron(estado.padron.value, fechaRef, repInicio, repFin, centro, selloAhora()), "Padron ${hoyIso()}", "Padrón (copia de referencia)") },
+                        pdf = { if (vacio()) null else Documento(pdfDelPadron(estado.padron.value, fechaRef, repInicio, repFin, centro, selloAhora(), fotos = fotosDeLasPersonas()), "Padron ${hoyIso()}", "Padrón (copia de referencia)") },
                         excel = { if (vacio()) null else Documento(excelDelPadron(estado.padron.value, fechaRef, repInicio, repFin, centro), "Padron ${hoyIso()}", "Padrón") }
                     )
-                    Pista("El Excel se puede cargar en otro teléfono con «Cargar la hoja».", Modifier.padding(top = Medidas.e2))
+                    Pista("El PDF lleva la foto de cada persona. El Excel se puede cargar en otro teléfono con «Cargar la hoja».", Modifier.padding(top = Medidas.e2))
+
+                    // Las dos versiones del padrón, cada una por separado: el libro de socias (vertical:
+                    // una ficha por socia con su foto y su familia) y el formato municipal (horizontal).
+                    Spacer(Modifier.height(Medidas.e5))
+                    TituloSeccion("Padrón de socias (vertical, como el libro)", apoyo = true)
+                    Pista("Una ficha por socia, con su foto, sus hijos y los otros familiares del domicilio. El Excel lleva lo mismo, sin fotos.", Modifier.padding(bottom = Medidas.e3))
+                    val socias = padron.afiliados.count { it.activo && it.condicion == "socia" }
+                    if (socias == 0) Text("Todavía no hay socias anotadas: en cada persona, marca «Socia» o «Familiar de una socia».", style = tipos.chicoFuerte, color = c.aviso, modifier = Modifier.padding(bottom = Medidas.e3))
+                    BotonesExportar(
+                        pdf = { if (vacio()) null else Documento(pdfLibroDeSocias(estado.padron.value, estado.config.value.olla, fechaRef, selloAhora(), fotos = fotosDeLasPersonas()), "Padron de socias ${hoyIso()}", "Padrón de socias (copia de referencia)") },
+                        excel = { if (vacio()) null else Documento(excelLibroDeSocias(estado.padron.value, estado.config.value.olla, fechaRef), "Padron de socias ${hoyIso()}", "Padrón de socias") }
+                    )
+
+                    Spacer(Modifier.height(Medidas.e5))
+                    TituloSeccion("Formato de la Municipalidad (horizontal)", apoyo = true)
+                    Pista("El formato de actualización de beneficiarios del PCA: una fila por persona, con socio, usuario o caso social, la dirección y espacio para firmar. Lleva los datos de la olla y las firmas de la directiva.", Modifier.padding(bottom = Medidas.e3))
+                    if (config.olla.nombre.isBlank()) {
+                        Text("Faltan los datos de la olla (nombre, código, directiva): el formato saldría sin encabezado.", style = tipos.chicoFuerte, color = c.aviso, modifier = Modifier.padding(bottom = Medidas.e2))
+                        Boton("Completar en Ajustes", { ctx.ir(Ruta.AJUSTES) }, diminuto = true)
+                        Spacer(Modifier.height(Medidas.e3))
+                    }
+                    BotonesExportar(
+                        pdf = { if (vacio()) null else Documento(pdfPadronMunicipal(estado.padron.value, estado.config.value.olla, fechaRef, selloAhora()), "Beneficiarios ${hoyIso()}", "Formato de beneficiarios (copia de referencia)") },
+                        excel = { if (vacio()) null else Documento(excelPadronMunicipal(estado.padron.value, estado.config.value.olla, fechaRef), "Beneficiarios ${hoyIso()}", "Formato de beneficiarios") }
+                    )
 
                     // Las inscritas aquí que falta llevar a la Municipalidad: la lista para el trámite.
                     val porRegistrar = padron.afiliados.count { it.activo && it.registroMunicipal == "pendiente" }
@@ -314,6 +425,7 @@ fun PantallaPadron(ctx: Contexto) {
 /** Una línea por persona; abierta, el editor. */
 @Composable
 private fun FilaPersona(
+    ctx: Contexto, padron: io.github.tmrainer.asistencia.nucleo.modelo.Padron,
     a: Afiliado, fechaRef: String, errores: Int, abierta: Boolean, primera: Boolean, ultima: Boolean,
     alAbrir: () -> Unit, cambiar: ((Afiliado) -> Afiliado) -> Unit, borrar: () -> Unit, retirar: (String) -> Unit, fechaUltimaHoja: String?
 ) {
@@ -338,29 +450,41 @@ private fun FilaPersona(
                     if (a.numeroDocumento.isNotEmpty()) add(a.numeroDocumento)
                     add((if (g != null) etiquetaGrupoEtario(g) else "Sin grupo") + (if (edad == null) "" else ", $edad años"))
                     if (a.tipoAfiliado == "caso_social") add("Ayuda social") else if (a.tipoAfiliado.isEmpty()) add("Sin tipo")
+                    when (a.condicion) {
+                        "socia" -> add("Socia")
+                        "familiar" -> add(padron.afiliados.firstOrNull { it.id == a.titularId }?.let { "Familiar de ${it.nombres.trim().ifEmpty { nombreCompleto(it) }}" } ?: "Familiar")
+                    }
                     if (!a.activo) add("Dada de baja")
                 }
                 Text(meta.joinToString(" · "), style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 2.dp))
             }
             if (errores > 0) { Spacer(Modifier.width(Medidas.e2)); Pastilla("faltan datos", TonoPastilla.FALTA) }
+            else if (faltaFotoDni(a)) { Spacer(Modifier.width(Medidas.e2)); Pastilla("falta la foto", TonoPastilla.FALTA) }
             else if (a.activo && a.registroMunicipal == "pendiente") { Spacer(Modifier.width(Medidas.e2)); Pastilla("falta la Municipalidad", TonoPastilla.FALTA) }
             Spacer(Modifier.width(Medidas.e2))
             Icono("flecha", 18.dp, if (abierta) c.acentoTexto else c.tintaSuave, Modifier.rotate(if (abierta) 90f else 0f))
         }
         if (abierta) {
             Separador()
-            EditorPersona(a, cambiar, borrar, retirar, fechaUltimaHoja)
+            EditorPersona(ctx, padron, a, cambiar, borrar, retirar, fechaUltimaHoja)
         }
         if (!ultima) Separador()
     }
 }
 
 @Composable
-private fun EditorPersona(a: Afiliado, cambiar: ((Afiliado) -> Afiliado) -> Unit, borrar: () -> Unit, retirar: (String) -> Unit, fechaUltimaHoja: String?) {
+private fun EditorPersona(ctx: Contexto, padron: io.github.tmrainer.asistencia.nucleo.modelo.Padron, a: Afiliado, cambiar: ((Afiliado) -> Afiliado) -> Unit, borrar: () -> Unit, retirar: (String) -> Unit, fechaUltimaHoja: String?) {
     val c = colores
+    val contexto = LocalContext.current
+    val alcance = rememberCoroutineScope()
     var pidiendoBaja by remember { mutableStateOf(false) }
     var confirmandoBorrar by remember { mutableStateOf(false) }
+    var masDelLibro by remember { mutableStateOf(false) }
+    // La foto recién tomada, para verla enseguida (el archivo se sobrescribe con el mismo nombre).
+    var fotoNueva by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var retratoNuevo by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     val tieneFecha = esIso(a.fechaNacimiento)
+    val familia = remember(padron.afiliados, a.id) { familiaresDe(padron, a.id).filter { it.activo } }
     Column(Modifier.padding(Medidas.e4, Medidas.e1, Medidas.e4, Medidas.e4)) {
         Acciones(Modifier.padding(vertical = 10.dp)) {
             if (a.activo && a.registroMunicipal == "pendiente") {
@@ -371,6 +495,50 @@ private fun EditorPersona(a: Afiliado, cambiar: ((Afiliado) -> Afiliado) -> Unit
             }, diminuto = true)
             Boton("Borrar", { confirmandoBorrar = true }, diminuto = true, tipo = TipoBoton.PELIGRO)
         }
+        if (a.condicion == "socia") {
+            Leyenda("Ficha de socia (como en el libro)")
+            Pista("Sus datos, su foto, sus hijos y los otros familiares del mismo domicilio.", Modifier.padding(top = 4.dp, bottom = Medidas.e2))
+            BotonesExportar(pdf = {
+                val foto = a.fotoPersona.takeIf { it.isNotEmpty() }?.let { Fotos.bytesParaPdf(contexto, it) }
+                Documento(pdfFichaSocia(ctx.estado.padron.value, a, ctx.estado.config.value.olla, selloAhora(), foto), "Ficha ${nombreDeArchivo(nombreCompleto(a))}", "Ficha de socia (copia de referencia)")
+            })
+            Spacer(Modifier.height(Medidas.e4))
+        }
+        CampoFoto(ctx, "Foto del DNI", PISTA_DNI, a.fotoDni, fotoNueva, obligatorio = a.origenDato != "importado", error = if (faltaFotoDni(a)) "Falta la foto del DNI." else null) { bmp ->
+            val nombre = Fotos.guardar(contexto, a.id, bmp)
+            fotoNueva = bmp
+            cambiar { it.copy(fotoDni = nombre) }
+        }
+        Spacer(Modifier.height(Medidas.e3))
+        CampoFoto(ctx, "Foto de la persona", PISTA_PERSONA, a.fotoPersona, retratoNuevo, obligatorio = false, error = null, retrato = true) { bmp ->
+            val nombre = Fotos.guardar(contexto, "${a.id}-persona", bmp)
+            retratoNuevo = bmp
+            cambiar { it.copy(fotoPersona = nombre) }
+        }
+        Spacer(Modifier.height(Medidas.e4))
+        Leyenda("En el libro de socias")
+        Opciones(CONDICIONES + ("" to "No se sabe"), { it == a.condicion }, { v -> cambiar { it.copy(condicion = v, titularId = if (v == "familiar") it.titularId else "", parentesco = if (v == "familiar") it.parentesco else "") } })
+        Pista("En el formato de la Municipalidad, la socia va como «Socio» y su familia como «Usuario».", Modifier.padding(top = 4.dp))
+        if (a.condicion == "familiar") {
+            Spacer(Modifier.height(Medidas.e3))
+            ElegirSocia(padron, a.titularId, a.id) { id -> cambiar { it.copy(titularId = id) } }
+            Spacer(Modifier.height(Medidas.e3))
+            Leyenda("Parentesco con la socia", obligatorio = true)
+            Opciones(PARENTESCOS.map { it to it }, { it == a.parentesco }, { v -> cambiar { it.copy(parentesco = v) } })
+            Spacer(Modifier.height(Medidas.e3))
+            Campo("Ocupación", a.ocupacion, { v -> cambiar { it.copy(ocupacion = v) } }, pista = "Ej.: estudiante. Opcional.")
+        }
+        if (a.condicion == "socia" && familia.isNotEmpty()) {
+            Spacer(Modifier.height(Medidas.e3))
+            Leyenda("Su familia en el padrón")
+            Text(familia.joinToString(", ") { "${nombreCompleto(it)} (${it.parentesco.ifEmpty { "sin parentesco" }})" }, style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 4.dp))
+        }
+        Spacer(Modifier.height(Medidas.e3))
+        Campo("Dirección", a.direccion, { v -> cambiar { it.copy(direccion = v) } }, capitalizar = true,
+            pista = if (a.condicion == "familiar") "Si queda vacía, en el formato va la de su socia." else "Mz., lote, sector, asociación. Va en el formato de la Municipalidad.")
+        Spacer(Modifier.height(Medidas.e3))
+        Campo("Teléfono", a.telefono, { v -> cambiar { it.copy(telefono = v) } }, soloDigitos = true, maxLargo = 9, pista = "Opcional.")
+        Spacer(Modifier.height(Medidas.e4))
         Campo("Apellido paterno", a.apellidoPaterno, { v -> cambiar { it.copy(apellidoPaterno = v) } })
         Spacer(Modifier.height(Medidas.e3))
         Campo("Apellido materno", a.apellidoMaterno, { v -> cambiar { it.copy(apellidoMaterno = v) } })
@@ -386,7 +554,7 @@ private fun EditorPersona(a: Afiliado, cambiar: ((Afiliado) -> Afiliado) -> Unit
         Opciones(TIPOS_AFILIADO.map { it.clave to it.etiqueta }, { it == a.tipoAfiliado }, { v -> cambiar { it.copy(tipoAfiliado = v) } })
         Pista("Define el menú que le toca por defecto.", Modifier.padding(top = 4.dp))
         Spacer(Modifier.height(Medidas.e3))
-        CampoFecha("Fecha de nacimiento", a.fechaNacimiento, { v -> cambiar { it.copy(fechaNacimiento = v) } }, pista = "Opcional.")
+        CampoFecha("Fecha de nacimiento", a.fechaNacimiento, { v -> cambiar { it.copy(fechaNacimiento = v) } }, pista = "Opcional.", hasta = hoyIso())
         Spacer(Modifier.height(Medidas.e3))
         Leyenda("Grupo de edad")
         Opciones(TRAMOS_ETARIOS.map { it.clave to "${it.etiqueta} (${it.detalle})" }, { it == a.grupoEtarioManual }, { v -> cambiar { it.copy(grupoEtarioManual = v) } }, habilitado = !tieneFecha)
@@ -401,6 +569,31 @@ private fun EditorPersona(a: Afiliado, cambiar: ((Afiliado) -> Afiliado) -> Unit
         Campo("Quién verificó los datos", a.verificadoPor, { v -> cambiar { it.copy(verificadoPor = v) } }, pista = "Obligatorio si los datos vinieron de un escaneo.")
         Spacer(Modifier.height(Medidas.e3))
         Campo("Nota", a.nota, { v -> cambiar { it.copy(nota = v) } })
+        // Lo demás del libro de socias: se guarda, pero no lo usa ningún formato.
+        Spacer(Modifier.height(Medidas.e3))
+        Boton(if (masDelLibro) "Ocultar los demás datos del libro" else "Más datos del libro de socias", { masDelLibro = !masDelLibro }, diminuto = true)
+        if (masDelLibro) {
+            Spacer(Modifier.height(Medidas.e3))
+            Pista("Como en el libro. Ningún formato los pide; se guardan por si hacen falta.", Modifier.padding(bottom = Medidas.e2))
+            Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+                Campo("Distrito", a.distrito, { v -> cambiar { it.copy(distrito = v) } }, Modifier.weight(1f), capitalizar = true)
+                Campo("Provincia", a.provincia, { v -> cambiar { it.copy(provincia = v) } }, Modifier.weight(1f), capitalizar = true)
+            }
+            Spacer(Modifier.height(Medidas.e3))
+            Campo("Departamento", a.departamento, { v -> cambiar { it.copy(departamento = v) } }, capitalizar = true)
+            Spacer(Modifier.height(Medidas.e3))
+            Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+                Campo("Profesión", a.profesion, { v -> cambiar { it.copy(profesion = v) } }, Modifier.weight(1f), capitalizar = true)
+                Campo("Actividad", a.actividad, { v -> cambiar { it.copy(actividad = v) } }, Modifier.weight(1f), capitalizar = true, placeholder = "Ej.: ama de casa")
+            }
+            Spacer(Modifier.height(Medidas.e3))
+            Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+                Campo("Grado de instrucción", a.gradoInstruccion, { v -> cambiar { it.copy(gradoInstruccion = v) } }, Modifier.weight(1f), capitalizar = true, placeholder = "Ej.: secundaria incompleta")
+                Campo("Estado civil", a.estadoCivil, { v -> cambiar { it.copy(estadoCivil = v) } }, Modifier.weight(1f), capitalizar = true, placeholder = "Ej.: soltera")
+            }
+            Spacer(Modifier.height(Medidas.e3))
+            Campo("Carnet N.º", a.carnet, { v -> cambiar { it.copy(carnet = v) } })
+        }
     }
     if (pidiendoBaja) {
         var motivo by remember { mutableStateOf(a.motivoBaja) }
@@ -460,6 +653,15 @@ fun PantallaInscribir(ctx: Contexto) {
     var nacimiento by remember { mutableStateOf("") }
     var grupo by remember { mutableStateOf<String?>(null) }
     var tipo by remember { mutableStateOf("") }
+    // El libro de socias: socia o familiar de una socia, con su parentesco; la dirección y la foto del DNI.
+    var condicion by remember { mutableStateOf("") }
+    var titularId by remember { mutableStateOf("") }
+    var parentesco by remember { mutableStateOf("") }
+    var direccion by remember { mutableStateOf("") }
+    var foto by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var retrato by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    val contexto = LocalContext.current
+    val padronActual by estado.padron.collectAsStateWithLifecycle()
     var mensaje by remember { mutableStateOf("") }
     var mensajeOk by remember { mutableStateOf(false) }
     var confirmarNombre by remember { mutableStateOf<Afiliado?>(null) }
@@ -479,7 +681,7 @@ fun PantallaInscribir(ctx: Contexto) {
     val desplazamiento = rememberScrollState()
     val alcance = rememberCoroutineScope()
     val tieneFecha = esIso(nacimiento)
-    val hayDatos = listOf(paterno, materno, nombres, doc, nacimiento, tipo).any { it.isNotBlank() } || grupo != null || escaneo != null
+    val hayDatos = listOf(paterno, materno, nombres, doc, nacimiento, tipo, condicion, direccion).any { it.isNotBlank() } || grupo != null || escaneo != null || foto != null || retrato != null
 
     fun salir() { if (hayDatos) saliendo = true else ctx.volver() }
     BackHandler(enabled = hayDatos) { saliendo = true }
@@ -489,7 +691,9 @@ fun PantallaInscribir(ctx: Contexto) {
     fun armar(): Afiliado = nuevoAfiliado().copy(
         apellidoPaterno = paterno.trim(), apellidoMaterno = materno.trim(), nombres = nombres.trim(),
         tipoDocumento = tipoDoc, numeroDocumento = doc.trim(), fechaNacimiento = nacimiento,
-        grupoEtarioManual = if (tieneFecha) null else grupo, tipoAfiliado = tipo
+        grupoEtarioManual = if (tieneFecha) null else grupo, tipoAfiliado = tipo,
+        condicion = condicion, titularId = if (condicion == "familiar") titularId else "", parentesco = if (condicion == "familiar") parentesco else "",
+        direccion = direccion.trim()
     ).let { a -> escaneo?.let { sexo -> a.copy(origenDato = "escaneo_dni", sexo = sexo, verificadoPor = verifica.trim()) } ?: a }
 
     /**
@@ -521,12 +725,17 @@ fun PantallaInscribir(ctx: Contexto) {
         nombre("Nombres", l.anverso?.nombres, m.nombres) { nombres = it }
         if (materno.isEmpty()) revisar.add("Apellido materno: escríbelo (no se leyó).")
         escaneo = m.sexo
+        // Las fotos salen del escaneo: el lado de la foto es la foto del DNI y de ahí se recorta el retrato.
+        l.foto?.let { f -> foto = f; retrato = Fotos.retratoDelDni(f); revisar.add("Foto del DNI y retrato: tomados del escaneo; si salieron mal, toma otra abajo.") }
         // Quien usa el teléfono es quien revisa: su nombre del perfil, editable.
         if (verifica.isBlank()) verifica = ctx.preferencias.perfil.value.nombre
         notaDni = revisar; dudas = ds
     }
 
-    fun inscribirDeVerdad(a: Afiliado) {
+    fun inscribirDeVerdad(sinFoto: Afiliado) {
+        // La foto se guarda con el id de la persona; si no se pudo, se inscribe igual y queda «falta la foto».
+        var a = foto?.let { b -> try { sinFoto.copy(fotoDni = Fotos.guardar(contexto, sinFoto.id, b)) } catch (e: Exception) { sinFoto } } ?: sinFoto
+        retrato?.let { b -> a = try { a.copy(fotoPersona = Fotos.guardar(contexto, "${a.id}-persona", b)) } catch (e: Exception) { a } }
         if (deLaHoja) {
             estado.cambiarPadron { agregarDeLaHoja(it, a, fechaHoja) }
             avisar("${nombreCompleto(a)} quedó en el padrón. Puedes copiar a otra persona.", ok = true)
@@ -538,6 +747,9 @@ fun PantallaInscribir(ctx: Contexto) {
             return
         }
         paterno = ""; materno = ""; nombres = ""; doc = ""; nacimiento = ""; grupo = null; tipo = ""
+        // Copiando a varias de la misma familia, la socia y la dirección se quedan.
+        if (condicion == "socia") { condicion = ""; direccion = "" }
+        parentesco = ""; foto = null; retrato = null
         escaneo = null; notaDni = emptyList(); dudas = emptyList(); avisoDni = ""
         alcance.launch { desplazamiento.animateScrollTo(0) }
     }
@@ -551,7 +763,12 @@ fun PantallaInscribir(ctx: Contexto) {
         if (a.numeroDocumento.isEmpty()) faltan.add("número de documento")
         if (grupoEtario(a, hoyIso()) == null) faltan.add("grupo de edad")
         if (a.tipoAfiliado.isEmpty()) faltan.add("tipo")
+        if (a.condicion.isEmpty()) faltan.add("si es socia o familiar")
+        if (a.condicion == "familiar" && a.titularId.isEmpty()) faltan.add("de qué socia es familiar")
+        if (a.condicion == "familiar" && a.parentesco.isEmpty()) faltan.add("el parentesco")
         if (escaneo != null && a.verificadoPor.isEmpty()) faltan.add("quién revisó los datos con el DNI")
+        // La foto del DNI es obligatoria al inscribir (05-11-2026).
+        if (foto == null) faltan.add("la foto del DNI")
         if (faltan.isNotEmpty()) { avisar("Falta: ${faltan.joinToString(", ")}."); return }
         // Lleno no es lo mismo que bien escrito: las mismas reglas que «Les faltan datos».
         val malEscritos = validarAfiliado(a, padron).filter { it.severidad == Severidad.ERROR }
@@ -617,7 +834,7 @@ fun PantallaInscribir(ctx: Contexto) {
             Campo("Número", doc, { doc = it }, obligatorio = true, soloDigitos = tipoDoc == "dni", maxLargo = 12,
                 aviso = yaEsta?.let { "Ya está inscrita: ${nombreCompleto(it)}. No hace falta inscribirla otra vez." })
             Spacer(Modifier.height(Medidas.e4))
-            CampoFecha("Fecha de nacimiento (opcional)", nacimiento, { nacimiento = it }, pista = "Con la fecha, el grupo de edad se calcula solo.")
+            CampoFecha("Fecha de nacimiento (opcional)", nacimiento, { nacimiento = it }, pista = "Con la fecha, el grupo de edad se calcula solo.", hasta = hoyIso())
             Spacer(Modifier.height(Medidas.e4))
             Leyenda("Grupo de edad", obligatorio = true)
             Opciones(TRAMOS_ETARIOS.map { it.clave to "${it.etiqueta} (${it.detalle})" }, { it == grupo }, { grupo = it }, habilitado = !tieneFecha)
@@ -625,6 +842,27 @@ fun PantallaInscribir(ctx: Contexto) {
             Spacer(Modifier.height(Medidas.e4))
             Leyenda("Tipo", obligatorio = true)
             Opciones(TIPOS_AFILIADO.map { it.clave to it.etiqueta }, { it == tipo }, { tipo = it })
+            Pista("Define el menú que le toca. «Ayuda social» va como «Caso social» en el formato de la Municipalidad.", Modifier.padding(top = 4.dp))
+            Spacer(Modifier.height(Medidas.e4))
+            Separador()
+            Spacer(Modifier.height(Medidas.e4))
+            Leyenda("En el libro de socias", obligatorio = true)
+            Opciones(CONDICIONES, { it == condicion }, { condicion = it; if (it != "familiar") { titularId = ""; parentesco = "" } })
+            Pista("La socia es la titular del libro; su familia va debajo de ella.", Modifier.padding(top = 4.dp))
+            if (condicion == "familiar") {
+                Spacer(Modifier.height(Medidas.e3))
+                ElegirSocia(padronActual, titularId, "") { titularId = it }
+                Spacer(Modifier.height(Medidas.e3))
+                Leyenda("Parentesco con la socia", obligatorio = true)
+                Opciones(PARENTESCOS.map { it to it }, { it == parentesco }, { parentesco = it })
+            }
+            Spacer(Modifier.height(Medidas.e4))
+            Campo("Dirección", direccion, { direccion = it }, capitalizar = true,
+                pista = if (condicion == "familiar") "Si queda vacía, va la de su socia." else "Mz., lote, sector, asociación. Va en el formato de la Municipalidad.")
+            Spacer(Modifier.height(Medidas.e4))
+            CampoFoto(ctx, "Foto del DNI", PISTA_DNI, "", foto, obligatorio = true, error = null) { foto = it }
+            Spacer(Modifier.height(Medidas.e4))
+            CampoFoto(ctx, "Foto de la persona", PISTA_PERSONA, "", retrato, obligatorio = false, error = null, retrato = true) { retrato = it }
         }
         // La barra de abajo: sobre la barra de gestos y, con el teclado abierto, sobre el teclado.
         Column(Modifier.fillMaxWidth().background(c.superficie)) {

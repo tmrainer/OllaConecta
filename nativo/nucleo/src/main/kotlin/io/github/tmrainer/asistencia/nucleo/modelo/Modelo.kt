@@ -112,7 +112,30 @@ data class Afiliado(
      */
     val registroMunicipal: String = "",
     /** Fecha de la hoja municipal donde figura (si está registrada). */
-    val registroMunicipalEn: String = ""
+    val registroMunicipalEn: String = "",
+    // Lo del libro de socias de la olla y del formato municipal de beneficiarios
+    // (decisión del 05-11-2026, AGENTS.md §9): una socia y, bajo ella, su familia.
+    /** "socia" (titular del hogar) | "familiar" (de una socia) | "" (no se sabe: datos de antes o importados). */
+    val condicion: String = "",
+    /** Familiar: el id de la socia de su hogar. */
+    val titularId: String = "",
+    /** Familiar: "hijo/a", "esposo/a", "conviviente", "madre/padre", "otro". */
+    val parentesco: String = "",
+    val ocupacion: String = "",
+    val direccion: String = "",
+    val telefono: String = "",
+    val distrito: String = "",
+    val provincia: String = "",
+    val departamento: String = "",
+    val profesion: String = "",
+    val actividad: String = "",
+    val gradoInstruccion: String = "",
+    val estadoCivil: String = "",
+    val carnet: String = "",
+    /** La foto del DNI: nombre del archivo en la carpeta de fotos del teléfono. No viaja en la copia ni por QR. */
+    val fotoDni: String = "",
+    /** La foto de la persona (como la del libro de socias): archivo local; sale en los PDF del padrón y en la ficha. */
+    val fotoPersona: String = ""
 )
 
 @Serializable

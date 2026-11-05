@@ -3,7 +3,9 @@
 // Inscribir lee el reverso, pide voltear y lee el anverso; el resultado solo llena el
 // formulario. Pasar lista lee solo reversos, uno tras otro.
 //
-// La lectura no se guarda ni se registra: se entrega y se descarta.
+// La lectura no se guarda ni se registra aquí: se entrega y se descarta. Al inscribir,
+// el fotograma del lado de la foto se entrega con la lectura (LecturaDni.foto) para que
+// la pantalla lo guarde como foto del DNI y recorte el retrato (decisión del 05-11-2026).
 package io.github.tmrainer.asistencia.ui.camara
 
 import android.Manifest
@@ -96,7 +98,19 @@ private const val VUELTAS_MISMA_CARA = 3
 private enum class Etapa { ANTES_ATRAS, ATRAS, REVISANDO_ATRAS, ANTES_FOTO, FOTO }
 
 /** Lo que se lee para inscribir: la MRZ con sus controles y, si se pudo, el anverso cruzado. */
-class LecturaDni(val mrz: LecturaMrz, val anverso: LecturaAnverso?)
+/**
+ * Lo leído del DNI y, si se leyó el lado de la foto, ese fotograma ([foto], la
+ * tarjeta derecha, hasta 1280 px): es la foto del DNI de la persona y de ahí
+ * sale su retrato (decisión del 05-11-2026). Quien lo recibe decide si lo guarda.
+ */
+class LecturaDni(val mrz: LecturaMrz, val anverso: LecturaAnverso?, val foto: android.graphics.Bitmap? = null)
+
+/** Una copia chica del fotograma (hasta 1280 px de ancho): el original se reutiliza para el siguiente. */
+private fun copiaDelFotograma(imagen: android.graphics.Bitmap): android.graphics.Bitmap? = try {
+    val escala = minOf(1f, 1280f / imagen.width)
+    val copia = android.graphics.Bitmap.createScaledBitmap(imagen, (imagen.width * escala).toInt(), (imagen.height * escala).toInt(), true)
+    if (copia === imagen) imagen.copy(imagen.config ?: android.graphics.Bitmap.Config.ARGB_8888, false) else copia
+} catch (e: Exception) { null }
 
 /**
  * La cámara del DNI. Con [alLeerDni] es «pasar lista» (continuo: devuelve
@@ -233,7 +247,8 @@ fun CamaraDni(
                 val conMaterno = anverso.apellidoMaterno.estado != EstadoCampo.NO_LEIDO
                 if ((cruzados && (conMaterno || b.lecturasAnverso >= 4)) || anverso == b.anteriorAnverso) {
                     registro?.let { it.anverso = it.capturar(imagen, filas) }
-                    entregar(LecturaDni(mrzLeida, anverso))
+                    // El lado de la foto, derecho: la foto del DNI y el retrato salen de aquí, sin otra toma.
+                    entregar(LecturaDni(mrzLeida, anverso, if (enAsistencia) null else copiaDelFotograma(imagen)))
                     return
                 }
             }

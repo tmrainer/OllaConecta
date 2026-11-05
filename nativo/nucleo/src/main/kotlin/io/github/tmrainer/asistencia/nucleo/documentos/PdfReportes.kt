@@ -98,7 +98,7 @@ internal class Documento(val titulo: String, val subtitulo: String, val generado
             h.l.texto(t, h.ancho - MARGEN - anchoMm(t, 7.0), alto - 7, 7.0)
             h.l.gris(0.0)
         }
-        return armarPdf(hojas.map { PaginaPdf(it.l.ops.joinToString("\n"), it.apaisada) }, nombre)
+        return armarPdf(hojas.map { PaginaPdf(it.l.ops.joinToString("\n"), it.apaisada, it.l.imagenes.toList()) }, nombre)
     }
 }
 
@@ -110,7 +110,7 @@ private fun periodoTexto(inicio: String, fin: String) = "del ${aDdMmAa(inicio)} 
  * @param generado «14-10-26 18:40»; por defecto, ahora
  */
 fun pdfDelPadron(padron: Padron, fechaRef: String, inicio: String, fin: String, centro: String = "",
-                 generado: String = selloAhora()): ByteArray {
+                 generado: String = selloAhora(), fotos: ((String) -> ByteArray?)? = null): ByteArray {
     val filas = filasPadron(padron, fechaRef)
     val dias = asistenciaPorAfiliado(padron, inicio, fin).associate { it.afiliadoId to it.dias }
     val doc = Documento(
@@ -118,25 +118,40 @@ fun pdfDelPadron(padron: Padron, fechaRef: String, inicio: String, fin: String, 
         subtitulo = "${if (centro.isNotEmpty()) "$centro · " else ""}Activas al ${aDdMmAa(fechaRef)} · días que vinieron ${periodoTexto(inicio, fin)}",
         generado = generado
     )
-    val columnas = listOf(
-        ColumnaTabla("N°", 9.0, "right"), ColumnaTabla("Apellidos y nombres", 66.0, "left"),
+    // Con fotos (la de cada persona, como en el libro): una columna más y filas altas para que se vean.
+    val conFotos = fotos != null
+    val altoFila = if (conFotos) 16.0 else 6.0
+    val columnas = (if (conFotos) listOf(ColumnaTabla("Foto", 14.0, "center")) else emptyList()) + listOf(
+        ColumnaTabla("N°", 9.0, "right"), ColumnaTabla(if (conFotos) "Apellidos y nombres" else "Apellidos y nombres", if (conFotos) 52.0 else 66.0, "left"),
         ColumnaTabla("Documento", 25.0, "center"), ColumnaTabla("Grupo de edad", 25.0, "center"),
         ColumnaTabla("Edad", 11.0, "center"), ColumnaTabla("Tipo", 24.0, "center"),
         ColumnaTabla("Días", 12.0, "right")
     )
     val datos = filas.map { f ->
-        listOf(
+        (if (conFotos) listOf("") else emptyList()) + listOf(
             f.n, "${listOf(f.apellidoPaterno, f.apellidoMaterno).filter { it.isNotEmpty() }.joinToString(" ")}, ${f.nombres}".removePrefix(", "),
             "${f.tipoDocumento} ${f.numeroDocumento}".trimJs(), f.grupoEtarioEtiqueta.ifEmpty { "—" }, f.edad ?: "—",
             f.tipoAfiliadoEtiqueta.ifEmpty { "—" }, dias[f.afiliadoId] ?: 0
         )
     }
-    val porHoja = 38
+    val porHoja = if (conFotos) 13 else 38
     var hoja = doc.nueva()
     if (datos.isEmpty()) hoja.l.texto("El padrón está vacío.", MARGEN, hoja.arriba + 8, 10.0)
     for (i in datos.indices step porHoja) {
         if (i > 0) hoja = doc.nueva()
-        val finTabla = tabla(hoja.l, MARGEN, hoja.arriba, columnas, datos.subList(i, min(i + porHoja, datos.size)))
+        val finTabla = tabla(hoja.l, MARGEN, hoja.arriba, columnas, datos.subList(i, min(i + porHoja, datos.size)), altoFila = altoFila)
+        if (conFotos) {
+            // La foto, dentro de su celda, con la proporción de la foto (3:4 como mucho).
+            for (k in i until min(i + porHoja, datos.size)) {
+                val jpeg = fotos!!(filas[k].afiliadoId) ?: continue
+                val (an, al) = medidasJpeg(jpeg)?.let { it.first.toDouble() to it.second.toDouble() } ?: continue
+                val cajaW = 12.0; val cajaH = altoFila - 2
+                val escala = min(cajaW / an, cajaH / al)
+                val w = an * escala; val h = al * escala
+                val fy = hoja.arriba + 8.0 + (k - i) * altoFila
+                hoja.l.imagen(jpeg, MARGEN + (14.0 - w) / 2, fy + (altoFila - h) / 2, w, h)
+            }
+        }
         if (i + porHoja >= datos.size) {
             val porGrupo = TRAMOS_ETARIOS.associate { it.clave to 0 }.toMutableMap()
             var social = 0

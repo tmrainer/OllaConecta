@@ -113,6 +113,7 @@ private fun DrawScope.pintar(trazos: List<Trazo>) {
             style = Stroke(maxOf(1f, t.grosorMm.toFloat() * k), pathEffect = puntos(t.punteada))
         )
         is Trazo.Relleno -> drawRect(color(t.gris), Offset(t.xMm.toFloat() * k, t.yMm.toFloat() * k), Size(t.anchoMm.toFloat() * k, t.altoMm.toFloat() * k))
+        is Trazo.Imagen -> {}  // el B-1 no lleva fotos
         is Trazo.Texto -> drawIntoCanvas { lienzo ->
             val p = if (t.negrita) negrita else normal
             p.color = android.graphics.Color.rgb((t.gris * 255).toInt(), (t.gris * 255).toInt(), (t.gris * 255).toInt())

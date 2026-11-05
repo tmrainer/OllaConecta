@@ -104,7 +104,10 @@ class ImportarWebTest {
     private fun columnas(mapa: Map<String, Int>) = JsonObject(mapa.mapValues { JsonPrimitive(it.value) })
 
     // Sin el id (al azar) ni el registro en la Municipalidad, que la web no tiene.
-    private fun sinId(a: Afiliado) = JsonObject(JSON.encodeToJsonElement(Afiliado.serializer(), a).jsonObject - "id" - "registroMunicipal" - "registroMunicipalEn")
+    // Los campos del libro de socias y del formato municipal (05-11-2026) no existen en la web.
+    private val SOLO_NATIVO = setOf("condicion", "titularId", "parentesco", "ocupacion", "direccion", "telefono", "distrito", "provincia",
+        "departamento", "profesion", "actividad", "gradoInstruccion", "estadoCivil", "carnet", "fotoDni", "fotoPersona")
+    private fun sinId(a: Afiliado) = JsonObject(JSON.encodeToJsonElement(Afiliado.serializer(), a).jsonObject - "id" - "registroMunicipal" - "registroMunicipalEn" - SOLO_NATIVO)
 
     private fun comoJson(r: Importacion) = JsonObject(mapOf(
         "columnas" to columnas(r.columnas),

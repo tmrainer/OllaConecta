@@ -119,7 +119,12 @@ private val SINONIMOS: Map<String, List<String>> = linkedMapOf(
     "edad" to listOf("edad", "anos", "años"),
     "tipoAfiliado" to listOf("tipo", "tipo de afiliada", "tipo de afiliado", "condicion",
         "categoria", "ayuda social"),
-    "sexo" to listOf("sexo", "genero")
+    "sexo" to listOf("sexo", "genero"),
+    // El formato municipal de beneficiarios (2026): dirección y las tres columnas que se marcan con X.
+    "direccion" to listOf("direccion", "direccion del beneficiario", "domicilio", "mz lt sect barrio urb aahh"),
+    "socio" to listOf("socio", "socia"),
+    "usuario" to listOf("usuario", "usuaria"),
+    "casoSocial" to listOf("caso social", "caso social (ayuda social)")
 )
 
 private fun norm(t: String?): String =
@@ -318,7 +323,14 @@ fun prepararImportacion(texto: String?, padron: Padron?, hoy: String = hoyIso())
         }
         val grupoEtarioManual = if (fnac.isEmpty()) grupo else null
 
-        val tipoAfiliado = parsearTipoAfiliado(valor("tipoAfiliado"))
+        // En la hoja municipal se marca con X una de tres columnas: socio, usuario o caso social.
+        val marcaSocio = valor("socio").isNotEmpty()
+        val marcaUsuario = valor("usuario").isNotEmpty()
+        val marcaCasoSocial = valor("casoSocial").isNotEmpty()
+        val tipoAfiliado = parsearTipoAfiliado(valor("tipoAfiliado")).ifEmpty {
+            if (marcaCasoSocial) "caso_social" else if (marcaSocio || marcaUsuario) "habitual" else ""
+        }
+        val condicion = if (marcaSocio) "socia" else if (marcaUsuario) "familiar" else ""
         val sexoTexto = norm(valor("sexo"))
         val sexo = when {
             sexoTexto.startsWith("mujer") -> "F"
@@ -338,7 +350,9 @@ fun prepararImportacion(texto: String?, padron: Padron?, hoy: String = hoyIso())
             fechaNacimiento = fnac,
             grupoEtarioManual = grupoEtarioManual,
             tipoAfiliado = tipoAfiliado,
-            sexo = sexo
+            sexo = sexo,
+            condicion = condicion,
+            direccion = valor("direccion")
         )
 
         val nombreCompleto = recortar("$apellidoPaterno $apellidoMaterno $nombres")

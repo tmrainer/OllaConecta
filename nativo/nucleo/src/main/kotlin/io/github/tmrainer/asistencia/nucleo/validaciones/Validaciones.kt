@@ -362,8 +362,25 @@ fun validarAfiliado(
     if (a.origenDato == "escaneo_dni" && vacio(a.verificadoPor)) {
         hs.add(h(AVISO, campo, "Estos datos vinieron de un escaneo y nadie los ha confirmado todavía."))
     }
+    // El libro de socias: un familiar es de alguna socia; una socia no es familiar de nadie.
+    if (a.condicion == "familiar") {
+        val titular = if (a.titularId.isEmpty()) null else padron.afiliados.firstOrNull { it.id == a.titularId }
+        if (titular == null) hs.add(h(AVISO, campo, "Falta indicar de qué socia es familiar."))
+        else if (titular.condicion != "socia") hs.add(h(AVISO, campo, "${nombreCompleto(titular)} no está anotada como socia."))
+        if (vacio(a.parentesco)) hs.add(h(AVISO, campo, "Falta el parentesco con la socia."))
+    } else if (a.condicion != "socia" && a.condicion.isNotEmpty()) {
+        hs.add(h(ERROR, campo, "La condición debe ser socia o familiar."))
+    }
     return hs
 }
+
+/**
+ * La foto del DNI es obligatoria al inscribir (05-11-2026). Va aparte de
+ * validarAfiliado(), que sigue dando lo mismo que la web: la pantalla del
+ * padrón lo señala y la de inscribir no deja seguir sin ella. A quien vino de
+ * la hoja municipal se le pide después, sin marcarla como incompleta.
+ */
+fun faltaFotoDni(a: Afiliado): Boolean = a.activo && vacio(a.fotoDni) && a.origenDato != "importado"
 
 // Raciones
 

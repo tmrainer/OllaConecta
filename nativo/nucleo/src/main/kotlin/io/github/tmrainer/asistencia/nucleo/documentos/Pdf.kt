@@ -101,11 +101,34 @@ interface Lienzo {
     fun relleno(xMm: Double, yMm: Double, anchoMm: Double, altoMm: Double)
     /** `yBase`: línea donde se apoyan las letras. Un texto vacío no se dibuja. */
     fun texto(t: String, xMm: Double, yBase: Double, pt: Double, negrita: Boolean = false)
+    /** Una foto JPEG dentro de la caja (se estira a la caja: quien llama respeta la proporción). */
+    fun imagen(jpeg: ByteArray, xMm: Double, yMm: Double, anchoMm: Double, altoMm: Double) {}
+}
+
+/** Ancho, alto y componentes (1 gris, 3 color) de un JPEG, leídos de su cabecera SOF; null si no es JPEG. */
+fun medidasJpeg(b: ByteArray): Triple<Int, Int, Int>? {
+    if (b.size < 4 || (b[0].toInt() and 0xff) != 0xFF || (b[1].toInt() and 0xff) != 0xD8) return null
+    var i = 2
+    while (i + 9 < b.size) {
+        if ((b[i].toInt() and 0xff) != 0xFF) { i++; continue }
+        val marcador = b[i + 1].toInt() and 0xff
+        if (marcador == 0xD8 || marcador == 0x01 || marcador in 0xD0..0xD7) { i += 2; continue }
+        val largo = ((b[i + 2].toInt() and 0xff) shl 8) or (b[i + 3].toInt() and 0xff)
+        if (marcador in 0xC0..0xCF && marcador != 0xC4 && marcador != 0xC8 && marcador != 0xCC) {
+            val alto = ((b[i + 5].toInt() and 0xff) shl 8) or (b[i + 6].toInt() and 0xff)
+            val ancho = ((b[i + 7].toInt() and 0xff) shl 8) or (b[i + 8].toInt() and 0xff)
+            return Triple(ancho, alto, b[i + 9].toInt() and 0xff)
+        }
+        i += 2 + largo
+    }
+    return null
 }
 
 /** El lienzo del PDF: los operadores de la página. A4: 297 de alto; apaisada: 210. */
 class LienzoPdf(val altoMm: Double = 297.0) : Lienzo {
     val ops = mutableListOf<String>()
+    /** Las fotos de la página, en el orden de /Im1, /Im2… */
+    val imagenes = mutableListOf<ByteArray>()
     private fun x(mm: Double) = fijo(mm * PT)
     private fun y(mm: Double) = fijo((altoMm - mm) * PT)
 
@@ -124,6 +147,11 @@ class LienzoPdf(val altoMm: Double = 297.0) : Lienzo {
     override fun texto(t: String, xMm: Double, yBase: Double, pt: Double, negrita: Boolean) {
         if (t.isEmpty()) return
         ops.add("BT /${if (negrita) "F2" else "F1"} ${numeroJs(pt)} Tf ${x(xMm)} ${y(yBase)} Td (${aWinAnsi(t)}) Tj ET")
+    }
+    override fun imagen(jpeg: ByteArray, xMm: Double, yMm: Double, anchoMm: Double, altoMm: Double) {
+        if (medidasJpeg(jpeg) == null) return
+        imagenes.add(jpeg)
+        ops.add("q ${fijo(anchoMm * PT)} 0 0 ${fijo(altoMm * PT)} ${x(xMm)} ${y(yMm + altoMm)} cm /Im${imagenes.size} Do Q")
     }
 }
 
@@ -145,6 +173,8 @@ sealed interface Trazo {
     /** Helvetica (o Helvetica-Bold) a `pt` puntos, apoyada en `yBaseMm`. */
     data class Texto(val texto: String, val xMm: Double, val yBaseMm: Double, val pt: Double,
                      val negrita: Boolean, val gris: Double) : Trazo
+    /** Una foto JPEG en su caja. */
+    class Imagen(val jpeg: ByteArray, val xMm: Double, val yMm: Double, val anchoMm: Double, val altoMm: Double) : Trazo
 }
 
 /**
@@ -174,10 +204,13 @@ class LienzoTrazos : Lienzo {
         if (t.isEmpty()) return
         trazos.add(Trazo.Texto(t, xMm, yBase, pt, negrita, gris))
     }
+    override fun imagen(jpeg: ByteArray, xMm: Double, yMm: Double, anchoMm: Double, altoMm: Double) {
+        trazos.add(Trazo.Imagen(jpeg, xMm, yMm, anchoMm, altoMm))
+    }
 }
 
-/** Una página: contenido = `LienzoPdf.ops.joinToString("\n")`. */
-data class PaginaPdf(val contenido: String, val apaisada: Boolean = false)
+/** Una página: contenido = `LienzoPdf.ops.joinToString("\n")`; `imagenes`, las fotos que usa (/Im1, /Im2…). */
+data class PaginaPdf(val contenido: String, val apaisada: Boolean = false, val imagenes: List<ByteArray> = emptyList())
 
 /** Arma el archivo PDF con las hojas dibujadas. */
 fun armarPdf(paginasPdf: List<PaginaPdf>, titulo: String): ByteArray {
@@ -187,11 +220,19 @@ fun armarPdf(paginasPdf: List<PaginaPdf>, titulo: String): ByteArray {
     val paginas = agregar(null)
     val f1 = agregar("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>")
     val f2 = agregar("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>")
-    val kids = paginasPdf.map { (contenido, apaisada) ->
+    val kids = paginasPdf.map { (contenido, apaisada, imagenes) ->
         val flujo = agregar("<< /Length ${contenido.length} >>\nstream\n$contenido\nendstream")
         val caja = if (apaisada) "0 0 841.89 595.28" else "0 0 595.28 841.89"
-        agregar("<< /Type /Page /Parent $paginas 0 R /MediaBox [$caja] " +
-            "/Resources << /Font << /F1 $f1 0 R /F2 $f2 0 R >> >> /Contents $flujo 0 R >>")
+        // Cada foto, un XObject JPEG (DCTDecode): los bytes van tal cual, un Char por byte.
+        val xobjs = imagenes.mapIndexed { i, jpeg ->
+            val (ancho, alto, comps) = medidasJpeg(jpeg) ?: Triple(1, 1, 3)
+            val crudo = String(CharArray(jpeg.size) { (jpeg[it].toInt() and 0xff).toChar() })
+            val n = agregar("<< /Type /XObject /Subtype /Image /Width $ancho /Height $alto /ColorSpace /${if (comps == 1) "DeviceGray" else "DeviceRGB"} " +
+                "/BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.size} >>\nstream\n$crudo\nendstream")
+            "/Im${i + 1} $n 0 R"
+        }
+        val recursos = "/Font << /F1 $f1 0 R /F2 $f2 0 R >>" + if (xobjs.isEmpty()) "" else " /XObject << ${xobjs.joinToString(" ")} >>"
+        agregar("<< /Type /Page /Parent $paginas 0 R /MediaBox [$caja] /Resources << $recursos >> /Contents $flujo 0 R >>")
     }
     objetos[catalogo - 1] = "<< /Type /Catalog /Pages $paginas 0 R >>"
     objetos[paginas - 1] = "<< /Type /Pages /Kids [${kids.joinToString(" ") { "$it 0 R" }}] /Count ${kids.size} >>"

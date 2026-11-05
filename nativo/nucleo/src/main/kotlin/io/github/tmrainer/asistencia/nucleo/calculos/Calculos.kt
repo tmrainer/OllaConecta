@@ -182,6 +182,26 @@ val TIPOS_AFILIADO = listOf(
     TipoAfiliado("caso_social", "Ayuda social", "ayuda_social")
 )
 
+/** Cómo está en el hogar: la socia del libro, o un familiar suyo. */
+val CONDICIONES = listOf("socia" to "Socia", "familiar" to "Familiar de una socia")
+
+val PARENTESCOS = listOf("hijo/a", "esposo/a", "conviviente", "madre/padre", "hermano/a", "nieto/a", "otro")
+
+/**
+ * La columna que se marca en el formato municipal de beneficiarios:
+ * "socio" (la socia), "usuario" (un familiar) o "caso_social"; "" si no se sabe.
+ */
+fun tipoBeneficiarioMunicipal(a: Afiliado): String = when {
+    a.tipoAfiliado == "caso_social" -> "caso_social"
+    a.condicion == "socia" -> "socio"
+    a.condicion == "familiar" -> "usuario"
+    else -> ""
+}
+
+/** Los familiares de una socia (activos o no), en el orden del padrón. */
+fun familiaresDe(padron: Padron, titularId: String): List<Afiliado> =
+    padron.afiliados.filter { it.condicion == "familiar" && it.titularId == titularId }
+
 /** Menú que le corresponde por defecto a una persona, según cómo se inscribió. */
 fun menuPorDefecto(afiliado: Afiliado): String =
     TIPOS_AFILIADO.firstOrNull { it.clave == afiliado.tipoAfiliado }?.menu ?: "normal"

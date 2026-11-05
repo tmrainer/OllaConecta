@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.tmrainer.asistencia.Fotos
 import io.github.tmrainer.asistencia.OllaConectaApp
 import io.github.tmrainer.asistencia.nucleo.modelo.JSON
 import io.github.tmrainer.asistencia.nucleo.modelo.cuantos
@@ -262,12 +263,13 @@ fun PantallaDatos(ctx: Contexto) {
         AlertDialog(
             onDismissRequest = { confirmandoBorrar = false }, containerColor = c.superficie,
             title = { Text("¿Borrar todo?", style = tipos.seccion, color = c.titulo) },
-            text = { Text("Se borrará de este equipo: el padrón (${cuantos(padron.afiliados.size, "persona")}), la asistencia, el formato B-1, las entregas, quién eres y los ajustes. La app vuelve a empezar, como recién instalada.\n\nNo se puede deshacer. ¿Guardaste una copia?", style = tipos.texto, color = c.tinta) },
+            text = { Text("Se borrará de este equipo: el padrón (${cuantos(padron.afiliados.size, "persona")}) con las fotos de los DNI, la asistencia, el formato B-1, las entregas, los datos de la olla, quién eres y los ajustes. La app vuelve a empezar, como recién instalada.\n\nNo se puede deshacer. ¿Guardaste una copia?", style = tipos.texto, color = c.tinta) },
             confirmButton = { Boton("Borrar todo", {
                 confirmandoBorrar = false
                 // Todo: los datos, lo de este teléfono (perfil, ajustes, guías vistas) y lo del envío a UNACEM.
                 // Sin perfil, la app vuelve a la bienvenida; detrás queda el Inicio.
                 estado.borrarTodo()
+                Fotos.borrarTodas(contexto)
                 ctx.preferencias.borrarTodo()
                 (contexto.applicationContext as OllaConectaApp).envios.borrarTodo()
                 ctx.ir(Ruta.INICIO)
