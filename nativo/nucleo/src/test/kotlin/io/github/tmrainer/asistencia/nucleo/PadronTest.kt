@@ -22,6 +22,7 @@ class PadronTest {
         igual(edadEnFecha("2000-09-14", "2026-09-14"), 26, "el día del cumpleaños")
         igual(edadEnFecha("2000-09-14", "2026-09-15"), 26)
         igual(edadEnFecha("", "2026-09-14"), null)
+        igual(edadEnFecha("2026-12-31", "2026-09-14"), null, "nacimiento futuro: sin edad, no -1")
     }
 
     @Test

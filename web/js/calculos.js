@@ -125,7 +125,8 @@ export function edadEnFecha(fechaNacimientoIso, fechaRefIso) {
     ref.getMonth() > nac.getMonth() ||
     (ref.getMonth() === nac.getMonth() && ref.getDate() >= nac.getDate());
   if (!cumplioEsteAno) edad -= 1;
-  return edad;
+  // Nacimiento después de la fecha de referencia: no hay edad, no «-1».
+  return edad < 0 ? null : edad;
 }
 
 // Tramos de las «etapas de vida» del MINSA, Documento Técnico del Modelo de

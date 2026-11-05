@@ -1,5 +1,5 @@
 {
-  "generadoEn": "2026-10-25",
+  "generadoEn": "2026-11-05",
   "hoy": "2026-10-20",
   "revision": {
     "error": null,
@@ -299,7 +299,7 @@
             "tipoDocumento": "DNI",
             "grupoEtario": null,
             "grupoEtarioEtiqueta": "",
-            "edad": -1,
+            "edad": null,
             "tipoAfiliadoEtiqueta": "Habitual"
           },
           {
@@ -899,7 +899,7 @@
             "tipoDocumento": "DNI",
             "grupoEtario": null,
             "grupoEtarioEtiqueta": "",
-            "edad": -1,
+            "edad": null,
             "tipoAfiliadoEtiqueta": "Habitual"
           },
           {
@@ -1254,7 +1254,7 @@
           "tipoDocumento": "DNI",
           "grupoEtario": null,
           "grupoEtarioEtiqueta": "",
-          "edad": -1,
+          "edad": null,
           "tipoAfiliadoEtiqueta": "Habitual"
         },
         {

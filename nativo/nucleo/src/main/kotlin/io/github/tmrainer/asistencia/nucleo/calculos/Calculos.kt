@@ -133,7 +133,8 @@ fun edadEnFecha(fechaNacimientoIso: String?, fechaRefIso: String?): Int? {
     val cumplioEsteAno = ref.monthValue > nac.monthValue ||
         (ref.monthValue == nac.monthValue && ref.dayOfMonth >= nac.dayOfMonth)
     if (!cumplioEsteAno) edad -= 1
-    return edad
+    // Nacimiento después de la fecha de referencia: no hay edad, no «-1».
+    return edad.takeIf { it >= 0 }
 }
 
 data class TramoEtario(val clave: String, val etiqueta: String, val detalle: String, val min: Int, val max: Int)
