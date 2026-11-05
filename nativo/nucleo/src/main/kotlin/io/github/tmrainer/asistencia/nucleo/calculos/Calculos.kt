@@ -24,11 +24,13 @@ fun totalRendicionGastos(rendicion: Rendicion): Long =
     rendicion.egresos.sumOf { it.montoTotalCent ?: 0L }
 
 /**
- * DECISIÓN ABIERTA: sin verificar.
- * min(subsidio, total) se dedujo de UN solo ejemplar llenado a mano, en el que
- * el total (S/ 209.85) superaba al subsidio (S/ 200.00). El tramo en que el
- * total es MENOR que el subsidio no tiene ninguna evidencia detrás.
- * No apoyarse en esta fórmula como si estuviera confirmada.
+ * Confirmado el 05-11-2026 con la hoja de Pachacámac 2026 llenada a mano
+ * (subsidio 540.00; compras 581.70; aporte 41.70; total de rendición 540.00):
+ * el subsidio se gasta entero y lo que se gasta de más es aporte de la olla.
+ * En esa hoja los renglones son «Monto total de compra» (la suma de las
+ * compras), «Aporte del centro de atención» y «Total de rendición de gastos»
+ * (lo rendido con el subsidio). El tramo en que las compras no llegan al
+ * subsidio sigue sin ejemplar: la app avisa que falta gastar.
  */
 fun gastosConSubsidio(rendicion: Rendicion): Long? {
     val subsidio = rendicion.montoSubsidioCent ?: return null
@@ -40,6 +42,11 @@ fun aporteCentroAtencion(rendicion: Rendicion): Long? {
     return max(0L, totalRendicionGastos(rendicion) - subsidio)
 }
 
+/**
+ * Los renglones del pie: `total` es «Monto total de compra», `conSubsidio` es
+ * «Total de rendición de gastos» (lo que se rinde con el subsidio) y `aporte`
+ * «Aporte del centro de atención». «Monto de declaración jurada» va vacío.
+ */
 data class Totales(val total: Long?, val conSubsidio: Long?, val aporte: Long?)
 
 /**

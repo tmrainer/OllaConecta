@@ -58,8 +58,9 @@ private fun vacio(v: String?) = (v ?: "").trim().isEmpty()
 
 private fun validarEncabezado(r: Rendicion): List<Hallazgo> {
     val hs = ArrayList<Hallazgo>()
-    if (r.tipoCentro != "comedor" && r.tipoCentro != "olla_comun") {
-        hs.add(h(ERROR, "tipoCentro", "Falta marcar si es comedor u olla común."))
+    // La app es solo para ollas comunes: el tipo se marca solo.
+    if (r.tipoCentro != "olla_comun") {
+        hs.add(h(ERROR, "tipoCentro", "Falta marcar «Olla común» como tipo de centro."))
     }
     val obligatorios = listOf(
         Triple("nombreCentro", r.nombreCentro, "el nombre del centro de atención"),
@@ -227,9 +228,10 @@ private fun validarConjunto(r: Rendicion): List<Hallazgo> {
     }
     val subsidio = r.montoSubsidioCent
     if (subsidio != null && t.total != null && t.total < subsidio) {
+        // El subsidio se gasta y se rinde completo (confirmado el 05-11-2026): si falta, se avisa.
         hs.add(h(AVISO, "totales",
-            "Queda S/ ${formatearSoles(subsidio - t.total)} del subsidio sin rendir. " +
-                "El formato no tiene un renglón para ese saldo: consulta en la Municipalidad qué corresponde hacer."))
+            "Quedan S/ ${formatearSoles(subsidio - t.total)} del subsidio sin rendir. " +
+                "El subsidio se gasta completo: anota las compras que faltan antes de entregar."))
     }
     if (subsidio != null && porOrigen.subsidio > subsidio) {
         hs.add(h(AVISO, "totales", "Las compras pagadas con el subsidio suman más que el subsidio recibido: la diferencia sale como «Aporte del centro de atención»."))

@@ -91,9 +91,9 @@ class ExportarTest {
         val r = nuevaRendicion().copy(montoSubsidioCent = 20000,
             egresos = listOf(nuevoEgreso().copy(fechaCompra = "2026-10-02", descripcion = "Arroz", montoTotalCent = 20985)))
         val b1 = leerXlsx(excelDelB1(r))
-        ok(Regex("Gastos con el subsidio económico(\t)+200(\n|$)").containsMatchIn(b1), "gastos con el subsidio: 200")
-        ok(Regex("Aporte del centro de atención(\t)+9.85(\n|$)").containsMatchIn(b1), "aporte: 9.85")
-        ok(Regex("Total de rendición de gastos(\t)+209.85(\n|$)").containsMatchIn(b1), "total: 209.85")
+        ok(Regex("Total de rendición de gastos(\t)+200(\n|$)").containsMatchIn(b1), "total de rendición (con el subsidio): 200")
+        ok(Regex("Aporte del centro de atención[^\t]*(\t)+9.85(\n|$)").containsMatchIn(b1), "aporte: 9.85")
+        ok(Regex("Monto total de compra(\t)+209.85(\n|$)").containsMatchIn(b1), "monto total de compra: 209.85")
     }
 
     @Test

@@ -140,7 +140,15 @@ private fun calcularTodo(r: Respaldo, crudo: JsonElement, hoy: String, hoyValida
         put("rendiciones", lista(r.rendiciones) { rd ->
             val t = totales(rd)
             val po = gastoPorOrigen(rd)
+            // Desde el 05-11-2026 la app es solo para ollas comunes y pide gastar el subsidio
+            // completo: «comedor» es error aquí (en la web no) y el aviso del saldo dice otra
+            // cosa. Se iguala a la web para comparar lo demás.
             val hs = validarRendicion(rd)
+                .filterNot { it.campo == "tipoCentro" && rd.tipoCentro == "comedor" }
+                .map { h ->
+                    val m = Regex("^Quedan (S/ [0-9.,]+) del subsidio sin rendir\\..*$").find(h.mensaje)
+                    if (m == null) h else h.copy(mensaje = "Queda ${m.groupValues[1]} del subsidio sin rendir. El formato no tiene un renglón para ese saldo: consulta en la Municipalidad qué corresponde hacer.")
+                }
             buildJsonObject {
                 put("id", rd.id)
                 put("totales", buildJsonObject { put("total", t.total); put("conSubsidio", t.conSubsidio); put("aporte", t.aporte) })

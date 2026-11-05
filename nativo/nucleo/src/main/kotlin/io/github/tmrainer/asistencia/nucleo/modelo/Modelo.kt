@@ -54,9 +54,11 @@ data class Rendicion(
     val version: Int = VERSION_ESQUEMA,
     val id: String = "",
     val actualizadoEn: String = "",
-    val tipoCentro: String = "",          // "comedor" | "olla_comun"
+    val tipoCentro: String = "",          // "olla_comun" (la app es solo para ollas comunes; "comedor" solo en datos de antes)
     val nombreCentro: String = "",
     val codigoPca: String = "",
+    /** El distrito de la Municipalidad que recibe el B-1 (hoja de Pachacámac 2026). */
+    val distrito: String = "",
     val periodo: Periodo = Periodo(),
     val fechaRendicion: String = "",
     val nombrePresidenta: String = "",
@@ -252,6 +254,7 @@ fun nuevoEgreso() = Egreso(id = uuid())
 fun nuevaRendicion(ahora: String = ahoraIso()) = Rendicion(
     id = uuid(),
     actualizadoEn = ahora,
+    tipoCentro = "olla_comun",
     egresos = listOf(nuevoEgreso())
 )
 

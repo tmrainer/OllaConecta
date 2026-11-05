@@ -175,16 +175,18 @@ fun excelDelB1(r: Rendicion): ByteArray {
     val egresos = r.egresos.filter { e -> e.fechaCompra.isNotEmpty() || e.descripcion.trimJs().isNotEmpty() || e.montoTotalCent != null }
     val centro = when (r.tipoCentro) { "comedor" -> "Comedor"; "olla_comun" -> "Olla común"; else -> "" }
     val p = r.periodo
+    val muni = if (r.distrito.isBlank()) "Municipalidad Distrital" else "Municipalidad Distrital de ${r.distrito.trim()}"
     return armarXlsx(listOf(HojaXlsx(
         nombre = "Formato B-1",
         anchos = listOf(26, 34, 9, 11, 14, 16, 13, 14),
         filas = listOf(
-            listOf(negrita("FORMATO B-1 (Balance de centros de atención subsidiados)")),
-            listOf("Programa de Complementación Alimentaria - PCA · Municipalidad Distrital de Villa María del Triunfo"),
+            listOf(negrita("FORMATO DE RENDICIÓN DE GASTOS DEL SUBSIDIO ECONÓMICO")),
+            listOf("Programa de Complementación Alimentaria - PCA · $muni"),
             emptyList(),
             listOf("Centro de atención", centro),
             listOf("Nombre del centro de atención", r.nombreCentro),
-            listOf("Código de PCA N°", r.codigoPca),
+            listOf("Código del Sistema Informático del PCA N°", r.codigoPca),
+            listOf("Distrito", r.distrito),
             listOf("Mes de rendición", p.etiqueta),
             listOf("Periodo", if (p.inicio.isNotEmpty() || p.fin.isNotEmpty()) "${aDdMmAa(p.inicio)} al ${aDdMmAa(p.fin)}" else ""),
             listOf("Fecha de rendición", aDdMmAa(r.fechaRendicion)),
@@ -205,13 +207,16 @@ fun excelDelB1(r: Rendicion): ByteArray {
                 precio(e), soles(e.montoTotalCent))
         } + listOf(
             emptyList(),
-            listOf("Gastos con el subsidio económico", null, null, null, null, null, null, soles(t.conSubsidio, true)),
+            // El pie de la hoja de Pachacámac 2026: lo comprado, la declaración jurada (vacía:
+            // no se calcula), el aporte y lo rendido con el subsidio.
+            listOf("Monto total de compra", null, null, null, null, null, null, soles(t.total, true)),
+            listOf("Monto de declaración jurada (registrar, de corresponder)", null, null, null, null, null, null, ""),
             // «Registrar de corresponder»: si es cero, va vacío, como en la hoja.
-            listOf("Aporte del centro de atención", null, null, null, null, null, null,
+            listOf("Aporte del centro de atención (registrar, de corresponder)", null, null, null, null, null, null,
                 if (t.aporte != null && t.aporte != 0L) soles(t.aporte, true) else ""),
-            listOf(negrita("Total de rendición de gastos"), null, null, null, null, null, null, soles(t.total, true)),
+            listOf(negrita("Total de rendición de gastos"), null, null, null, null, null, null, soles(t.conSubsidio, true)),
             emptyList(),
-            listOf(negrita("Presidente(a)"), r.nombrePresidentaFirma, null, null, negrita("DNI"), r.dniPresidentaFirma),
+            listOf(negrita("Presidenta/Representante"), r.nombrePresidentaFirma, null, null, negrita("DNI"), r.dniPresidentaFirma),
             listOf(negrita("Tesorero(a)"), r.nombreTesorera, null, null, negrita("DNI"), r.dniTesorera),
             emptyList(),
             listOf("Copia de referencia generada con OllaConecta. No reemplaza al formato oficial firmado.")

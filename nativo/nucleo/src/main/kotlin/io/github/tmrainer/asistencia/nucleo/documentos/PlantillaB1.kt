@@ -3,12 +3,16 @@
 // Todo en mm desde la esquina superior izquierda de una A4 vertical; `yMm` es
 // el borde de arriba de la caja y el texto se apoya abajo, sobre la punteada.
 //
-// Los números son los de la web tal cual: DocumentosOraculoTest exige el mismo
-// PDF byte a byte.
+// Desde el 05-11-2026 la hoja es la de Pachacámac 2026 (formato de rendición
+// de gastos del subsidio económico): una fila más en el encabezado (distrito)
+// y cuatro renglones al pie (monto total de compra, declaración jurada, aporte
+// del centro, total de rendición). Aquí se diverge de la web, que sigue con la
+// hoja de VMT: el PDF del B-1 ya no se compara byte a byte con ella.
 //
-// ESTIMADO: medido sobre una foto de la hoja en blanco enderezada a A4, no
-// sobre la hoja física con regla. DECISIÓN ABIERTA: se cierra midiendo
-// la hoja física o un escaneo plano a 300 ppp; entonces `estimado` pasa a false.
+// ESTIMADO: trazado a partir de una foto en ángulo de la hoja llenada, no de
+// un escaneo plano. La app dibuja el formato completo (no imprime encima de la
+// hoja oficial), así que lo que importa es que se lea; se afina con un
+// escaneo a 300 ppp y entonces `estimado` pasa a false.
 package io.github.tmrainer.asistencia.nucleo.documentos
 
 /** La caja de un dato. `align`: "left" | "center" | "right". */
@@ -44,35 +48,37 @@ val PLANTILLA_B1 = PlantillaB1(
     hoja = HojaA4(210.0, 297.0),
     letraPt = 9.0,
     letraTablaPt = 7.5,
-    letraFirmasPt = 8.0, // el espacio junto a «Nombre y apellido» es corto
+    letraFirmasPt = 8.0, // el espacio junto a «Nombres y apellidos» es corto
     campos = linkedMapOf(
-        // Centro de atención: una X dentro del recuadro que corresponde.
+        // Centro de atención: una X dentro del recuadro que corresponde (siempre «Olla común»).
         "marcaComedor" to CampoB1(129.4, 45.7, 8.9, 6.4, "center"),
         "marcaOllaComun" to CampoB1(177.6, 45.4, 14.1, 6.6, "center"),
-        "nombreCentro" to CampoB1(65.0, 51.3, 72.5, 4.5, "left"),
-        "codigoPca" to CampoB1(166.0, 51.3, 35.0, 4.5, "left"),
-        "periodo" to CampoB1(44.0, 58.5, 67.0, 4.5, "left"),
-        "fechaRendicion" to CampoB1(169.0, 58.5, 33.0, 4.5, "left"),
-        "nombrePresidenta" to CampoB1(58.5, 65.9, 142.5, 4.5, "left"),
-        "dniPresidenta" to CampoB1(23.0, 72.5, 52.0, 4.5, "left"),
-        "celular" to CampoB1(156.5, 72.2, 45.5, 4.5, "left"),
+        "nombreCentro" to CampoB1(65.0, 51.3, 136.0, 4.5, "left"),
+        "codigoPca" to CampoB1(82.0, 58.5, 50.0, 4.5, "left"),
+        "distrito" to CampoB1(157.0, 58.5, 44.0, 4.5, "left"),
+        "periodo" to CampoB1(44.0, 65.9, 67.0, 4.5, "left"),
+        "fechaRendicion" to CampoB1(169.0, 65.9, 33.0, 4.5, "left"),
+        "nombrePresidenta" to CampoB1(113.0, 72.5, 88.0, 4.5, "left"),
+        "dniPresidenta" to CampoB1(30.0, 79.1, 45.0, 4.5, "left"),
+        "celular" to CampoB1(156.5, 79.1, 45.5, 4.5, "left"),
         // Ingresos: el «S/» ya está impreso.
-        "montoSubsidio" to CampoB1(152.5, 88.3, 42.5, 4.5, "right"),
-        "fechaAsignacion" to CampoB1(149.0, 95.5, 46.0, 4.5, "center"),
-        // Pie de egresos: los tres totales, en la columna «Monto total».
-        "totalConSubsidio" to CampoB1(171.7, 189.2, 28.5, 3.9, "right"),
-        "totalAporte" to CampoB1(171.7, 193.1, 28.5, 3.9, "right"),
-        "totalRendicion" to CampoB1(171.7, 197.0, 28.5, 3.7, "right"),
+        "montoSubsidio" to CampoB1(152.5, 95.3, 42.5, 4.5, "right"),
+        "fechaAsignacion" to CampoB1(149.0, 102.5, 46.0, 4.5, "center"),
+        // Pie de egresos: los cuatro renglones, en la columna «Monto».
+        "totalCompra" to CampoB1(171.7, 196.2, 28.5, 3.9, "right"),
+        "totalDeclaracionJurada" to CampoB1(171.7, 200.1, 28.5, 3.9, "right"),
+        "totalAporte" to CampoB1(171.7, 204.0, 28.5, 3.9, "right"),
+        "totalRendicion" to CampoB1(171.7, 207.9, 28.5, 3.7, "right"),
         // Firmas: nombre y DNI junto a sus rótulos. La firma y el sello van a mano.
-        "nombrePresidentaFirma" to CampoB1(45.0, 248.2, 45.0, 4.2, "left"),
-        "dniPresidentaFirma" to CampoB1(26.5, 252.2, 45.0, 4.2, "left"),
-        "nombreTesorera" to CampoB1(167.5, 248.8, 36.0, 4.2, "left"),
-        "dniTesorera" to CampoB1(149.0, 252.6, 51.0, 4.2, "left")
+        "nombrePresidentaFirma" to CampoB1(46.0, 252.2, 47.0, 4.2, "left"),
+        "dniPresidentaFirma" to CampoB1(26.5, 256.2, 45.0, 4.2, "left"),
+        "nombreTesorera" to CampoB1(169.0, 252.2, 36.0, 4.2, "left"),
+        "dniTesorera" to CampoB1(149.0, 256.2, 51.0, 4.2, "left")
     ),
     egresos = EgresosB1(
-        primeraFilaYMm = 123.3,
+        primeraFilaYMm = 130.3,
         altoFilaMm = 3.876,
-        filas = 17, // contadas en la hoja
+        filas = 17, // contadas en la hoja de VMT; la de Pachacámac trae menos, pero el papel se llena a mano
         columnas = linkedMapOf(
             "fechaCompra" to ColumnaB1(15.1, 17.4, "center"),
             "descripcion" to ColumnaB1(32.5, 40.3, "left"),

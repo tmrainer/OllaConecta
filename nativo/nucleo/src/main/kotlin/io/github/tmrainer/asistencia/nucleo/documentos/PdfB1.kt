@@ -1,7 +1,7 @@
 // El B-1 como PDF de referencia, para cuando no se puede imprimir sobre la hoja
-// oficial: el formato en gris y los datos en negro, en las posiciones de
-// PlantillaB1.kt. Con un LienzoTrazos, la pantalla recibe el mismo dibujo como
-// datos. El PDF sale igual byte a byte que el de la web.
+// oficial: el formato (el de Pachacámac 2026) en gris y los datos en negro, en
+// las posiciones de PlantillaB1.kt. Con un LienzoTrazos, la pantalla recibe el
+// mismo dibujo como datos. Desde el 05-11-2026 ya no es el PDF de la web (VMT).
 package io.github.tmrainer.asistencia.nucleo.documentos
 
 import kotlin.math.max
@@ -65,24 +65,27 @@ private const val ROTULO = 6.5 // pt
 private fun campo(clave: String) = P.campos.getValue(clave)
 
 /**
- * Rótulos, líneas y recuadros del formato, en gris, sobre cualquier lienzo: el
- * del PDF y el de la vista previa en pantalla (LienzoTrazos).
+ * Rótulos, líneas y recuadros del formato (el de Pachacámac 2026), en gris,
+ * sobre cualquier lienzo: el del PDF y el de la vista previa (LienzoTrazos).
+ * [distrito]: el de la Municipalidad, para el título y la nota.
  */
-fun dibujarFormato(l: Lienzo) {
+fun dibujarFormato(l: Lienzo, distrito: String = "") {
     val e = P.egresos
     val c = e.columnas
     val cols = c.values.toList()
     val finFilas = e.primeraFilaYMm + e.filas * e.altoFilaMm
     val izq = cols[0].xMm
     val der = cols[cols.size - 1].xMm + cols[cols.size - 1].anchoMm
+    val muni = if (distrito.isBlank()) "MUNICIPALIDAD DISTRITAL" else "MUNICIPALIDAD DISTRITAL DE ${distrito.trim().uppercase()}"
+    val laMuni = if (distrito.isBlank()) "la Municipalidad" else "la Municipalidad Distrital de ${distrito.trim()}"
 
     l.gris(0.45)
     // Encabezado
-    l.texto("PROGRAMA DE COMPLEMENTACIÓN - PCA", 105 - anchoMm("PROGRAMA DE COMPLEMENTACIÓN - PCA", 8.0, true) / 2, 30.0, 8.0, negrita = true)
-    val t2 = "FORMATO B-1 (BALANCE DE CENTROS DE ATENCIÓN SUBSIDIADOS)"
-    l.texto(t2, 105 - anchoMm(t2, 8.0, true) / 2, 34.0, 8.0, negrita = true)
-    val t3 = "MUNICIPALIDAD DISTRITAL DE VILLA MARÍA DEL TRIUNFO"
-    l.texto(t3, 105 - anchoMm(t3, 8.0, true) / 2, 39.5, 8.0, negrita = true)
+    val t1 = "FORMATO DE RENDICIÓN DE GASTOS DEL SUBSIDIO ECONÓMICO"
+    l.texto(t1, 105 - anchoMm(t1, 8.0, true) / 2, 28.5, 8.0, negrita = true)
+    val t2 = "PROGRAMA DE COMPLEMENTACIÓN ALIMENTARIA – PCA"
+    l.texto(t2, 105 - anchoMm(t2, 8.0, true) / 2, 33.0, 8.0, negrita = true)
+    l.texto(muni, 105 - anchoMm(muni, 8.0, true) / 2, 38.0, 8.0, negrita = true)
 
     l.texto("CENTRO DE ATENCIÓN:", 16.0, 49.5, ROTULO)
     l.texto("COMEDOR", 113.0, 49.5, ROTULO)
@@ -96,10 +99,11 @@ fun dibujarFormato(l: Lienzo) {
     // Como en el papel: el rótulo empieza en el margen de su columna y la línea
     // punteada sigue hasta el final del espacio del dato.
     val renglones = listOf(
-        Triple("NOMBRE DEL CENTRO DE ATENCIÓN:", "nombreCentro", 16.0), Triple("CÓDIGO DE PCA N°:", "codigoPca", 139.0),
+        Triple("NOMBRE DEL CENTRO DE ATENCIÓN:", "nombreCentro", 16.0),
+        Triple("CÓDIGO DEL SISTEMA INFORMÁTICO DEL PCA N°:", "codigoPca", 16.0), Triple("DISTRITO:", "distrito", 139.0),
         Triple("MES DE RENDICIÓN:", "periodo", 16.0), Triple("FECHA DE RENDICIÓN:", "fechaRendicion", 139.0),
-        Triple("NOMBRE DE LA PRESIDENTE(A):", "nombrePresidenta", 16.0), Triple("DNI:", "dniPresidenta", 16.0),
-        Triple("CELULAR N°:", "celular", 139.0)
+        Triple("NOMBRE DE LA PRESIDENTA/REPRESENTANTE QUE RECIBE EL SUBSIDIO:", "nombrePresidenta", 16.0),
+        Triple("DNI N°:", "dniPresidenta", 16.0), Triple("CELULAR N°:", "celular", 139.0)
     )
     l.grosor(0.2)
     for ((rotulo, clave, xr) in renglones) {
@@ -127,15 +131,15 @@ fun dibujarFormato(l: Lienzo) {
     l.linea(izq, iTop + 4.4, der, iTop + 4.4)
     l.linea(izq, iMid, der, iMid)
     l.linea(iDiv, iTop + 4.4, iDiv, iBot)
-    l.texto("MONTO DEL SUBSIDIO:", izq + 1, ms.yMm + ms.altoMm, ROTULO)
-    l.texto("FECHA DE LA ASIGNACIÓN:", izq + 1, fa.yMm + fa.altoMm, ROTULO)
+    l.texto("MONTO DEL SUBSIDIO ECONÓMICO ASIGNADO:", izq + 1, ms.yMm + ms.altoMm, ROTULO)
+    l.texto("FECHA DE ASIGNACIÓN:", izq + 1, fa.yMm + fa.altoMm, ROTULO)
     l.texto("S/", iDiv + 1, ms.yMm + ms.altoMm, ROTULO)
 
     // Egresos
     val eTop = e.primeraFilaYMm - 16.9
     val cabecera = e.primeraFilaYMm - 12.4
-    val tot = listOf(campo("totalConSubsidio"), campo("totalAporte"), campo("totalRendicion"))
-    val eBot = tot[2].yMm + tot[2].altoMm
+    val tot = listOf(campo("totalCompra"), campo("totalDeclaracionJurada"), campo("totalAporte"), campo("totalRendicion"))
+    val eBot = tot.last().yMm + tot.last().altoMm
     l.caja(izq, eTop, der - izq, eBot - eTop)
     l.relleno(izq, eTop, der - izq, 4.4)
     l.gris(1.0)
@@ -145,13 +149,12 @@ fun dibujarFormato(l: Lienzo) {
     for (i in 0..e.filas) l.linea(izq, e.primeraFilaYMm + i * e.altoFilaMm, der, e.primeraFilaYMm + i * e.altoFilaMm)
     for (t in tot) l.linea(izq, t.yMm + t.altoMm, der, t.yMm + t.altoMm)
     cols.drop(1).forEach { col -> l.linea(col.xMm, cabecera, col.xMm, finFilas) }
-    l.linea(c.getValue("precioUnitario").xMm, finFilas, c.getValue("precioUnitario").xMm, eBot)
     l.linea(c.getValue("montoTotal").xMm, finFilas, c.getValue("montoTotal").xMm, eBot)
     val titulos = linkedMapOf(
-        "fechaCompra" to listOf("FECHA DE LA", "COMPRA"), "descripcion" to listOf("DESCRIPCIÓN DE LA COMPRA"),
-        "cantidad" to listOf("CANT."), "unidadMedida" to listOf("UNIDAD DE", "MEDIDA (Kg,", "L, otros)"),
-        "rucProveedor" to listOf("RUC DEL PROVEEDOR"), "boleta" to listOf("N° DE LA BOLETA", "(SERIE Y", "CORRELATIVO)"),
-        "precioUnitario" to listOf("PRECIO", "UNITARIO"), "montoTotal" to listOf("MONTO TOTAL (S/)")
+        "fechaCompra" to listOf("FECHA"), "descripcion" to listOf("DESCRIPCIÓN DE LA", "COMPRA (ALIMENTOS)"),
+        "cantidad" to listOf("CANTIDAD"), "unidadMedida" to listOf("UNIDAD DE", "MEDIDA (Kg,", "L, otros)"),
+        "rucProveedor" to listOf("RUC DEL", "PROVEEDOR"), "boleta" to listOf("N° DE", "BOLETA/", "FACTURA"),
+        "precioUnitario" to listOf("PRECIO", "UNITARIO"), "montoTotal" to listOf("MONTO", "(S/)")
     )
     for ((k, lineas) in titulos) {
         val col = c.getValue(k)
@@ -161,18 +164,22 @@ fun dibujarFormato(l: Lienzo) {
             l.texto(t, col.xMm + (col.anchoMm - anchoMm(t, pt)) / 2, cabecera + (12.4 - alto) / 2 + 2 + i * 2.4, pt)
         }
     }
-    val rotTot = listOf("GASTOS CON EL SUBSIDIO ECONÓMICO:", "APORTE DEL CENTRO DE ATENCIÓN (registrar de corresponder):",
-        "TOTAL DE RENDICIÓN DE GASTOS:")
-    tot.forEachIndexed { i, t -> l.texto(rotTot[i], izq + 1, t.yMm + t.altoMm - 0.9, ROTULO) }
+    val rotTot = listOf("MONTO TOTAL DE COMPRA:", "MONTO DE DECLARACIÓN JURADA (registrar, de corresponder):",
+        "APORTE DEL CENTRO DE ATENCIÓN (registrar, de corresponder):", "TOTAL DE RENDICIÓN DE GASTOS:")
+    tot.forEachIndexed { i, t -> l.texto(rotTot[i], izq + 1, t.yMm + t.altoMm - 0.9, ROTULO, negrita = i == 0 || i == 3) }
+    l.texto("S/", c.getValue("montoTotal").xMm + 1, tot[0].yMm + tot[0].altoMm - 0.9, ROTULO)
+    l.texto("S/", c.getValue("montoTotal").xMm + 1, tot[1].yMm + tot[1].altoMm - 0.9, ROTULO)
+    l.texto("S/", c.getValue("montoTotal").xMm + 1, tot[2].yMm + tot[2].altoMm - 0.9, ROTULO)
+    l.texto("S/", c.getValue("montoTotal").xMm + 1, tot[3].yMm + tot[3].altoMm - 0.9, ROTULO)
 
     // Nota
     val nota = listOf(
-        "NOTA:",
-        "1) Los documentos originales quedarán en custodia en la Municipalidad Distrital de Villa María del Triunfo para ser verificados oportunamente.",
-        "2) Los documentos no deben presentar borrones y/o enmendaduras, sean Acta de Asamblea, Boletas de Venta, Formato de balance; de lo",
-        "contrario no serán recepcionados por el personal de la Municipalidad Distrital de Villa María del Triunfo."
+        "Nota:",
+        "1) Los documentos no deben presentar borrones y/o enmendaduras, sean Acta de Asamblea, Boletas de Venta, Formato de",
+        "balance; de lo contrario no serán recepcionados por $laMuni.",
+        "2) Los documentos originales quedan en custodia en $laMuni para ser verificados oportunamente."
     )
-    nota.forEachIndexed { i, t -> l.texto(t, 16.0, (207 + i * 4).toDouble(), 6.0, negrita = i == 0) }
+    nota.forEachIndexed { i, t -> l.texto(t, 16.0, (218 + i * 4).toDouble(), 6.0, negrita = i == 0) }
 
     // Firmas
     val pf = campo("nombrePresidentaFirma")
@@ -180,28 +187,14 @@ fun dibujarFormato(l: Lienzo) {
     val pd = campo("dniPresidentaFirma")
     val td = campo("dniTesorera")
     l.grosor(0.35)
-    l.linea(16.0, pf.yMm - 6, 73.0, pf.yMm - 6)
-    l.linea(139.0, tf.yMm - 5.6, 200.0, tf.yMm - 5.6)
-    l.texto("PRESIDENTE(A)", 44.5 - anchoMm("PRESIDENTE(A)", 6.5, true) / 2, pf.yMm - 2.6, 6.5, negrita = true)
-    l.texto("TESORERO(A)", 169.5 - anchoMm("TESORERO(A)", 6.5, true) / 2, tf.yMm - 2.2, 6.5, negrita = true)
-    l.texto("NOMBRE Y APELLIDO:", 16.0, pf.yMm + pf.altoMm, ROTULO)
+    l.linea(16.0, pf.yMm - 6, 93.0, pf.yMm - 6)
+    l.linea(139.0, tf.yMm - 6, 205.0, tf.yMm - 6)
+    l.texto("PRESIDENTA/REPRESENTANTE", 54.5 - anchoMm("PRESIDENTA/REPRESENTANTE", 6.5, true) / 2, pf.yMm - 2.6, 6.5, negrita = true)
+    l.texto("TESORERO(A)", 172.0 - anchoMm("TESORERO(A)", 6.5, true) / 2, tf.yMm - 2.6, 6.5, negrita = true)
+    l.texto("Nombres y Apellidos:", 16.0, pf.yMm + pf.altoMm, ROTULO)
     l.texto("DNI N°:", 16.0, pd.yMm + pd.altoMm, ROTULO)
-    l.texto("NOMBRE Y APELLIDO:", 139.0, tf.yMm + tf.altoMm, ROTULO)
+    l.texto("Nombres y Apellidos:", 139.0, tf.yMm + tf.altoMm, ROTULO)
     l.texto("DNI N°:", 139.0, td.yMm + td.altoMm, ROTULO)
-
-    // Recibido por la Municipalidad (lo llena el personal municipal)
-    l.texto("Recibido por la Municipalidad Distrital de Villa María del Triunfo", 16.0, 265.0, 6.5, negrita = true)
-    l.caja(izq, 268.1, der - izq, 11.0)
-    l.linea(izq, 273.5, der, 273.5)
-    l.linea(140.0, 268.1, 140.0, 273.5)
-    l.texto("Nombres y Apellidos:", izq + 1, 272.2, ROTULO)
-    l.texto("DNI:", 141.0, 272.2, ROTULO)
-    l.texto("Observaciones:", izq + 1, 277.8, ROTULO, negrita = true)
-    val dj = listOf(
-        "El presente documento tiene carácter de Declaración Jurada, de acuerdo al Art. 06 de la Ley 25035; el fraude o falsedad en la documentación",
-        "o declaración determina la falta de cumplimiento de requisito y el inicio de las acciones penales correspondientes."
-    )
-    dj.forEachIndexed { i, t -> l.texto(t, 16.0, 284 + i * 3.6, 5.8) }
 }
 
 /**
@@ -211,7 +204,7 @@ fun dibujarFormato(l: Lienzo) {
  * @param numero desde 1; con `total` > 1 se escribe «Hoja numero de total»
  */
 fun dibujarHoja(l: Lienzo, h: HojaB1, generado: String = selloAhora(), numero: Int = 1, total: Int = 1) {
-    dibujarFormato(l)
+    dibujarFormato(l, h.campos["distrito"].orEmpty())
     // Aviso arriba: que nadie la confunda con el formato oficial firmado.
     l.gris(0.25)
     l.texto("COPIA DE REFERENCIA — generada con OllaConecta el $generado. No reemplaza al formato oficial firmado.", 14.0, 10.0, 7.0, negrita = true)

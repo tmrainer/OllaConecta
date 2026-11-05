@@ -9,15 +9,11 @@
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDeAsistencia
-import io.github.tmrainer.asistencia.nucleo.documentos.excelDelB1
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDelPadron
-import io.github.tmrainer.asistencia.nucleo.documentos.hojasDelB1
 import io.github.tmrainer.asistencia.nucleo.documentos.leerXlsx
 import io.github.tmrainer.asistencia.nucleo.documentos.pdfDeAsistencia
-import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelB1
 import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelPadron
 import io.github.tmrainer.asistencia.nucleo.modelo.Padron
-import io.github.tmrainer.asistencia.nucleo.modelo.nuevaRendicion
 import io.github.tmrainer.asistencia.nucleo.respaldo.LecturaRespaldo
 import io.github.tmrainer.asistencia.nucleo.respaldo.leerRespaldo
 import org.junit.jupiter.api.DynamicTest
@@ -50,20 +46,14 @@ class DocumentosOraculoTest {
             "asistencia-setiembre.pdf" to pdfDeAsistencia(padron, inicio = "2026-09-01", fin = "2026-09-30", centro = centro, generado = GENERADO),
             "asistencia-todo.xlsx" to excelDeAsistencia(padron, inicio = "2026-08-01", fin = HOY),
             "asistencia-todo.pdf" to pdfDeAsistencia(padron, inicio = "2026-08-01", fin = HOY, generado = GENERADO),
-            "asistencia-vacia.pdf" to pdfDeAsistencia(padron, inicio = "2025-01-01", fin = "2025-01-31", generado = GENERADO),
-            "b1-vacio.xlsx" to excelDelB1(nuevaRendicion()),
-            "b1-vacio.pdf" to pdfDelB1(hojasDelB1(null), generado = GENERADO)
+            "asistencia-vacia.pdf" to pdfDeAsistencia(padron, inicio = "2025-01-01", fin = "2025-01-31", generado = GENERADO)
         )
-        r.rendiciones.forEachIndexed { i, rendicion ->
-            docs["b1-${i + 1}.xlsx"] = excelDelB1(rendicion)
-            docs["b1-${i + 1}.pdf"] = pdfDelB1(hojasDelB1(rendicion), generado = GENERADO, titulo = "Formato B-1 ${rendicion.periodo.etiqueta}")
-        }
+        // El B-1 (PDF y Excel) ya no se compara: desde el 05-11-2026 la app dibuja la hoja de
+        // Pachacámac 2026 y la web sigue con la de VMT (HojaB1Test cubre el B-1).
         // Textos que no entran en su caja, letras fuera de WinAnsi, cantidades con decimales.
         val largo = assertIs<LecturaRespaldo.Lista>(leerRespaldo(recurso("respaldo-documentos.json"))).respaldo
         val rLargo = largo.rendiciones[0]
         val pLargo = largo.padron!!
-        docs["largo-b1.pdf"] = pdfDelB1(hojasDelB1(rLargo), generado = GENERADO, titulo = "B-1 (largo) \\ —")
-        docs["largo-b1.xlsx"] = excelDelB1(rLargo)
         docs["largo-padron.pdf"] = pdfDelPadron(pLargo, fechaRef = HOY, inicio = "2026-10-01", fin = HOY, centro = rLargo.nombreCentro, generado = GENERADO)
         docs["largo-padron.xlsx"] = excelDelPadron(pLargo, fechaRef = HOY, inicio = "2026-10-01", fin = HOY, centro = rLargo.nombreCentro)
         docs["largo-asistencia.pdf"] = pdfDeAsistencia(pLargo, inicio = "2026-10-01", fin = HOY, centro = rLargo.nombreCentro, generado = GENERADO)

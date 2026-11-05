@@ -178,8 +178,8 @@ private val NOMBRE_PASO_B1 = listOf("Centro", "Periodo", "Ingresos", "Compras", 
 private val PASOS_B1 = listOf(
     listOf(
         PasoGuia("Datos guardados", "Si ya llenaste un B-1, toca «Usar los datos guardados»: se copian y quedan marcados para que los revises.", "archivo", "b1.guardados", soloSiEsta = true),
-        PasoGuia("Tipo de centro", "Marca si es comedor u olla común.", "casa", "b1.tipo"),
-        PasoGuia("Los datos del centro", "Este y los que siguen: el nombre, el código de PCA, la presidenta, su DNI y el celular. Cópialos de tu B-1 anterior o de tu resolución.", "lapiz", "b1.nombreCentro")
+        PasoGuia("Tipo de centro", "La app es para ollas comunes: ya viene marcado «Olla común».", "casa", "b1.tipo"),
+        PasoGuia("Los datos del centro", "Este y los que siguen: el nombre, el código de PCA, el distrito, la presidenta, su DNI y el celular. Vienen de los datos de tu olla (Ajustes); revísalos.", "lapiz", "b1.nombreCentro")
     ),
     listOf(
         PasoGuia("Cada cuánto", "Marca si entregas el B-1 cada semana, cada quincena o cada mes.", "calendario", "b1.cada"),

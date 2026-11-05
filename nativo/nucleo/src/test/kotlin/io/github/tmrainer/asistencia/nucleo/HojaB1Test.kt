@@ -34,9 +34,10 @@ class HojaB1Test {
         igual(h.filas[1].cantidad, "varios")
         igual(h.filas[1].precioUnitario, "varios")
         igual(h.filas[1].montoTotal, "141.85")
-        igual(h.campos["totalConSubsidio"], "200.00")
+        igual(h.campos["totalRendicion"], "200.00", "lo rendido con el subsidio")
         igual(h.campos["totalAporte"], "9.85")
-        igual(h.campos["totalRendicion"], "209.85")
+        igual(h.campos["totalCompra"], "209.85", "la suma de las compras")
+        igual(h.campos["totalDeclaracionJurada"], "", "no se calcula: va vacía")
     }
 
     @Test
@@ -45,7 +46,7 @@ class HojaB1Test {
         val h = hojasDelB1(r)[0]
         igual(h.filas.size, 1, "la ficha vacía no se imprime")
         igual(h.campos["totalAporte"], "", "«registrar de corresponder»")
-        igual(h.campos["totalRendicion"], "68.00")
+        igual(h.campos["totalCompra"], "68.00")
     }
 
     @Test
@@ -71,7 +72,7 @@ class HojaB1Test {
             ok(c.xMm >= 0 && c.xMm + c.anchoMm <= 210 && c.yMm >= 0 && c.yMm + c.altoMm <= 297, "$k se sale de la hoja")
         }
         val e = PLANTILLA_B1.egresos
-        ok(e.primeraFilaYMm + e.filas * e.altoFilaMm < PLANTILLA_B1.campos.getValue("totalConSubsidio").yMm + 0.5, "las filas pisan los totales")
+        ok(e.primeraFilaYMm + e.filas * e.altoFilaMm < PLANTILLA_B1.campos.getValue("totalCompra").yMm + 0.5, "las filas pisan los totales")
     }
 
     @Test
@@ -101,7 +102,7 @@ class HojaB1Test {
         igual(pantalla.trazos.size, dibujos, "un trazo por cada línea, recuadro, relleno y texto del PDF")
         val textos = pantalla.trazos.filterIsInstance<Trazo.Texto>()
         ok(textos.any { it.texto == "141.85" && it.gris == 0.0 }, "los datos, en negro")
-        ok(textos.any { it.texto == "NOTA:" && it.negrita && it.gris == 0.45 }, "los rótulos, en gris")
+        ok(textos.any { it.texto == "Nota:" && it.negrita && it.gris == 0.45 }, "los rótulos, en gris")
         ok(pantalla.trazos.filterIsInstance<Trazo.Linea>().any { it.punteada }, "las líneas punteadas del encabezado")
         for (t in pantalla.trazos) {
             val (x, y) = when (t) {
@@ -109,6 +110,7 @@ class HojaB1Test {
                 is Trazo.Caja -> t.xMm + t.anchoMm to t.yMm + t.altoMm
                 is Trazo.Relleno -> t.xMm + t.anchoMm to t.yMm + t.altoMm
                 is Trazo.Texto -> t.xMm + anchoMm(t.texto, t.pt, t.negrita) to t.yBaseMm
+                is Trazo.Imagen -> t.xMm + t.anchoMm to t.yMm + t.altoMm
             }
             ok(x in 0.0..210.0 && y in 0.0..297.0, "$t se sale de la hoja")
         }

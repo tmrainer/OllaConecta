@@ -3,7 +3,7 @@
 // están en PlantillaB1.kt. No inventa nada: lo que falta queda vacío.
 //
 // Si hay más compras que renglones, van en una segunda hoja (o más), con el
-// encabezado repetido y los tres totales solo en la última.
+// encabezado repetido y los totales solo en la última.
 package io.github.tmrainer.asistencia.nucleo.documentos
 
 import io.github.tmrainer.asistencia.nucleo.calculos.totales
@@ -80,6 +80,7 @@ fun hojasDelB1(r: Rendicion?): List<HojaB1> {
         "marcaOllaComun" to if (rendicion.tipoCentro == "olla_comun") "X" else "",
         "nombreCentro" to texto(rendicion.nombreCentro),
         "codigoPca" to texto(rendicion.codigoPca),
+        "distrito" to texto(rendicion.distrito),
         "periodo" to texto(rendicion.periodo.etiqueta),
         "fechaRendicion" to aDdMmAa(rendicion.fechaRendicion),
         "nombrePresidenta" to texto(rendicion.nombrePresidenta),
@@ -93,11 +94,14 @@ fun hojasDelB1(r: Rendicion?): List<HojaB1> {
         "dniTesorera" to texto(rendicion.dniTesorera)
     )
     val t = totales(rendicion)
+    // Como en la hoja de Pachacámac 2026: lo comprado, la declaración jurada (no
+    // se calcula: va vacía), el aporte y lo que se rinde con el subsidio.
     val pie = linkedMapOf(
-        "totalConSubsidio" to soles(t.conSubsidio),
+        "totalCompra" to soles(t.total),
+        "totalDeclaracionJurada" to "",
         // «Registrar de corresponder»: si es cero, el renglón va vacío.
         "totalAporte" to if (t.aporte != null && t.aporte != 0L) soles(t.aporte) else "",
-        "totalRendicion" to soles(t.total)
+        "totalRendicion" to soles(t.conSubsidio)
     )
     val cuantas = maxOf(1, (filas.size + FILAS_EGRESOS - 1) / FILAS_EGRESOS)
     return List(cuantas) { i ->
