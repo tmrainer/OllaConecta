@@ -1,8 +1,11 @@
-// Los botones «PDF» y «Excel» de Asistencia, Padrón y B-1, y el bloque «Enviar a
-// UNACEM». Nada se muestra antes en pantalla: el archivo se arma al tocar, fuera del
-// hilo de la pantalla, y va al menú «Compartir» del teléfono o al correo.
+// Los botones «PDF» y «Excel» de Asistencia, Padrón, Reportes y B-1, y el bloque
+// «Enviar a UNACEM». Nada se muestra antes en pantalla: el archivo se arma al tocar,
+// fuera del hilo de la pantalla, y va al menú «Compartir» del teléfono, se guarda en
+// el teléfono (elección que se recuerda) o va al correo.
 package io.github.tmrainer.asistencia.ui.componentes
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -46,13 +49,37 @@ class Documento(val bytes: ByteArray, val nombre: String, val titulo: String, va
  * dijo por qué). [puede] corre antes, en la pantalla: puede avisar y llevar
  * a lo que falta (el B-1 incompleto). [pdfPrincipal]: el PDF es lo que se
  * hace en esa pantalla (mandar el B-1): va relleno, el único de la pantalla.
+ * Sin [excel], solo el botón del PDF (la ficha de socia).
+ *
+ * El archivo va a donde diga la elección de arriba, que se recuerda: al menú
+ * «Compartir» (WhatsApp, correo…) o guardado en el teléfono (la carpeta que
+ * elija la persona; por defecto Descargas), para que todo documento se pueda
+ * descargar aunque el teléfono no tenga a dónde mandarlo.
  */
 @Composable
-fun BotonesExportar(pdf: () -> Documento?, excel: () -> Documento?, modifier: Modifier = Modifier, puede: () -> Boolean = { true }, pdfPrincipal: Boolean = false) {
+fun BotonesExportar(pdf: () -> Documento?, excel: (() -> Documento?)? = null, modifier: Modifier = Modifier, puede: () -> Boolean = { true }, pdfPrincipal: Boolean = false) {
     val context = LocalContext.current
     val avisos = LocalAvisos.current
     val alcance = rememberCoroutineScope()
+    val prefs = (context.applicationContext as OllaConectaApp).preferencias
+    val guardar by prefs.exportarGuardar.collectAsStateWithLifecycle()
     var armando by remember { mutableStateOf(false) }
+    // El archivo armado espera a que la persona elija dónde guardarlo.
+    var pendiente by remember { mutableStateOf<Documento?>(null) }
+    fun escribir(uri: android.net.Uri?) {
+        val d = pendiente ?: return
+        pendiente = null
+        if (uri == null) return
+        alcance.launch {
+            val ok = try { withContext(Dispatchers.IO) { context.contentResolver.openOutputStream(uri)?.use { it.write(d.bytes) } != null } } catch (e: Exception) { false }
+            if (ok) {
+                avisos.mostrar("Guardado en el teléfono: ${d.nombre}.")
+                (d.alElegir as? AlElegir.B1)?.let { (context.applicationContext as OllaConectaApp).anotarB1Exportado(it.rendicionId, it.formato) }
+            } else avisos.mostrar("No se pudo guardar el archivo. Inténtalo de nuevo.")
+        }
+    }
+    val guardarPdf = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(MIME_PDF)) { escribir(it) }
+    val guardarExcel = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(MIME_XLSX)) { escribir(it) }
     fun entregar(armar: () -> Documento?, mime: String, extension: String) {
         if (armando || !puede()) return
         armando = true
@@ -60,15 +87,24 @@ fun BotonesExportar(pdf: () -> Documento?, excel: () -> Documento?, modifier: Mo
             try {
                 // Lo que arma el PDF o el Excel corre aparte: la pantalla no se congela.
                 val d = withContext(Dispatchers.Default) { armar() }
-                if (d != null) compartirArchivo(context, nombreArchivo(d.nombre, extension), mime, d.bytes, d.titulo, d.alElegir)
+                if (d != null) {
+                    val nombre = nombreArchivo(d.nombre, extension)
+                    if (guardar) {
+                        pendiente = d
+                        if (extension == "pdf") guardarPdf.launch(nombre) else guardarExcel.launch(nombre)
+                    } else compartirArchivo(context, nombre, mime, d.bytes, d.titulo, d.alElegir)
+                }
             } catch (e: Exception) {
                 avisos.mostrar("No se pudo armar el archivo. Inténtalo de nuevo.")
             } finally { armando = false }
         }
     }
-    Acciones(modifier) {
-        Boton("Exportar en PDF", { entregar(pdf, MIME_PDF, "pdf") }, icono = "archivo", habilitado = !armando, tipo = if (pdfPrincipal) TipoBoton.PRINCIPAL else TipoBoton.SECUNDARIO)
-        Boton("Exportar en Excel", { entregar(excel, MIME_XLSX, "xlsx") }, icono = "archivo", habilitado = !armando)
+    Column(modifier) {
+        Opciones(listOf(false to "Enviar (WhatsApp, correo…)", true to "Guardar en el teléfono"), { it == guardar }, { prefs.cambiarExportarGuardar(it) })
+        Acciones(Modifier.padding(top = Medidas.e3)) {
+            Boton(if (guardar) "Guardar PDF" else "Exportar en PDF", { entregar(pdf, MIME_PDF, "pdf") }, icono = "archivo", habilitado = !armando, tipo = if (pdfPrincipal) TipoBoton.PRINCIPAL else TipoBoton.SECUNDARIO)
+            if (excel != null) Boton(if (guardar) "Guardar Excel" else "Exportar en Excel", { entregar(excel, MIME_XLSX, "xlsx") }, icono = "archivo", habilitado = !armando)
+        }
     }
 }
 
