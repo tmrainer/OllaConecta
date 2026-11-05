@@ -9,7 +9,7 @@ import {
 } from './modelo.js';
 import {
   totales, totalRendicionGastos, gastosConSubsidio, aporteCentroAtencion,
-  gastoPorOrigen, descuadreFila, edadEnFecha, grupoEtario, afiliadosActivos,
+  gastoPorOrigen, descuadreFila, totalDeLaFila, conTotalCalculado, edadEnFecha, grupoEtario, afiliadosActivos,
   racionesPeriodo, proponerPeriodo, duracionPeriodo, resumenEtario,
   racionesDelDia, desgloseDelDia, recaudacionDelDiaCent, resumenEconomicoRaciones,
   asistenciaPorAfiliado, afiliadosSinAsistencia, conteoAsistenciaDelDia, asistenciasConTodos,
@@ -268,6 +268,26 @@ export const casos = [
       ok(d && d.esperado === 1000 && d.declarado === 1200, 'debe reportar ambos números');
       igual(descuadreFila({ cantidadVarios: true, cantidad: 2, precioUnitarioCent: 500, montoTotalCent: 9999 }), null);
       igual(descuadreFila({ cantidad: 2, precioUnitarioCent: 500, montoTotalCent: 1001 }), null, 'tolerancia de 1 céntimo');
+    }
+  },
+  {
+    grupo: 'Totales',
+    nombre: 'el total se calcula solo, pero no pisa el que escribió la usuaria',
+    fn: () => {
+      const egreso = (campos) => Object.assign(nuevoEgreso(), campos);
+      const conCantidad = egreso({ cantidad: 10 });
+      igual(conTotalCalculado(egreso({}), conCantidad).montoTotalCent, null, 'sin precio no hay cálculo');
+      const calculado = conTotalCalculado(conCantidad, { ...conCantidad, precioUnitarioCent: 450 });
+      igual(calculado.montoTotalCent, 4500, 'vacío: 10 × 4.50');
+      igual(conTotalCalculado(calculado, { ...calculado, cantidad: 12 }).montoTotalCent, 5400, 'era el cálculo: lo sigue');
+      igual(conTotalCalculado(egreso({ cantidad: 0.75 }), egreso({ cantidad: 0.75, precioUnitarioCent: 333 })).montoTotalCent, 250, 'redondea como descuadreFila');
+      const deLaBoleta = { ...calculado, montoTotalCent: 4400 };
+      igual(conTotalCalculado(deLaBoleta, { ...deLaBoleta, cantidad: 12 }).montoTotalCent, 4400, 'lo escribió ella: no se toca');
+      const varios = egreso({ cantidadVarios: true, precioUnitarioVarios: true, montoTotalCent: 9000 });
+      igual(conTotalCalculado(varios, { ...varios, cantidad: 2, precioUnitarioCent: 100 }).montoTotalCent, 9000, 'varios: no se calcula');
+      igual(totalDeLaFila(egreso({ cantidad: 2, precioUnitarioCent: 500 })), 1000);
+      igual(totalDeLaFila(egreso({ cantidad: 2 })), null, 'sin precio');
+      igual(conTotalCalculado(conCantidad, conCantidad), conCantidad, 'sin cálculo devuelve la misma fila');
     }
   },
 

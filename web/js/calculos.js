@@ -62,6 +62,28 @@ export function gastoPorOrigen(rendicion) {
   return acum;
 }
 
+/** Cantidad × precio unitario de la fila, en céntimos (redondeo de descuadreFila); null si falta uno o es «varios». */
+export function totalDeLaFila(fila) {
+  if (!fila || fila.cantidadVarios || fila.precioUnitarioVarios) return null;
+  if (!Number.isFinite(fila.cantidad) || !Number.isFinite(fila.precioUnitarioCent)) return null;
+  return Math.round(fila.cantidad * fila.precioUnitarioCent);
+}
+
+/**
+ * La fila `despues` de cambiar su cantidad o su precio: el monto total sigue a
+ * cantidad × precio si estaba vacío o si era el cálculo de `antes`. Un total que la
+ * usuaria escribió distinto (el de su boleta) no se toca. Decisión del 26-10-2026:
+ * el total se calcula solo, y la pantalla dice que es calculado (AGENTS.md §2).
+ * No modifica sus argumentos: devuelve `despues` o una copia con el monto nuevo.
+ */
+export function conTotalCalculado(antes, despues) {
+  const nuevo = totalDeLaFila(despues);
+  if (nuevo === null) return despues;
+  const previo = antes ? antes.montoTotalCent : null;
+  const eraCalculo = previo === null || previo === undefined || previo === totalDeLaFila(antes);
+  return eraCalculo ? { ...despues, montoTotalCent: nuevo } : despues;
+}
+
 /** Comprobación de fila: cantidad x precio unitario frente al monto total. */
 export function descuadreFila(fila) {
   if (!fila) return null;

@@ -5,7 +5,7 @@ import {
   CLAVES, leer, guardar, nuevaRendicion, nuevoEgreso,
   aCentimos, formatearSoles, aNumero, debounce, hoyIso, configVacia, calendarioVacio, aDdMmAa, cuantos
 } from './modelo.js';
-import { totales, gastoPorOrigen, proponerPeriodo } from './calculos.js';
+import { totales, gastoPorOrigen, proponerPeriodo, totalDeLaFila, conTotalCalculado } from './calculos.js';
 import { validarRendicion } from './validaciones.js';
 import { sugerenciasEncabezado, sugerenciasPerfil, instantaneaCentro } from './sugerencias.js';
 import { leerPerfil } from './perfil.js';
@@ -276,7 +276,12 @@ function fichaEgreso(fila, indice) {
     id: `e-cant-${idp}`, type: 'text', inputmode: 'decimal', autocomplete: 'off',
     value: fila.cantidad === null || fila.cantidad === undefined ? '' : String(fila.cantidad)
   });
-  fCant.addEventListener('input', () => { fila.cantidad = aNumero(fCant.value); cambio(); });
+  fCant.addEventListener('input', () => {
+    const antes = { ...fila };
+    fila.cantidad = aNumero(fCant.value);
+    seguirElCalculo(antes);
+    cambio();
+  });
 
   const chkCant = crearElemento('input', { id: `e-cantv-${idp}`, type: 'checkbox' });
   chkCant.checked = !!fila.cantidadVarios;
@@ -284,6 +289,7 @@ function fichaEgreso(fila, indice) {
     fila.cantidadVarios = chkCant.checked;
     fCant.disabled = chkCant.checked;
     if (chkCant.checked) { fCant.value = ''; fila.cantidad = null; }
+    pintarPistaTotal();
     cambio();
   });
   fCant.disabled = !!fila.cantidadVarios;
@@ -323,7 +329,12 @@ function fichaEgreso(fila, indice) {
     id: `e-pu-${idp}`, type: 'text', inputmode: 'decimal', autocomplete: 'off',
     value: formatearSoles(fila.precioUnitarioCent)
   });
-  fPrecio.addEventListener('input', () => { fila.precioUnitarioCent = aCentimos(fPrecio.value); cambio(); });
+  fPrecio.addEventListener('input', () => {
+    const antes = { ...fila };
+    fila.precioUnitarioCent = aCentimos(fPrecio.value);
+    seguirElCalculo(antes);
+    cambio();
+  });
 
   const chkPrecio = crearElemento('input', { id: `e-puv-${idp}`, type: 'checkbox' });
   chkPrecio.checked = !!fila.precioUnitarioVarios;
@@ -331,6 +342,7 @@ function fichaEgreso(fila, indice) {
     fila.precioUnitarioVarios = chkPrecio.checked;
     fPrecio.disabled = chkPrecio.checked;
     if (chkPrecio.checked) { fPrecio.value = ''; fila.precioUnitarioCent = null; }
+    pintarPistaTotal();
     cambio();
   });
   fPrecio.disabled = !!fila.precioUnitarioVarios;
@@ -339,7 +351,31 @@ function fichaEgreso(fila, indice) {
     id: `e-total-${idp}`, type: 'text', inputmode: 'decimal', autocomplete: 'off',
     value: formatearSoles(fila.montoTotalCent), placeholder: '0.00'
   });
-  fMonto.addEventListener('input', () => { fila.montoTotalCent = aCentimos(fMonto.value); cambio(); });
+  fMonto.addEventListener('input', () => { fila.montoTotalCent = aCentimos(fMonto.value); pintarPistaTotal(); cambio(); });
+
+  // El monto sigue a cantidad × precio mientras esté vacío o sea ese mismo cálculo;
+  // el que la usuaria escribió (el de su boleta) no se toca (AGENTS.md §2).
+  function seguirElCalculo(antes) {
+    const nueva = conTotalCalculado(antes, fila);
+    if (nueva.montoTotalCent !== fila.montoTotalCent) {
+      fila.montoTotalCent = nueva.montoTotalCent;
+      fMonto.value = formatearSoles(fila.montoTotalCent);
+    }
+    pintarPistaTotal();
+  }
+
+  // Calculado (cantidad × precio) se dice siempre: el que vale es el de la boleta.
+  function pistaTotal() {
+    const calculado = Number.isFinite(fila.montoTotalCent) && fila.montoTotalCent === totalDeLaFila(fila);
+    return calculado
+      ? `Calculado: ${fila.cantidad} × S/ ${formatearSoles(fila.precioUnitarioCent)}. Si tu boleta dice otro total, cámbialo.`
+      : 'Lo que pagaste por esta compra.';
+  }
+
+  function pintarPistaTotal() {
+    const el = document.getElementById(`pista-${fMonto.id}`);
+    if (el) el.textContent = pistaTotal();
+  }
 
   const fOrigen = crearElemento('select', { id: `e-origen-${idp}` },
     ORIGENES.map(([v, t]) => crearElemento('option', { value: v, texto: t })));
@@ -401,7 +437,7 @@ function fichaEgreso(fila, indice) {
     ]),
     crearElemento('div', { clase: 'rejilla par', style: 'margin-top:10px' }, [
       campo('Precio unitario (S/)', fPrecio, 'Precio de uno. Si no aparece, marca «varios».'),
-      campo('Monto total (S/)', fMonto, 'Lo que pagaste por esta compra.'),
+      campo('Monto total (S/)', fMonto, pistaTotal()),
       crearElemento('label', { clase: 'opcion a-lo-ancho' }, [chkPrecio, 'La boleta dice «varios» en el precio'])
     ])
   ]);
