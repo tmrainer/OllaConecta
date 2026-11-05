@@ -87,10 +87,23 @@ class ReportesOllaTest {
             if (it.fecha == fecha) it.copy(precioMenuNormalCent = null, precioMenuAyudaSocialCent = null) else it
         })
         ok("Recaudado (S/)\tfalta el precio" in leerXlsx(excelDelDia(sinPrecio, fecha)))
+        ok("Precio del menú normal (S/)\tfalta el precio" in leerXlsx(excelDelDia(sinPrecio, fecha)), "sin precio, el Excel del día lo dice en la fila del precio")
+        // El mes lleva el precio de cada menú por día («Día por día» es la segunda hoja): el recaudado se comprueba a mano.
+        val diaPorDia = hojaXml(excelDelMes(padron, rendiciones, mes), 2)
+        ok("Precio menú normal (S/)" in diaPorDia && "Precio ayuda social (S/)" in diaPorDia, "el mes lleva el precio por día")
         val m2 = reporteDelMes(sinPrecio, rendiciones, mes)
         ok(m2.diasSinPrecio == r.diasSinPrecio + 1, "un día más sin precio")
         val texto = leerXlsx(excelDelMes(sinPrecio, rendiciones, mes))
         ok(Regex("Raciones sin precio del menú \\(\\d+ días?\\), no suman al recaudado\t${m2.racionesSinPrecio}\n").containsMatchIn(texto), texto)
+    }
+
+    /** El XML de la hoja [n] de un .xlsx (leerXlsx solo lee la primera). */
+    private fun hojaXml(bytes: ByteArray, n: Int): String {
+        val z = java.util.zip.ZipInputStream(bytes.inputStream())
+        while (true) {
+            val e = z.nextEntry ?: return ""
+            if (e.name == "xl/worksheets/sheet$n.xml") return z.readBytes().toString(Charsets.UTF_8)
+        }
     }
 
     @Test
