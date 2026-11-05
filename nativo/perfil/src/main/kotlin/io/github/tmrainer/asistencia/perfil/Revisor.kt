@@ -62,7 +62,8 @@ class Revisor {
                 device.findObject(By.text("Ayuda"))?.click(); Thread.sleep(900)
                 revisarPantalla("Inicio · Ayuda", bajar = false)
                 device.findObject(By.text("Cerrar"))?.click(); Thread.sleep(400)
-                device.findObject(By.text("Ajustes"))?.click(); device.waitForIdle(); Thread.sleep(1_000)
+                // La rueda de Ajustes es un ícono: se busca por su nombre para TalkBack.
+                device.findObject(By.desc("Ajustes"))?.click(); device.waitForIdle(); Thread.sleep(1_000)
                 revisarPantalla("Ajustes")
                 device.pressBack(); device.waitForIdle(); Thread.sleep(1_000)
             }
