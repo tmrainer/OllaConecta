@@ -200,7 +200,6 @@ fun LeerQr(alRecibir: (Paquete) -> Unit, alCerrar: () -> Unit) {
     // Fondo siempre negro: los botones con los colores del modo oscuro, también en el claro.
     IconosBarras(arribaOscuro = true, abajoOscuro = true)
     CompositionLocalProvider(LocalColores provides COLORES_OSCURO) {
-    val c = colores
     Column(
         Modifier.fillMaxSize().background(Color.Black).systemBarsPadding().padding(Medidas.e4),
         verticalArrangement = Arrangement.spacedBy(Medidas.e3)
@@ -230,6 +229,5 @@ fun LeerQr(alRecibir: (Paquete) -> Unit, alCerrar: () -> Unit) {
             Boton("Cancelar", ::cerrar)
         }
     }
-    @Suppress("UNUSED_VARIABLE") val sinUso = c
     }
 }

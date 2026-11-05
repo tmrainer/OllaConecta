@@ -15,7 +15,9 @@ web/js/casos-prueba.js
 # Herramientas de desarrollo (prueba de humo): no son parte de la app.
 herramientas/
 
-# App Android: el proyecto nativo y sus librerías no describen la app.
+# App Android: fixtures de prueba (PDF y Excel inventados) y perfiles generados.
+nativo/nucleo/src/test/resources/documentos/
+nativo/app/src/release/generated/
 
 # Librería de terceros (QR): no describe la app.
 web/vendor/
