@@ -21,3 +21,8 @@ nativo/app/src/release/generated/
 
 # Librería de terceros (QR): no describe la app.
 web/vendor/
+
+# Logos, fuentes y licencias: no describen la app.
+*.webp
+nativo/app/src/main/assets/fuentes/
+nativo/nucleo/src/main/resources/licencias/
