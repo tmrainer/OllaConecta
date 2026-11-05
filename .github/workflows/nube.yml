@@ -1,0 +1,40 @@
+# Corre las pruebas de nube/ en cada push y en cada pull request: las reglas de
+# Firestore, la sincronización y el envío a UNACEM (el script de Apps Script
+# armado desde web/js), contra el emulador de Firestore. No necesita proyecto
+# en Firebase ni secretos: el emulador corre con el proyecto demo-ollaconecta.
+# Un cambio en web/js puede romper el envío, por eso no se filtra por carpeta.
+
+name: Nube
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  nube:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: nube
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: nube/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21  # el emulador lo exige
+      - name: Emulador de Firestore ya bajado
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('nube/package-lock.json') }}
+      - run: npm ci
+      - name: Pruebas de la nube (reglas, sincronización y envío)
+        env:
+          TZ: America/Lima  # la hora de la app
+        run: npm run pruebas
