@@ -6,7 +6,6 @@
 - CSS
 - JavaScript
 - PWA (Service Worker)
-- Capacitor
 - Firebase (Authentication, Firestore)
 - Google Apps Script
 - Kotlin

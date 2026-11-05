@@ -15,7 +15,7 @@
 # Íconos y pantalla de inicio de la app nativa: sin datos personales.
 !nativo/app/src/main/res/**/*.png
 
-# Firebase (nube/): sus .json sí van; google-services.json del APK sigue fuera.
+# Firebase (nube/): sus .json sí van.
 !nube/*.json
 
 # graphify

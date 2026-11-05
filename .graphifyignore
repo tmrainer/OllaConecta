@@ -16,7 +16,6 @@ web/js/casos-prueba.js
 herramientas/
 
 # App Android: el proyecto nativo y sus librerías no describen la app.
-mobile/
 
 # Librería de terceros (QR): no describe la app.
 web/vendor/

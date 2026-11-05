@@ -25,8 +25,8 @@ android {
     }
 
     // La firma tiene que ser la MISMA que la del APK 1.7 instalado, o Android
-    // no deja instalar encima. Con nativo/firma.properties (mismo formato que
-    // mobile/firma.properties) se firma con la clave
+    // no deja instalar encima. Con nativo/firma.properties (archivo, clave, alias
+    // y claveAlias: el mismo almacén con que se firmó el 1.7) se firma con la clave
     // final; sin él, con la de depuración de esta máquina, como el 1.7.
     val firma = Properties()
     val archivoFirma = rootProject.file("firma.properties")
