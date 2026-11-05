@@ -1,6 +1,6 @@
-// Solo en la versión de prueba (Ajustes → Probar el escaneo del DNI): lo que pasó
-// en una lectura, para compartirlo con el equipo. La app normal nunca lo pide: ahí
-// la lectura no se guarda ni se registra.
+// Solo desde Ajustes → Probar el escaneo del DNI: lo que pasó
+// en una lectura, para compartirlo con el equipo. Inscribir y pasar lista nunca lo
+// piden: ahí la lectura no se guarda ni se registra.
 package io.github.tmrainer.asistencia.ui.camara
 
 import android.graphics.Bitmap

@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.platform.LocalContext
 import io.github.tmrainer.asistencia.Letra
-import io.github.tmrainer.asistencia.BuildConfig
 import io.github.tmrainer.asistencia.OllaConectaApp
 import io.github.tmrainer.asistencia.nucleo.envio.pareceCorreo
 import io.github.tmrainer.asistencia.R
@@ -151,11 +150,10 @@ fun PantallaAjustes(ctx: Contexto) {
             Spacer(Modifier.height(Medidas.e5))
             EnlaceMas("escudo", "¿Buscas la copia de tus datos?", "Está en Tus datos, con borrar todo") { ctx.ir(Ruta.DATOS) }
 
-            if (BuildConfig.DEBUG) {
-                Spacer(Modifier.height(Medidas.e5))
-                TituloSeccion("Versión de prueba")
-                Boton("Probar el escaneo del DNI", { ctx.abrirCapa { PruebaDni(ctx) } }, icono = "camara")
-            }
+            // En todas las versiones (decisión del 05-11-2026): una sola APK con la prueba del escaneo.
+            Spacer(Modifier.height(Medidas.e5))
+            TituloSeccion("Pruebas")
+            Boton("Probar el escaneo del DNI", { ctx.abrirCapa { PruebaDni(ctx) } }, icono = "camara")
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Acerca de")

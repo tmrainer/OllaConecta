@@ -1,4 +1,4 @@
-// Solo en la versión de prueba (BuildConfig.DEBUG): probar el escaneo del DNI y
+// Ajustes → Probar el escaneo del DNI (en todas las versiones desde el 05-11-2026): probar el escaneo y
 // compartir cómo salió. Quien prueba lee un DNI, marca dato por dato si salió bien
 // (y, si no, cuál era el correcto) y lo comparte: un resumen para leer, las fotos
 // de cada lado y el detalle comprimido en una línea «OLLADNI1:…», que se lee con
@@ -65,6 +65,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.zip.GZIPOutputStream
@@ -99,9 +100,10 @@ fun PruebaDni(ctx: Contexto) {
     val correcto = remember { mutableStateMapOf<String, String>() }
     var quien by remember { mutableStateOf(ctx.preferencias.perfil.value.nombre) }
     var nota by remember { mutableStateOf("") }
+    var guardada by remember { mutableStateOf<String?>(null) }
 
     fun leerOtro() {
-        registro = RegistroDni(); lectura = null; bien.clear(); correcto.clear(); nota = ""
+        registro = RegistroDni(); lectura = null; bien.clear(); correcto.clear(); nota = ""; guardada = null
         leyendo = true
     }
 
@@ -117,7 +119,7 @@ fun PruebaDni(ctx: Contexto) {
         verticalArrangement = Arrangement.spacedBy(Medidas.e3)
     ) {
         Text("Probar el escaneo del DNI", style = tipos.titulo, color = c.titulo, modifier = Modifier.semantics { heading() })
-        Pista("Solo en la versión de prueba. Lee un DNI, marca si cada dato salió bien y comparte el resultado. Lleva las fotos del DNI, con la cara: compártelo solo con el equipo.")
+        Pista("Lee un DNI, marca si cada dato salió bien y comparte el resultado. Lleva las fotos del DNI, con la cara: compártelo solo con el equipo.")
         val l = lectura
         if (l == null) {
             Boton("Leer un DNI", ::leerOtro, Modifier.fillMaxWidth(), tipo = TipoBoton.PRINCIPAL, icono = "camara")
@@ -152,6 +154,12 @@ fun PruebaDni(ctx: Contexto) {
                 val texto = textoPrueba(context, registro, l, datos, bien, correcto, quien, nota)
                 (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Prueba del DNI", texto))
             }, Modifier.fillMaxWidth(), habilitado = faltan == 0)
+            // Para revisarla por USB (adb) sin pasar por otra app: queda en el teléfono hasta borrarla.
+            Boton("Guardar en el teléfono (para revisar por USB)", {
+                val texto = textoPrueba(context, registro, l, datos, bien, correcto, quien, nota)
+                guardada = guardarPrueba(context, texto, registro)
+            }, Modifier.fillMaxWidth())
+            guardada?.let { Pista("Guardada en $it. Se borra al desinstalar la versión de prueba.") }
             Boton("Leer otro DNI", ::leerOtro, Modifier.fillMaxWidth(), icono = "camara")
         }
         Spacer(Modifier.height(Medidas.e2))
@@ -167,6 +175,21 @@ private fun resumenTiempos(r: RegistroDni, l: LecturaDni): String =
     ).joinToString(" · ").replaceFirstChar { it.uppercase() } + "."
 
 private fun segundos(ms: Long) = "%.1f s".format(ms / 1000.0)
+
+/**
+ * Guarda la prueba (texto y las fotos de cada lado) en la carpeta de la app en el
+ * almacenamiento externo (Android/data/…/files/pruebas-dni/<momento>/), de donde se
+ * saca por USB. Devuelve la ruta.
+ */
+private fun guardarPrueba(context: Context, texto: String, r: RegistroDni): String {
+    val raiz = context.getExternalFilesDir(null) ?: context.filesDir
+    val carpeta = File(raiz, "pruebas-dni/" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")))
+    carpeta.mkdirs()
+    File(carpeta, "prueba.txt").writeText(texto)
+    r.reverso?.let { File(carpeta, "dni-reverso.jpg").writeBytes(jpeg(it)) }
+    r.anverso?.let { File(carpeta, "dni-anverso.jpg").writeBytes(jpeg(it)) }
+    return carpeta.absolutePath
+}
 
 private fun jpeg(c: CapturaDni): ByteArray = ByteArrayOutputStream().also { c.imagen.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
 
