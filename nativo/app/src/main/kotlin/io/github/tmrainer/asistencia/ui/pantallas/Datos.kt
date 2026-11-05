@@ -41,6 +41,8 @@ import io.github.tmrainer.asistencia.nucleo.respaldo.cifrarRespaldo
 import io.github.tmrainer.asistencia.nucleo.respaldo.descifrarRespaldo
 import io.github.tmrainer.asistencia.nucleo.respaldo.escribirRespaldo
 import io.github.tmrainer.asistencia.nucleo.respaldo.leerRespaldo
+import io.github.tmrainer.asistencia.ui.GUIA_DATOS
+import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
@@ -124,7 +126,7 @@ fun PantallaDatos(ctx: Contexto) {
     var confirmandoBorrar by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxWidth()) {
-        Cabecera(ctx, "Tus datos", "Dónde están y cómo cuidarlos")
+        Cabecera(ctx, "Tus datos", "Dónde están y cómo cuidarlos", guia = GUIA_DATOS)
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
@@ -142,11 +144,11 @@ fun PantallaDatos(ctx: Contexto) {
             }
             ParaLeer(textoUltima)
             Text(textoUltima, style = if (dias == null || dias >= 14) tipos.textoFuerte else tipos.texto, color = if (dias == null || dias >= 14) c.aviso else c.tinta, modifier = Modifier.padding(bottom = Medidas.e3))
-            Acciones {
+            Acciones(Modifier.objetivoGuia("datos.copia")) {
                 Boton("Guardar una copia", { guardarCopia(null) })
                 Boton("Recuperar una copia", { abrir.launch(arrayOf("application/json", "application/octet-stream", "text/plain", "*/*")) })
             }
-            Boton(if (conContrasena) "Ocultar «con contraseña»" else "Guardar con contraseña", { conContrasena = !conContrasena }, Modifier.padding(top = Medidas.e2), diminuto = true)
+            Boton(if (conContrasena) "Ocultar «con contraseña»" else "Guardar con contraseña", { conContrasena = !conContrasena }, Modifier.padding(top = Medidas.e2).objetivoGuia("datos.contrasena"), diminuto = true)
             if (conContrasena) {
                 var c1 by remember { mutableStateOf("") }
                 var c2 by remember { mutableStateOf("") }
@@ -177,13 +179,15 @@ fun PantallaDatos(ctx: Contexto) {
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Pasar a otro teléfono")
             Pista("Sin internet: un teléfono muestra un QR y el otro lo lee. Antes de guardar, se ve qué cambia.", Modifier.padding(bottom = Medidas.e3))
-            Acciones {
-                Boton("Pasar el padrón", { enviarPorQr(ctx, "padron") })
-                Boton("Pasar la asistencia", { elegirDiasYEnviar(ctx) })
-                Boton("Pasar las entregas", { enviarPorQr(ctx, "entregas") })
+            Column(Modifier.objetivoGuia("datos.qr")) {
+                Acciones {
+                    Boton("Pasar el padrón", { enviarPorQr(ctx, "padron") })
+                    Boton("Pasar la asistencia", { elegirDiasYEnviar(ctx) })
+                    Boton("Pasar las entregas", { enviarPorQr(ctx, "entregas") })
+                }
+                Spacer(Modifier.height(Medidas.e3))
+                Boton("Recibir por QR", { recibirPorQr(ctx) }, icono = "camara")
             }
-            Spacer(Modifier.height(Medidas.e3))
-            Boton("Recibir por QR", { recibirPorQr(ctx) }, icono = "camara")
             Pista("Para pasar todo, también el B-1, usa «Guardar una copia».", Modifier.padding(top = Medidas.e3))
 
             Spacer(Modifier.height(Medidas.e5))
@@ -201,7 +205,7 @@ fun PantallaDatos(ctx: Contexto) {
             Spacer(Modifier.height(Medidas.e5))
             Text("Borrar todo", style = tipos.seccion, color = c.error, modifier = Modifier.padding(bottom = Medidas.e3))
             Pista("Borra de este teléfono el padrón, la asistencia, el B-1 y las entregas. No se puede deshacer.", Modifier.padding(bottom = Medidas.e3))
-            Boton("Borrar todo", { confirmandoBorrar = true }, tipo = TipoBoton.PELIGRO)
+            Boton("Borrar todo", { confirmandoBorrar = true }, Modifier.objetivoGuia("datos.borrar"), tipo = TipoBoton.PELIGRO)
         }
     }
 
@@ -249,7 +253,7 @@ fun PantallaDatos(ctx: Contexto) {
             onDismissRequest = { errorCopia = null }, containerColor = c.superficie,
             title = { Text("No se pudo recuperar", style = tipos.seccion, color = c.titulo) },
             text = { Text(err, style = tipos.texto, color = c.tinta) },
-            confirmButton = { Boton("Entendido", { errorCopia = null }, tipo = TipoBoton.PRINCIPAL) }
+            confirmButton = { Boton("Listo", { errorCopia = null }, tipo = TipoBoton.PRINCIPAL) }
         )
     }
     if (confirmandoBorrar) {

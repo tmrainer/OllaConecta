@@ -67,7 +67,6 @@ import io.github.tmrainer.asistencia.nucleo.modelo.hoyIso
 import io.github.tmrainer.asistencia.nucleo.modelo.nuevaEntrega
 import io.github.tmrainer.asistencia.nucleo.validaciones.Severidad
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarCalendario
-import io.github.tmrainer.asistencia.nucleo.validaciones.validarRendicion
 import io.github.tmrainer.asistencia.nucleo.calculos.codigoPeriodo
 import io.github.tmrainer.asistencia.nucleo.calculos.proponerPeriodo
 import io.github.tmrainer.asistencia.ui.objetivoGuia
@@ -80,7 +79,7 @@ import io.github.tmrainer.asistencia.ui.componentes.CampoFecha
 import io.github.tmrainer.asistencia.ui.componentes.EstadoGuardado
 import io.github.tmrainer.asistencia.ui.componentes.EstadoVacio
 import io.github.tmrainer.asistencia.ui.componentes.FranjaEstado
-import io.github.tmrainer.asistencia.ui.componentes.Ficha
+import io.github.tmrainer.asistencia.ui.componentes.Pastilla
 import io.github.tmrainer.asistencia.ui.componentes.Leyenda
 import io.github.tmrainer.asistencia.ui.componentes.Opciones
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
@@ -95,7 +94,23 @@ import io.github.tmrainer.asistencia.ui.tema.colores
 import io.github.tmrainer.asistencia.ui.tema.tipos
 
 private val ETIQUETA_ESTADO = listOf("pendiente" to "Pendiente", "entregada" to "Entregada", "observada" to "Observada", "conforme" to "Conforme")
+// Pendiente sin color; entregada y conforme, bien; observada, a revisar. Cada uno con su
+// ícono: en claro el verde de «bien» y el neutro casi no se distinguen.
+private val TONO_ESTADO = mapOf(
+    "pendiente" to (TonoPastilla.NEUTRA to "reloj"), "entregada" to (TonoPastilla.OK to "ok"),
+    "observada" to (TonoPastilla.ADVERTENCIA to "aviso"), "conforme" to (TonoPastilla.OK to "ok")
+)
 private val OPCIONES_AVISO = listOf(1 to "1 día antes", 3 to "3 días antes", 7 to "7 días antes", 15 to "15 días antes")
+
+/**
+ * El color de una entrega según cuánto falta, igual en el Inicio, el reloj y la lista:
+ * vencida u hoy en rojo, faltan pocos días en amarillo, lejos sin color.
+ */
+fun tonoEntrega(nivel: Nivel): TonoPastilla = when (nivel) {
+    Nivel.VENCIDA, Nivel.HOY -> TonoPastilla.ERROR
+    Nivel.URGENTE, Nivel.PROXIMA -> TonoPastilla.ADVERTENCIA
+    Nivel.LEJANA -> TonoPastilla.NEUTRA
+}
 
 @Composable
 fun PantallaEntregas(ctx: Contexto) {
@@ -123,7 +138,7 @@ fun PantallaEntregas(ctx: Contexto) {
                 val dias: Int = diasAlerta
                 val largo = when (calendario.periodicidad) { "semanal" -> 7; "quincenal" -> 15; else -> 30 }
                 val lleno = if (dias < 0) 1f else (1f - dias.toFloat() / largo).coerceIn(0f, 1f)
-                val colorReloj = when (a.nivel) { Nivel.PROXIMA -> c.aviso; Nivel.LEJANA -> c.acentoTexto; else -> c.error }
+                val colorReloj = when (tonoEntrega(a.nivel)) { TonoPastilla.ERROR -> c.error; TonoPastilla.ADVERTENCIA -> c.aviso; else -> c.acentoTexto }
                 Column(
                     Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(Medidas.rL)).clip(RoundedCornerShape(Medidas.rL)).background(c.superficie).padding(Medidas.e4, Medidas.e5),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -158,7 +173,7 @@ fun PantallaEntregas(ctx: Contexto) {
             TituloSeccion("Próximas entregas")
             val r = rendiciones.firstOrNull()
             if (r != null) {
-                val hs = validarRendicion(r)
+                val hs = hallazgosDelB1(r)
                 val faltan = hs.count { it.severidad == Severidad.ERROR && it.falta }
                 val mal = hs.count { it.severidad == Severidad.ERROR && !it.falta }
                 val listo = faltan == 0 && mal == 0
@@ -189,11 +204,13 @@ fun PantallaEntregas(ctx: Contexto) {
                             else -> "faltan ${item.diasRestantes} días"
                         }
                         Row(Modifier.fillMaxWidth().padding(Medidas.e4, Medidas.e3), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                            Text(aDdMmAa(item.fechaLimite), style = tipos.textoNegrita, color = c.titulo, modifier = Modifier.width(76.dp))
+                            Text(aDdMmAa(item.fechaLimite), style = tipos.textoNegrita, color = c.titulo, modifier = Modifier.widthIn(min = 76.dp))
                             Column(Modifier.weight(1f)) {
+                                // Ya entregada, una fecha pasada no es una alerta.
+                                val tono = if (estadoItem == "entregada" || estadoItem == "conforme") TonoPastilla.NEUTRA else tonoEntrega(item.nivel)
                                 Text(
-                                    texto, style = if (item.nivel == Nivel.LEJANA || item.nivel == Nivel.PROXIMA) tipos.chico else tipos.chicoFuerte,
-                                    color = when (item.nivel) { Nivel.VENCIDA -> c.error; Nivel.HOY, Nivel.URGENTE -> c.aviso; else -> c.tintaSuave }
+                                    texto, style = if (tono == TonoPastilla.NEUTRA) tipos.chico else tipos.chicoFuerte,
+                                    color = when (tono) { TonoPastilla.ERROR -> c.error; TonoPastilla.ADVERTENCIA -> c.aviso; else -> c.tintaSuave }
                                 )
                                 // Qué B-1 se entrega ese día: el periodo que contiene la fecha, como propone el paso «Periodo».
                                 codigoPeriodo(proponerPeriodo(calendario.periodicidad, item.fechaLimite).aPeriodo())?.let {
@@ -204,8 +221,8 @@ fun PantallaEntregas(ctx: Contexto) {
                             Box {
                                 val textoEstado = ETIQUETA_ESTADO.first { it.first == estadoItem }.second
                                 // Cada entrega dice de qué fecha es: no cinco «Pendiente» iguales.
-                                Ficha(textoEstado, estadoItem != "pendiente", { abierto = true }, comoBoton = true,
-                                    modifier = Modifier.semantics { contentDescription = "Entrega del ${aDdMmAa(item.fechaLimite)}: $textoEstado" })
+                                val (tonoEstado, iconoEstado) = TONO_ESTADO.getValue(estadoItem)
+                                Pastilla(textoEstado, tonoEstado, iconoEstado, modifier = Modifier.semantics { contentDescription = "Entrega del ${aDdMmAa(item.fechaLimite)}: $textoEstado" }) { abierto = true }
                                 DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }, containerColor = c.superficie) {
                                     for ((v, t) in ETIQUETA_ESTADO) DropdownMenuItem(text = { Text(t, style = tipos.texto, color = c.tinta) }, onClick = {
                                         abierto = false
@@ -226,21 +243,26 @@ fun PantallaEntregas(ctx: Contexto) {
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Cada cuánto entregas")
-            Leyenda("Cada cuánto")
-            Box(Modifier.objetivoGuia("entregas.cada")) { Opciones(PERIODICIDADES.map { it.clave to "${it.etiqueta} (${it.detalle})" }, { it == calendario.periodicidad }, { v -> estado.cambiarCalendario { it.copy(periodicidad = v) } }) }
+            // La guía ilumina el rótulo con sus opciones: el rótulo solo quedaba medio iluminado.
+            Column(Modifier.objetivoGuia("entregas.cada")) {
+                Leyenda("Cada cuánto")
+                Opciones(PERIODICIDADES.map { it.clave to "${it.etiqueta} (${it.detalle})" }, { it == calendario.periodicidad }, { v -> estado.cambiarCalendario { it.copy(periodicidad = v) } })
+            }
             Spacer(Modifier.height(Medidas.e3))
             CampoFecha("Una fecha de entrega que conoces", calendario.fechaLimiteBase, { v -> estado.cambiarCalendario { it.copy(fechaLimiteBase = v) } }, Modifier.objetivoGuia("entregas.fecha"), pista = "La próxima o una pasada, da igual.")
             Spacer(Modifier.height(Medidas.e3))
-            Leyenda("Avisarme")
-            Box(Modifier.objetivoGuia("entregas.avisar")) { Opciones(OPCIONES_AVISO, { it in calendario.diasDeAviso }, { dias ->
-                val otros = calendario.diasDeAviso.filter { it != dias }
-                val marcado = dias in calendario.diasDeAviso
-                if (marcado && otros.isEmpty()) { msgAviso = "Deja marcado al menos uno." }
-                else {
-                    msgAviso = ""
-                    estado.cambiarCalendario { it.copy(diasDeAviso = (if (marcado) otros else otros + dias).sortedDescending()) }
-                }
-            }) }
+            Column(Modifier.objetivoGuia("entregas.avisar")) {
+                Leyenda("Avisarme")
+                Opciones(OPCIONES_AVISO, { it in calendario.diasDeAviso }, { dias ->
+                    val otros = calendario.diasDeAviso.filter { it != dias }
+                    val marcado = dias in calendario.diasDeAviso
+                    if (marcado && otros.isEmpty()) { msgAviso = "Deja marcado al menos uno." }
+                    else {
+                        msgAviso = ""
+                        estado.cambiarCalendario { it.copy(diasDeAviso = (if (marcado) otros else otros + dias).sortedDescending()) }
+                    }
+                })
+            }
             if (msgAviso.isNotEmpty()) Text(msgAviso, style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = 4.dp))
             EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
         }
@@ -280,7 +302,7 @@ private fun AvisosDelTelefono(hayFechas: Boolean) {
         Text("Sin permiso, el aviso solo se ve al abrir la app.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
         FranjaEstado(
             "Activa los avisos y el teléfono te recordará la entrega.",
-            TonoPastilla.ADVERTENCIA, Modifier.padding(top = Medidas.e2),
+            TonoPastilla.ADVERTENCIA, Modifier.padding(top = Medidas.e2).objetivoGuia("entregas.activar"),
             boton = "Activar los avisos" to {
                 val actividad = context as? Activity
                 val negadoParaSiempre = prefs.getBoolean("permisoPedido", false) && actividad != null &&

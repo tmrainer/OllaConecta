@@ -42,7 +42,8 @@ import io.github.tmrainer.asistencia.nucleo.documentos.dibujarHoja
 import io.github.tmrainer.asistencia.nucleo.documentos.hojasDelB1
 import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
 import io.github.tmrainer.asistencia.ui.Cabecera
-import io.github.tmrainer.asistencia.ui.GUIA_B1
+import io.github.tmrainer.asistencia.ui.GUIA_HOJA
+import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.componentes.EstadoVacio
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
@@ -68,7 +69,7 @@ fun PantallaHojaB1(ctx: Contexto, rendicionId: String?) {
         }
     }
     Column(Modifier.fillMaxWidth()) {
-        Cabecera(ctx, "Vista previa del B-1", r?.periodo?.etiqueta?.trim()?.ifEmpty { null } ?: "En curso", guia = GUIA_B1)
+        Cabecera(ctx, "Vista previa del B-1", r?.periodo?.etiqueta?.trim()?.ifEmpty { null } ?: "En curso", guia = GUIA_HOJA)
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
@@ -86,7 +87,7 @@ fun PantallaHojaB1(ctx: Contexto, rendicionId: String?) {
                 if (hojas.size > 1) Text("Hoja ${i + 1} de ${hojas.size}", style = tipos.chicoFuerte, color = c.tintaSuave, modifier = Modifier.padding(bottom = Medidas.e2))
                 // Siempre en papel blanco, también en modo oscuro: es la hoja.
                 Canvas(
-                    Modifier.fillMaxWidth().aspectRatio(210f / 297f).shadow(2.dp, RoundedCornerShape(4.dp))
+                    Modifier.then(if (i == 0) Modifier.objetivoGuia("hoja.primera") else Modifier).fillMaxWidth().aspectRatio(210f / 297f).shadow(2.dp, RoundedCornerShape(4.dp))
                         .clip(RoundedCornerShape(4.dp)).background(Color.White)
                 ) { pintar(trazos) }
                 Spacer(Modifier.height(Medidas.e4))

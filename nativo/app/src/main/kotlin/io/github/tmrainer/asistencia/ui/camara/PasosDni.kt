@@ -53,6 +53,7 @@ import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.FranjaEstado
 import io.github.tmrainer.asistencia.ui.componentes.Icono
+import io.github.tmrainer.asistencia.ui.componentes.IconosBarras
 import io.github.tmrainer.asistencia.ui.componentes.Separador
 import io.github.tmrainer.asistencia.ui.componentes.Superficie
 import io.github.tmrainer.asistencia.ui.componentes.TipoBoton
@@ -239,6 +240,7 @@ private fun nombre(etiqueta: String, cruce: CampoCruzado?, deMrz: String): Dato 
 @Composable
 fun RevisionDni(l: LecturaDni, usar: () -> Unit, otraVez: () -> Unit) {
     val c = colores
+    IconosBarras(c.esOscuro, c.esOscuro)
     val m = l.mrz.campos
     val a = l.anverso
     val datos = listOf(

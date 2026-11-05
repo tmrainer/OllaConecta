@@ -55,6 +55,9 @@ class Avisador {
     }
 
     fun cerrar() { actual = null }
+
+    /** Lo que ocupa abajo la barra de botones de la pantalla (B-1): el aviso va encima, sin taparla. */
+    var sobreBarra by mutableStateOf(0.dp)
 }
 
 val LocalAvisos = staticCompositionLocalOf { Avisador() }

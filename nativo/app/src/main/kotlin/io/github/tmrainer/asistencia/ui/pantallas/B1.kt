@@ -3,8 +3,7 @@
 // nunca se aplican solas.
 package io.github.tmrainer.asistencia.ui.pantallas
 
-import io.github.tmrainer.asistencia.nucleo.modelo.uuid
-import io.github.tmrainer.asistencia.nucleo.modelo.GastoPropio
+import androidx.compose.ui.layout.onGloballyPositioned
 import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
 import io.github.tmrainer.asistencia.nucleo.documentos.hojasDelB1
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDelB1
@@ -14,6 +13,7 @@ import io.github.tmrainer.asistencia.ui.componentes.Documento
 import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
 import io.github.tmrainer.asistencia.AlElegir
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,6 +49,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.tmrainer.asistencia.nucleo.alertas.Nivel
@@ -56,11 +57,14 @@ import io.github.tmrainer.asistencia.nucleo.alertas.alertaProximaEntrega
 import io.github.tmrainer.asistencia.nucleo.calculos.gastoPorOrigen
 import io.github.tmrainer.asistencia.nucleo.calculos.proponerPeriodo
 import io.github.tmrainer.asistencia.nucleo.calculos.totales
+import io.github.tmrainer.asistencia.nucleo.calculos.conTotalCalculado
+import io.github.tmrainer.asistencia.nucleo.calculos.totalDeLaFila
 import io.github.tmrainer.asistencia.nucleo.modelo.Egreso
 import io.github.tmrainer.asistencia.nucleo.modelo.Rendicion
 import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
 import io.github.tmrainer.asistencia.nucleo.modelo.aNumero
 import io.github.tmrainer.asistencia.nucleo.modelo.cuantos
+import io.github.tmrainer.asistencia.nucleo.modelo.esIso
 import io.github.tmrainer.asistencia.nucleo.modelo.formatearSoles
 import io.github.tmrainer.asistencia.nucleo.modelo.hoyIso
 import io.github.tmrainer.asistencia.nucleo.modelo.nuevaRendicion
@@ -72,7 +76,7 @@ import io.github.tmrainer.asistencia.nucleo.validaciones.Severidad
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarRendicion
 import io.github.tmrainer.asistencia.nucleo.calculos.codigoPeriodo
 import io.github.tmrainer.asistencia.ui.Cabecera
-import io.github.tmrainer.asistencia.ui.GUIA_B1
+import io.github.tmrainer.asistencia.ui.ayudaB1
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
@@ -107,9 +111,15 @@ import io.github.tmrainer.asistencia.ui.tema.colores
 import io.github.tmrainer.asistencia.ui.tema.tipos
 import kotlinx.coroutines.launch
 
-private val PASOS = listOf("Centro de atención", "Periodo", "Ingresos (dinero recibido)", "Compras (egresos)", "Firmas", "Revisar")
-private val UNIDADES = listOf("Kg", "g", "L", "ml", "unid", "saco", "bolsa", "caja", "varios")
-private val ORIGENES = listOf("subsidio" to "Subsidio municipal", "ayuda_social" to "Ayuda social / donación", "aporte_propio" to "Aporte propio del centro")
+// Sin paso de firmas (decisión del 26-10-2026): el B-1 se completa con los datos de la olla, el
+// periodo, los ingresos y las compras. Quién firma se escribe a mano, en el papel.
+private val PASOS = listOf("Centro de atención", "Periodo", "Ingresos (dinero recibido)", "Compras (egresos)", "Revisar")
+private val CAMPOS_FIRMA = setOf("nombrePresidentaFirma", "dniPresidentaFirma", "nombreTesorera", "dniTesorera")
+
+/** Lo que la app revisa del B-1: lo de [validarRendicion], menos lo de las firmas, que aquí no se piden. */
+internal fun hallazgosDelB1(r: Rendicion): List<Hallazgo> = validarRendicion(r).filter { it.campo !in CAMPOS_FIRMA }
+// «varios» no está aquí: lo pone «¿Cómo viene la boleta?» → «Varios juntos».
+private val UNIDADES = listOf("Kg", "g", "L", "ml", "unid", "saco", "bolsa", "caja")
 
 /** Paso de cada hallazgo, por la sección donde está su campo. */
 private fun pasoDe(campo: String): Int = when {
@@ -117,11 +127,12 @@ private fun pasoDe(campo: String): Int = when {
     campo.startsWith("periodo.") || campo == "fechaRendicion" -> 2
     campo == "montoSubsidio" || campo == "fechaAsignacion" -> 3
     campo == "egresos" || campo.startsWith("egreso.") || campo == "totales" -> 4
-    campo in listOf("nombrePresidentaFirma", "dniPresidentaFirma", "nombreTesorera", "dniTesorera") -> 5
-    else -> 6
+    else -> 5
 }
 
 private fun List<Hallazgo>.errorDe(campo: String): String? = firstOrNull { it.campo == campo && it.severidad == Severidad.ERROR && !it.falta }?.mensaje
+/** Un aviso aceptado vuelve a frenar si cambia lo que dice (cambió el dato). */
+private fun clave(h: Hallazgo) = "${h.campo}|${h.mensaje}"
 private fun List<Hallazgo>.avisoDe(campo: String): String? = firstOrNull { it.campo == campo && it.severidad == Severidad.ADVERTENCIA }?.mensaje
 
 /** «Octubre», o las fechas del periodo, o «sin periodo». Solo para mostrar. */
@@ -168,16 +179,32 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
     fun cambiar(cambio: (Rendicion) -> Rendicion) = estado.cambiarRendicion(rendicion.id, cambio)
     fun cambiarEgreso(id: String, cambio: (Egreso) -> Egreso) = cambiar { r -> r.copy(egresos = r.egresos.map { if (it.id == id) cambio(it) else it }) }
 
-    val hallazgos = remember(rendicion) { validarRendicion(rendicion) }
+    val hallazgos = remember(rendicion) { hallazgosDelB1(rendicion) }
     val pendientesPorPaso = remember(hallazgos) { hallazgos.filter { it.severidad == Severidad.ERROR }.map { pasoDe(it.campo) }.toSet() }
 
-    var pasoActual by remember {
+    // Por B-1: al abrir otro desde «Meses anteriores», empieza en su primer paso con algo que corregir.
+    var pasoActual by remember(rendicion.id) {
         mutableIntStateOf(
             if (argumento == "compras") 4
-            else validarRendicion(rendicion).filter { it.severidad == Severidad.ERROR }.map { pasoDe(it.campo) }.minOrNull() ?: 6
+            else hallazgosDelB1(rendicion).filter { it.severidad == Severidad.ERROR }.map { pasoDe(it.campo) }.minOrNull() ?: PASOS.size
         )
     }
     var avisoPasos by remember { mutableStateOf("") }
+    // Los avisos también frenan el paso: se corrigen o se aceptan con «Está bien así».
+    var avisosPorAceptar by remember { mutableStateOf(listOf<Hallazgo>()) }
+    var aceptados by remember(rendicion.id) { mutableStateOf(setOf<String>()) }
+    var destino by remember { mutableIntStateOf(0) }
+    // El alto de la barra de abajo: el aviso de «Deshacer» y el botón «Compra» van encima, sin taparla.
+    var altoBarra by remember { mutableStateOf(0.dp) }
+    val densidad = androidx.compose.ui.platform.LocalDensity.current
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { avisos.sobreBarra = 0.dp } }
+    // «Para seguir, revisa…» se va solo cuando el paso ya no tiene errores (corregido o quitado).
+    LaunchedEffect(hallazgos, pasoActual) {
+        if (avisosPorAceptar.isNotEmpty()) {
+            val siguen = hallazgos.map(::clave).toSet()
+            if (avisosPorAceptar.none { clave(it) in siguen } || pasoDe(avisosPorAceptar[0].campo) != pasoActual) { avisosPorAceptar = emptyList(); avisoPasos = "" }
+        } else if (avisoPasos.isNotEmpty() && hallazgos.none { it.severidad == Severidad.ERROR && pasoDe(it.campo) == pasoActual }) avisoPasos = ""
+    }
     // Campos aceptados de una sugerencia, marcados hasta que se editen.
     val propuestos = remember { mutableStateOf(setOf<String>()) }
     val desplazamiento = rememberScrollState()
@@ -189,10 +216,23 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
         alcance.launch { desplazamiento.scrollTo(0) }
     }
 
-    /** No se avanza con un dato obligatorio pendiente: se dice cuál y se lleva ahí. */
+    /** No se avanza con un dato obligatorio pendiente ni con un aviso sin mirar: se dice cuál y se lleva ahí. */
     fun bloqueoHasta(n: Int): Boolean {
-        val pendientes = validarRendicion(rendicion).filter { it.severidad == Severidad.ERROR && pasoDe(it.campo) >= pasoActual && pasoDe(it.campo) < n }.sortedBy { pasoDe(it.campo) }
-        if (pendientes.isEmpty()) return false
+        val enCamino = hallazgosDelB1(rendicion).filter { pasoDe(it.campo) >= pasoActual && pasoDe(it.campo) < n }
+        val pendientes = enCamino.filter { it.severidad == Severidad.ERROR }.sortedBy { pasoDe(it.campo) }
+        avisosPorAceptar = emptyList()
+        if (pendientes.isEmpty()) {
+            val porMirar = enCamino.filter { it.severidad == Severidad.ADVERTENCIA && clave(it) !in aceptados }.sortedBy { pasoDe(it.campo) }
+            if (porMirar.isEmpty()) return false
+            val paso = pasoDe(porMirar[0].campo)
+            if (paso != pasoActual) irAPaso(paso)
+            avisosPorAceptar = porMirar.filter { pasoDe(it.campo) == paso }
+            destino = n
+            avisoPasos = "Revisa antes de seguir: ${avisosPorAceptar.take(2).joinToString(" ") { it.mensaje }}"
+            vibrar(contexto, 60)
+            if (porMirar[0].campo.startsWith("egreso.")) egresoAbierto = porMirar[0].campo.removePrefix("egreso.")
+            return true
+        }
         val paso = pasoDe(pendientes[0].campo)
         if (paso != pasoActual) irAPaso(paso)
         val delPaso = pendientes.filter { pasoDe(it.campo) == paso }
@@ -210,7 +250,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
 
     fun avanzarA(n: Int) {
         if (n > pasoActual && bloqueoHasta(n)) return
-        avisoPasos = ""
+        avisoPasos = ""; avisosPorAceptar = emptyList()
         irAPaso(n)
     }
 
@@ -221,7 +261,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
 
     /** Exportar pide el B-1 completo: si falta algo, se dice qué y se lleva ahí. */
     fun listoParaExportar(): Boolean {
-        val pendientes = validarRendicion(rendicion).filter { it.severidad == Severidad.ERROR }.sortedBy { pasoDe(it.campo) }
+        val pendientes = hallazgosDelB1(rendicion).filter { it.severidad == Severidad.ERROR }.sortedBy { pasoDe(it.campo) }
         if (pendientes.isEmpty()) { ctx.estado.guardarPendiente(); return true }
         ctx.avisos.mostrar("Antes de exportar, completa el B-1: " +
             pendientes.take(2).joinToString("; ") { it.mensaje.removeSuffix(".").replace(Regex("^Faltan? "), "falta ") } +
@@ -246,7 +286,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             // El código del B-1 abierto («Octubre-2026-Q1»), si sus fechas son un periodo completo.
-            Cabecera(ctx, "Formato B-1", codigoPeriodo(rendicion.periodo) ?: "Rendición de cuentas", guia = GUIA_B1)
+            Cabecera(ctx, "Formato B-1", codigoPeriodo(rendicion.periodo) ?: "Rendición de cuentas", guiaSegun = { ayudaB1(ctx.preferencias, pasoActual) })
             Column(
                 Modifier.weight(1f).fillMaxWidth().verticalScroll(desplazamiento).widthIn(max = Medidas.anchoColumna)
                     .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, if (pasoActual == 4) 110.dp else 40.dp)
@@ -257,39 +297,42 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                     FranjaEstado("Estás viendo el B-1 de un mes anterior: ${nombreDelMes(rendicion)}.", TonoPastilla.ADVERTENCIA, Modifier.padding(bottom = Medidas.e3), boton = "Volver al B-1 del mes" to { verId = null })
                 }
                 BannerEntrega(ctx, calendario, hoyIso())
-                PanelHallazgos(hallazgos, alIrA = { irACampo(it) })
+                PanelHallazgos(hallazgos, Modifier.objetivoGuia("b1.revisar"), alIrA = { irACampo(it) })
 
                 Row(Modifier.objetivoGuia("b1.barra").fillMaxWidth().padding(bottom = 2.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     PASOS.forEachIndexed { i, nombre ->
                         val n = i + 1
+                        // Los que vienen, solo con borde: rellenos de verde pálido casi no se veían.
                         val color = when {
                             n == pasoActual -> c.acento
-                            n in pendientesPorPaso -> c.pendiente
+                            n in pendientesPorPaso -> c.azul
                             n < pasoActual -> c.acentoTexto
-                            else -> c.seleccion
+                            else -> null
                         }
                         Box(
                             Modifier.weight(1f).objetivoGuia("b1.paso$n").height(48.dp).clip(RoundedCornerShape(Medidas.rS)).clickable(role = Role.Button) { avanzarA(n) }
                                 .semantics { contentDescription = "Paso $n: $nombre" + if (n in pendientesPorPaso) ", le falta algo" else "" },
                             contentAlignment = Alignment.Center
-                        ) { Box(Modifier.fillMaxWidth().height(if (n == pasoActual) 8.dp else 6.dp).clip(RoundedCornerShape(999.dp)).background(color)) }
+                        ) {
+                            val barra = Modifier.fillMaxWidth().height(if (n == pasoActual) 8.dp else 6.dp).clip(RoundedCornerShape(999.dp))
+                            Box(if (color != null) barra.background(color) else barra.border(1.5.dp, c.contorno, RoundedCornerShape(999.dp)))
+                        }
                     }
                 }
-                // Lo que dice el ámbar de la barra también va en palabras (el color nunca va solo).
+                // Lo que dice el azul de la barra también va en palabras (el color nunca va solo).
                 val faltan = pendientesPorPaso.sorted()
                 val queFalta = when (faltan.size) {
                     0 -> ""
                     1 -> ". Al paso ${faltan[0]} le falta algo"
                     else -> ". A los pasos ${faltan.dropLast(1).joinToString(", ")} y ${faltan.last()} les falta algo"
                 }
-                Text("Paso $pasoActual de ${PASOS.size}$queFalta", style = tipos.pista, color = c.tintaSuave, modifier = Modifier.padding(bottom = Medidas.e3))
+                Text("Paso $pasoActual de ${PASOS.size}$queFalta", style = tipos.pista, color = c.tintaSuave, modifier = Modifier.padding(bottom = Medidas.e3).objetivoGuia("b1.barraTexto"))
 
                 when (pasoActual) {
                     1 -> PasoCentro(rendicion, hallazgos, config, perfil, propuestos, ::cambiar)
                     2 -> PasoPeriodo(rendicion, hallazgos, ::cambiar)
                     3 -> PasoIngresos(rendicion, hallazgos, ::cambiar)
                     4 -> PasoCompras(rendicion, hallazgos, egresoAbierto, { egresoAbierto = it }, ::cambiar, ::cambiarEgreso)
-                    5 -> PasoFirmas(rendicion, hallazgos, ::cambiar)
                     else -> PasoRevisar(
                         rendicion, rendiciones, indice, hallazgos, ::irACampo, abrir = { verId = it }, empezarMes = { confirmarMes = true },
                         listoParaExportar = ::listoParaExportar, verHoja = { ctx.ir(Ruta.HOJA, rendicion.id) }
@@ -300,12 +343,21 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
             }
             // Atrás / Siguiente, pegados abajo.
             Separador()
-            Column(Modifier.fillMaxWidth().background(c.superficie).padding(Medidas.e4, 10.dp)) {
+            Column(Modifier.fillMaxWidth().background(c.superficie).onGloballyPositioned {
+                altoBarra = with(densidad) { it.size.height.toDp() }; avisos.sobreBarra = altoBarra
+            }.padding(Medidas.e4, 10.dp)) {
                 if (avisoPasos.isNotEmpty()) {
-                    Text(avisoPasos, style = tipos.textoFuerte, color = c.error, modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(c.errorFondo).padding(Medidas.e4, Medidas.e3))
+                    val esAviso = avisosPorAceptar.isNotEmpty()
+                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(if (esAviso) c.avisoFondo else c.errorFondo).padding(Medidas.e4, Medidas.e3)) {
+                        Text(avisoPasos, style = tipos.textoFuerte, color = if (esAviso) c.aviso else c.error)
+                        if (esAviso) Boton("Está bien así", {
+                            aceptados = aceptados + avisosPorAceptar.map(::clave)
+                            avanzarA(destino)
+                        }, Modifier.padding(top = 10.dp), diminuto = true)
+                    }
                     Spacer(Modifier.height(10.dp))
                 }
-                Row(Modifier.widthIn(max = Medidas.anchoColumna).align(Alignment.CenterHorizontally).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.widthIn(max = Medidas.anchoColumna).align(Alignment.CenterHorizontally).fillMaxWidth().objetivoGuia("b1.botones"), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Boton("Atrás", { irAPaso(pasoActual - 1) }, habilitado = pasoActual > 1)
                     if (pasoActual < PASOS.size) {
                         Boton("Siguiente: ${PASOS[pasoActual].replace(Regex(" \\(.*\\)$"), "")}", { avanzarA(pasoActual + 1) }, Modifier.weight(1f), tipo = TipoBoton.PRINCIPAL)
@@ -313,7 +365,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                 }
             }
         }
-        if (pasoActual == 4) BotonFlotante("Compra", ::agregarCompra, Modifier.align(Alignment.BottomEnd).padding(end = Medidas.e4, bottom = 84.dp))
+        if (pasoActual == 4) BotonFlotante("Compra", ::agregarCompra, Modifier.align(Alignment.BottomEnd).padding(end = Medidas.e4, bottom = altoBarra + Medidas.e3).objetivoGuia("b1.compra"))
     }
 
     if (confirmarMes) {
@@ -374,12 +426,12 @@ private fun PasoCentro(
     val props = sugerenciasEncabezado(config) + sugerenciasPerfil(perfil)
     val valorDe = { campo: String -> when (campo) {
         "tipoCentro" -> r.tipoCentro; "nombreCentro" -> r.nombreCentro; "codigoPca" -> r.codigoPca; "nombrePresidenta" -> r.nombrePresidenta
-        "dniPresidenta" -> r.dniPresidenta; "celular" -> r.celular; "nombreTesorera" -> r.nombreTesorera; "dniTesorera" -> r.dniTesorera
-        "nombrePresidentaFirma" -> r.nombrePresidentaFirma; "dniPresidentaFirma" -> r.dniPresidentaFirma; else -> ""
+        "dniPresidenta" -> r.dniPresidenta; "celular" -> r.celular; else -> ""
     } }
-    val pendientes = props.filter { (campo, _) -> valorDe(campo).trim().isEmpty() }
+    // Las firmas no se piden: no se proponen.
+    val pendientes = props.filter { (campo, _) -> campo !in CAMPOS_FIRMA && valorDe(campo).trim().isEmpty() }
     if (pendientes.isNotEmpty()) {
-        BloqueSuave(Modifier.padding(bottom = Medidas.e3)) {
+        BloqueSuave(Modifier.padding(bottom = Medidas.e3).objetivoGuia("b1.guardados")) {
             Text("Tienes datos guardados (${pendientes.values.map { it.procedencia }.distinct().joinToString(" y ")}). Puedes usarlos o escribirlos de nuevo.", style = tipos.pista, color = c.tintaSuave, modifier = Modifier.padding(bottom = Medidas.e2))
             Boton("Usar los datos guardados (${pendientes.size})", {
                 cambiar { x ->
@@ -387,8 +439,7 @@ private fun PasoCentro(
                     for ((campo, p) in pendientes) y = when (campo) {
                         "tipoCentro" -> y.copy(tipoCentro = p.valor); "nombreCentro" -> y.copy(nombreCentro = p.valor); "codigoPca" -> y.copy(codigoPca = p.valor)
                         "nombrePresidenta" -> y.copy(nombrePresidenta = p.valor); "dniPresidenta" -> y.copy(dniPresidenta = p.valor); "celular" -> y.copy(celular = p.valor)
-                        "nombreTesorera" -> y.copy(nombreTesorera = p.valor); "dniTesorera" -> y.copy(dniTesorera = p.valor)
-                        "nombrePresidentaFirma" -> y.copy(nombrePresidentaFirma = p.valor); "dniPresidentaFirma" -> y.copy(dniPresidentaFirma = p.valor); else -> y
+                        else -> y
                     }
                     y
                 }
@@ -400,10 +451,10 @@ private fun PasoCentro(
     fun escribir(campo: String, f: (Rendicion) -> Rendicion) { propuestos.value = propuestos.value - campo; cambiar(f) }
 
     Leyenda("Tipo de centro (marca uno)")
-    Opciones(listOf("comedor" to "Comedor", "olla_comun" to "Olla común"), { it == r.tipoCentro }, { v -> cambiar { it.copy(tipoCentro = v) } })
+    Box(Modifier.objetivoGuia("b1.tipo")) { Opciones(listOf("comedor" to "Comedor", "olla_comun" to "Olla común"), { it == r.tipoCentro }, { v -> cambiar { it.copy(tipoCentro = v) } }) }
     hs.errorDe("tipoCentro")?.let { Text(it, style = tipos.chico, color = c.error) }
     Spacer(Modifier.height(Medidas.e3))
-    Campo("Nombre del centro de atención", r.nombreCentro, { v -> escribir("nombreCentro") { it.copy(nombreCentro = v) } }, pista = marca("nombreCentro") ?: "Como lo registró la Municipalidad.", error = hs.errorDe("nombreCentro"), placeholder = "Ej.: Olla común Virgen de Fátima", obligatorio = true)
+    Campo("Nombre del centro de atención", r.nombreCentro, { v -> escribir("nombreCentro") { it.copy(nombreCentro = v) } }, Modifier.objetivoGuia("b1.nombreCentro"), pista = marca("nombreCentro") ?: "Como lo registró la Municipalidad.", error = hs.errorDe("nombreCentro"), placeholder = "Ej.: Olla común Virgen de Fátima", obligatorio = true)
     Spacer(Modifier.height(Medidas.e3))
     Campo("Código de PCA N.º", r.codigoPca, { v -> escribir("codigoPca") { it.copy(codigoPca = v) } }, pista = marca("codigoPca") ?: "El código que te dio la Municipalidad.", error = hs.errorDe("codigoPca"), aviso = hs.avisoDe("codigoPca"), placeholder = "Ej.: 0123", obligatorio = true, soloDigitos = true)
     Spacer(Modifier.height(Medidas.e3))
@@ -411,7 +462,7 @@ private fun PasoCentro(
     Spacer(Modifier.height(Medidas.e3))
     Campo("DNI", r.dniPresidenta, { v -> escribir("dniPresidenta") { it.copy(dniPresidenta = v) } }, pista = marca("dniPresidenta") ?: "8 cifras.", error = hs.errorDe("dniPresidenta"), placeholder = "12345678", obligatorio = true, soloDigitos = true, maxLargo = 8)
     Spacer(Modifier.height(Medidas.e3))
-    Campo("Celular N.º", r.celular, { v -> escribir("celular") { it.copy(celular = v) } }, pista = marca("celular") ?: "9 cifras; empieza con 9.", error = hs.errorDe("celular"), placeholder = "987654321", obligatorio = true, soloDigitos = true, maxLargo = 9)
+    Campo("Celular N.º", r.celular, { v -> escribir("celular") { it.copy(celular = v) } }, Modifier.objetivoGuia("b1.celular"), pista = marca("celular") ?: "9 cifras; empieza con 9.", error = hs.errorDe("celular"), placeholder = "987654321", obligatorio = true, soloDigitos = true, maxLargo = 9)
 }
 
 @Composable
@@ -420,15 +471,18 @@ private fun PasoPeriodo(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) 
     TituloSeccion("Periodo que se rinde")
     Pista("¿Qué semana, quincena o mes estás rindiendo?", Modifier.padding(bottom = Medidas.e3))
     Leyenda("Cada cuánto se entrega")
-    Opciones(listOf("semanal" to "Semanal", "quincenal" to "Quincenal", "mensual" to "Mensual"), { it == r.periodo.tipo }, { v -> cambiar { it.copy(periodo = it.periodo.copy(tipo = v)) } })
+    Box(Modifier.objetivoGuia("b1.cada")) { Opciones(listOf("semanal" to "Semanal", "quincenal" to "Quincenal", "mensual" to "Mensual"), { it == r.periodo.tipo }, { v -> cambiar { it.copy(periodo = it.periodo.copy(tipo = v)) } }) }
     Spacer(Modifier.height(Medidas.e3))
-    CampoFecha("Fecha de rendición", r.fechaRendicion, { v -> cambiar { it.copy(fechaRendicion = v) } }, pista = "El día que entregas este B-1 en la Municipalidad.", error = hs.errorDe("fechaRendicion"), obligatorio = true)
+    // Se rinde después de recibir el subsidio y de la última compra.
+    val ultimaCompra = r.egresos.map { it.fechaCompra }.filter(::esIso).maxOrNull() ?: ""
+    CampoFecha("Fecha de rendición", r.fechaRendicion, { v -> cambiar { it.copy(fechaRendicion = v) } }, Modifier.objetivoGuia("b1.fechaRendicion"), pista = "El día que entregas este B-1 en la Municipalidad.", error = hs.errorDe("fechaRendicion"), obligatorio = true,
+        desde = listOf(r.fechaAsignacion, ultimaCompra).filter(::esIso).maxOrNull() ?: "")
 
     // Ayudas, no datos: se usan solo si se tocan.
     val p = proponerPeriodo(r.periodo.tipo.ifEmpty { "mensual" }, r.fechaRendicion.ifEmpty { hoyIso() })
     val yaIgual = r.periodo.inicio == p.inicio && r.periodo.fin == p.fin
     if (!(yaIgual && r.periodo.etiqueta.isNotEmpty())) {
-        BloqueSuave(Modifier.padding(top = Medidas.e3)) {
+        BloqueSuave(Modifier.padding(top = Medidas.e3).objetivoGuia("b1.propuesta")) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Fechas del periodo", style = tipos.chicoNegrita, color = c.acentoTexto)
@@ -443,14 +497,14 @@ private fun PasoPeriodo(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) 
     }
     Spacer(Modifier.height(Medidas.e3))
     Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-        CampoFecha("Primer día del periodo", r.periodo.inicio, { v -> cambiar { it.copy(periodo = it.periodo.copy(inicio = v)) } }, Modifier.weight(1f), error = hs.errorDe("periodo.inicio"), aviso = hs.avisoDe("periodo.inicio"), obligatorio = true)
-        CampoFecha("Último día del periodo", r.periodo.fin, { v -> cambiar { it.copy(periodo = it.periodo.copy(fin = v)) } }, Modifier.weight(1f), pista = "Las compras que rindes van de un día al otro.", obligatorio = true)
+        CampoFecha("Primer día del periodo", r.periodo.inicio, { v -> cambiar { it.copy(periodo = it.periodo.copy(inicio = v)) } }, Modifier.weight(1f), error = hs.errorDe("periodo.inicio"), aviso = hs.avisoDe("periodo.inicio"), obligatorio = true, hasta = r.periodo.fin)
+        CampoFecha("Último día del periodo", r.periodo.fin, { v -> cambiar { it.copy(periodo = it.periodo.copy(fin = v)) } }, Modifier.weight(1f), pista = "Las compras que rindes van de un día al otro.", obligatorio = true, desde = r.periodo.inicio)
     }
     // El código sale de las fechas: una quincena, un mes o una semana completos.
     if (r.periodo.inicio.isNotEmpty() && r.periodo.fin.isNotEmpty()) {
         val codigo = codigoPeriodo(r.periodo)
-        if (codigo != null) FranjaEstado("Código de este B-1: $codigo", TonoPastilla.OK, Modifier.padding(top = Medidas.e3), icono = "boleta")
-        else FranjaEstado("Estas fechas no son una quincena, un mes ni una semana completos: este B-1 no tiene código.", TonoPastilla.NEUTRA, Modifier.padding(top = Medidas.e3), icono = "aviso")
+        if (codigo != null) FranjaEstado("Código de este B-1: $codigo", TonoPastilla.OK, Modifier.padding(top = Medidas.e3).objetivoGuia("b1.codigo"), icono = "boleta")
+        else FranjaEstado("Estas fechas no son una quincena, un mes ni una semana completos: este B-1 no tiene código.", TonoPastilla.NEUTRA, Modifier.padding(top = Medidas.e3).objetivoGuia("b1.codigo"), icono = "aviso")
     }
     Spacer(Modifier.height(Medidas.e3))
     Campo("Mes de rendición", r.periodo.etiqueta, { v -> cambiar { it.copy(periodo = it.periodo.copy(etiqueta = v)) } }, pista = "Lo que se escribe en la hoja, en «Mes de rendición».", error = hs.errorDe("periodo.etiqueta"), placeholder = "Ej.: Setiembre 2026", obligatorio = true)
@@ -460,8 +514,11 @@ private fun PasoPeriodo(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) 
 private fun PasoIngresos(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) -> Rendicion) -> Unit) {
     TituloSeccion("Ingresos")
     Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-        CampoSoles("Monto del subsidio (S/)", r.montoSubsidioCent, { v -> cambiar { it.copy(montoSubsidioCent = v) } }, Modifier.weight(1f), pista = "Lo que te dio la Municipalidad para este periodo.", error = hs.errorDe("montoSubsidio"), obligatorio = true)
-        CampoFecha("Fecha de la asignación", r.fechaAsignacion, { v -> cambiar { it.copy(fechaAsignacion = v) } }, Modifier.weight(1f), pista = "El día que recibiste ese dinero.", error = hs.errorDe("fechaAsignacion"), aviso = hs.avisoDe("fechaAsignacion"), obligatorio = true)
+        CampoSoles("Monto del subsidio (S/)", r.montoSubsidioCent, { v -> cambiar { it.copy(montoSubsidioCent = v) } }, Modifier.weight(1f).objetivoGuia("b1.monto"), pista = "Lo que te dio la Municipalidad para este periodo.", error = hs.errorDe("montoSubsidio"), obligatorio = true)
+        // Se recibe antes de la primera compra y de la rendición.
+        val primeraCompra = r.egresos.map { it.fechaCompra }.filter(::esIso).minOrNull() ?: ""
+        CampoFecha("Fecha de la asignación", r.fechaAsignacion, { v -> cambiar { it.copy(fechaAsignacion = v) } }, Modifier.weight(1f).objetivoGuia("b1.fechaAsignacion"), pista = "El día que recibiste ese dinero.", error = hs.errorDe("fechaAsignacion"), aviso = hs.avisoDe("fechaAsignacion"), obligatorio = true,
+            hasta = listOf(r.fechaRendicion, primeraCompra).filter(::esIso).minOrNull() ?: "")
     }
 }
 
@@ -473,9 +530,9 @@ private fun PasoCompras(
     val c = colores
     val avisos = LocalAvisos.current
     TituloSeccion("Egresos")
-    Pista("Una ficha por boleta, copiada tal cual. Si dice «varios», márcalo y escribe solo el total.", Modifier.padding(bottom = Medidas.e3))
+    Pista("Una ficha por compra, copiada tal cual de la boleta o del papel.", Modifier.padding(bottom = Medidas.e3))
     hs.errorDe("egresos")?.let { Text(it, style = tipos.chico, color = c.error, modifier = Modifier.padding(bottom = Medidas.e2)) }
-    Superficie {
+    Superficie(Modifier.objetivoGuia("b1.compras")) {
         r.egresos.forEachIndexed { i, f ->
             val campo = "egreso.${f.id}"
             val conError = hs.any { it.campo == campo && it.severidad == Severidad.ERROR && !it.falta }
@@ -483,6 +540,8 @@ private fun PasoCompras(
             val estaAbierta = abierto == f.id || (abierto == null && !egresoCompleto(f))
             Row(
                 Modifier.fillMaxWidth().background(if (estaAbierta) c.superficie2 else c.superficie).clickable(role = Role.Button) { alAbrir(if (estaAbierta) "" else f.id) }
+                    // TalkBack dice si la ficha está abierta (la flecha sola no se oye).
+                    .semantics { stateDescription = if (estaAbierta) "Abierta" else "Cerrada" }
                     .defaultMinSize(minHeight = 56.dp).padding(Medidas.e4, Medidas.e3),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)
             ) {
@@ -492,6 +551,9 @@ private fun PasoCompras(
                 Icono("flecha", 18.dp, c.tintaSuave, Modifier.rotate(if (estaAbierta) 90f else 0f))
             }
             if (estaAbierta) {
+                // La que se está llenando queda abierta: no se cierra sola al completarse,
+                // con la boleta todavía por escribir.
+                val editar: ((Egreso) -> Egreso) -> Unit = { cambio -> if (abierto != f.id) alAbrir(f.id); cambiarEgreso(f.id, cambio) }
                 Column(Modifier.padding(Medidas.e4, Medidas.e2, Medidas.e4, Medidas.e4)) {
                     val mensajes = hs.filter { it.campo == campo && !(it.severidad == Severidad.ERROR && it.falta) }
                     for (m in mensajes) Text(m.mensaje, style = tipos.chico, color = if (m.severidad == Severidad.ERROR) c.error else c.aviso, modifier = Modifier.padding(bottom = Medidas.e2))
@@ -500,48 +562,58 @@ private fun PasoCompras(
                         cambiar { x -> x.copy(egresos = x.egresos.filter { it.id != f.id }.ifEmpty { listOf(nuevoEgreso()) }) }
                         avisos.mostrar("Quitaste la compra ${i + 1}") { cambiar { x -> x.copy(egresos = antes) } }
                     }, Modifier.padding(bottom = 10.dp), diminuto = true, tipo = TipoBoton.PELIGRO)
-                    CampoFecha("Fecha de la compra", f.fechaCompra, { v -> cambiarEgreso(f.id) { it.copy(fechaCompra = v) } }, pista = "La fecha que dice la boleta.")
+                    // Entre el día que llegó el subsidio y la rendición.
+                    CampoFecha("Fecha de la compra", f.fechaCompra, { v -> editar { it.copy(fechaCompra = v) } }, pista = "La fecha que dice la boleta.", desde = r.fechaAsignacion, hasta = r.fechaRendicion)
                     Spacer(Modifier.height(10.dp))
-                    Campo("Descripción de la compra", f.descripcion, { v -> cambiarEgreso(f.id) { it.copy(descripcion = v) } }, pista = "Qué compraste. Ej.: Arroz superior.")
+                    Campo("Descripción de la compra", f.descripcion, { v -> editar { it.copy(descripcion = v) } }, pista = "Qué compraste. Ej.: Arroz superior.")
                     Spacer(Modifier.height(10.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                        var cantidad by remember(f.id) { mutableStateOf(f.cantidad?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() } ?: "") }
-                        Campo("Cantidad", cantidad, { v -> cantidad = v; cambiarEgreso(f.id) { it.copy(cantidad = aNumero(v)) } }, Modifier.weight(1f), decimal = true, habilitado = !f.cantidadVarios)
-                        Column(Modifier.weight(1f)) {
-                            Leyenda("Unidad de medida")
-                            var unidadAbierta by remember { mutableStateOf(false) }
-                            Box {
-                                Ficha(f.unidadMedida.ifEmpty { "—" }, f.unidadMedida.isNotEmpty(), { unidadAbierta = true }, Modifier.fillMaxWidth(), minAlto = 48.dp)
-                                androidx.compose.material3.DropdownMenu(expanded = unidadAbierta, onDismissRequest = { unidadAbierta = false }, containerColor = c.superficie) {
-                                    for (u in listOf("—") + UNIDADES) androidx.compose.material3.DropdownMenuItem(text = { Text(u, style = tipos.texto, color = c.tinta) }, onClick = { unidadAbierta = false; cambiarEgreso(f.id) { it.copy(unidadMedida = if (u == "—") "" else u) } })
+                    // Varios: la boleta junta varias cosas o no dice cuánto ni a cuánto (la carne
+                    // de distintos cortes). No se pide desglosar: va «varios».
+                    val varios = f.cantidadVarios || f.precioUnitarioVarios
+                    Leyenda("¿Cómo viene la compra?")
+                    Opciones(listOf(false to "Un producto, con cantidad y precio", true to "Varios juntos"), { it == varios }, { v ->
+                        editar {
+                            if (v) it.copy(cantidadVarios = true, precioUnitarioVarios = true, unidadMedida = "varios")
+                            else it.copy(cantidadVarios = false, precioUnitarioVarios = false, unidadMedida = if (it.unidadMedida == "varios") "" else it.unidadMedida)
+                        }
+                    })
+                    if (varios) {
+                        Pista("Para cuando la boleta junta varias cosas o no dice cuánto ni a cuánto. En la hoja sale «varios» en cantidad, unidad y precio: escribe solo el monto total.", Modifier.padding(top = Medidas.e2))
+                    } else {
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+                            var cantidad by remember(f.id) { mutableStateOf(f.cantidad?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() } ?: "") }
+                            Campo("Cantidad", cantidad, { v -> cantidad = v; editar { conTotalCalculado(it, it.copy(cantidad = aNumero(v))) } }, Modifier.weight(1f), decimal = true)
+                            Column(Modifier.weight(1f)) {
+                                Leyenda("Unidad de medida")
+                                var unidadAbierta by remember { mutableStateOf(false) }
+                                Box {
+                                    Ficha(f.unidadMedida.ifEmpty { "—" }, f.unidadMedida.isNotEmpty(), { unidadAbierta = true }, Modifier.fillMaxWidth(), minAlto = 48.dp, comoBoton = true)
+                                    androidx.compose.material3.DropdownMenu(expanded = unidadAbierta, onDismissRequest = { unidadAbierta = false }, containerColor = c.superficie) {
+                                        for (u in listOf("—") + UNIDADES) androidx.compose.material3.DropdownMenuItem(text = { Text(u, style = tipos.texto, color = c.tinta) }, onClick = { unidadAbierta = false; editar { it.copy(unidadMedida = if (u == "—") "" else u) } })
+                                    }
                                 }
                             }
                         }
+                        Spacer(Modifier.height(10.dp))
+                        CampoSoles("Precio unitario (S/)", f.precioUnitarioCent, { v -> editar { conTotalCalculado(it, it.copy(precioUnitarioCent = v)) } }, pista = "El precio de uno, como dice la boleta.")
                     }
-                    Spacer(Modifier.height(Medidas.e2))
-                    Ficha("La boleta dice «varios» en la cantidad", f.cantidadVarios, { cambiarEgreso(f.id) { it.copy(cantidadVarios = !it.cantidadVarios, cantidad = if (!it.cantidadVarios) null else it.cantidad) } })
                     Spacer(Modifier.height(10.dp))
-                    Leyenda("Origen del dinero")
-                    // Lo comprado con dinero propio no va en el B-1: va abajo, en «Gasto propio».
-                    // Una compra que ya lo tenía lo sigue mostrando, para poder cambiarlo.
-                    Opciones(ORIGENES.filter { it.first != "aporte_propio" || f.origenFondo == "aporte_propio" }, { it == f.origenFondo }, { v -> cambiarEgreso(f.id) { it.copy(origenFondo = v) } })
-                    Pista("No va al formato. El subsidio municipal es solo para alimentos.", Modifier.padding(top = 4.dp))
-                    Spacer(Modifier.height(10.dp))
-                    Campo("RUC del proveedor", f.rucProveedor, { v -> cambiarEgreso(f.id) { it.copy(rucProveedor = v) } }, pista = "11 cifras; está arriba en la boleta.", soloDigitos = true, maxLargo = 11)
-                    Spacer(Modifier.height(10.dp))
-                    Campo("Nombre del proveedor", f.proveedorNombre, { v -> cambiarEgreso(f.id) { it.copy(proveedorNombre = v) } }, pista = "No va al formato.")
+                    // Calculado (cantidad × precio) se dice siempre: el que vale es el de la boleta.
+                    val calculado = f.montoTotalCent != null && f.montoTotalCent == totalDeLaFila(f)
+                    val pistaTotal = if (calculado) "Calculado: ${f.cantidad?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() }} × S/ ${formatearSoles(f.precioUnitarioCent)}. Si tu boleta dice otro total, cámbialo."
+                        else "Lo que pagaste por esta compra."
+                    CampoSoles("Monto total (S/)", f.montoTotalCent, { v -> editar { it.copy(montoTotalCent = v) } }, pista = pistaTotal, obligatorio = true)
+                    // Lo de la boleta: en el mercado muchas veces no dan; entonces queda vacío.
+                    Spacer(Modifier.height(Medidas.e4))
+                    Leyenda("La boleta, si te dieron")
+                    Pista("Si compraste en el mercado sin boleta, déjalo vacío.", Modifier.padding(bottom = Medidas.e2))
+                    Campo("RUC del vendedor", f.rucProveedor, { v -> editar { it.copy(rucProveedor = v) } }, pista = "11 cifras; está arriba en la boleta.", soloDigitos = true, maxLargo = 11)
                     Spacer(Modifier.height(10.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                        Campo("Serie", f.boletaSerie, { v -> cambiarEgreso(f.id) { it.copy(boletaSerie = v) } }, Modifier.weight(1f), pista = "Ej.: B001", placeholder = "E001")
-                        Campo("Correlativo", f.boletaCorrelativo, { v -> cambiarEgreso(f.id) { it.copy(boletaCorrelativo = v) } }, Modifier.weight(1f), pista = "Ej.: 000143", placeholder = "000143")
+                        Campo("Serie", f.boletaSerie, { v -> editar { it.copy(boletaSerie = v) } }, Modifier.weight(1f), pista = "Ej.: B001")
+                        Campo("Número", f.boletaCorrelativo, { v -> editar { it.copy(boletaCorrelativo = v) } }, Modifier.weight(1f), pista = "Ej.: 000143")
                     }
-                    Spacer(Modifier.height(10.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                        CampoSoles("Precio unitario (S/)", f.precioUnitarioCent, { v -> cambiarEgreso(f.id) { it.copy(precioUnitarioCent = v) } }, Modifier.weight(1f), pista = "Precio de uno. Si no aparece, marca «varios».", habilitado = !f.precioUnitarioVarios)
-                        CampoSoles("Monto total (S/)", f.montoTotalCent, { v -> cambiarEgreso(f.id) { it.copy(montoTotalCent = v) } }, Modifier.weight(1f), pista = "Lo que pagaste por esta compra.")
-                    }
-                    Spacer(Modifier.height(Medidas.e2))
-                    Ficha("La boleta dice «varios» en el precio", f.precioUnitarioVarios, { cambiarEgreso(f.id) { it.copy(precioUnitarioVarios = !it.precioUnitarioVarios, precioUnitarioCent = if (!it.precioUnitarioVarios) null else it.precioUnitarioCent) } })
                 }
             }
             if (i < r.egresos.size - 1) Separador()
@@ -552,7 +624,7 @@ private fun PasoCompras(
 
     // Los totales se suman solos; de solo lectura.
     val t = totales(r)
-    Superficie(Modifier.padding(top = Medidas.e4)) {
+    Superficie(Modifier.padding(top = Medidas.e4).objetivoGuia("b1.totales")) {
         Column(Modifier.padding(Medidas.e4, Medidas.e3)) {
             FilaTotal("Gastos con el subsidio económico", t.conSubsidio?.let { "S/ ${formatearSoles(it)}" })
             Separador()
@@ -570,36 +642,6 @@ private fun PasoCompras(
             for (m in hs.filter { it.campo == "totales" }) Text(m.mensaje, style = tipos.chico, color = if (m.severidad == Severidad.ERROR) c.error else c.aviso, modifier = Modifier.padding(top = Medidas.e2))
         }
     }
-
-    // Gasto propio: fuera del B-1.
-    Spacer(Modifier.height(Medidas.e5))
-    TituloSeccion("Gasto propio (no va en el B-1)", apoyo = true)
-    Pista("Lo comprado con su propio dinero, como azúcar extra. No va en el B-1: sale en el reporte del mes.", Modifier.padding(bottom = Medidas.e3))
-    if (r.gastosPropios.isNotEmpty()) {
-        Superficie {
-            r.gastosPropios.forEachIndexed { i, g ->
-                Column(Modifier.fillMaxWidth().padding(Medidas.e4, Medidas.e3)) {
-                    fun cambiarGasto(cambio: (GastoPropio) -> GastoPropio) = cambiar { x -> x.copy(gastosPropios = x.gastosPropios.map { if (it.id == g.id) cambio(it) else it }) }
-                    CampoFecha("Fecha", g.fecha, { v -> cambiarGasto { it.copy(fecha = v) } })
-                    Spacer(Modifier.height(Medidas.e2))
-                    Campo("Qué compraron", g.descripcion, { v -> cambiarGasto { it.copy(descripcion = v) } })
-                    Spacer(Modifier.height(Medidas.e2))
-                    CampoSoles("Cuánto (S/)", g.montoCent, { v -> cambiarGasto { it.copy(montoCent = v) } })
-                    Boton("Quitar este gasto", {
-                        val antes = r.gastosPropios
-                        cambiar { x -> x.copy(gastosPropios = x.gastosPropios.filter { it.id != g.id }) }
-                        avisos.mostrar("Quitaste el gasto propio") { cambiar { x -> x.copy(gastosPropios = antes) } }
-                    }, Modifier.padding(top = Medidas.e2), diminuto = true, tipo = TipoBoton.PELIGRO)
-                }
-                if (i < r.gastosPropios.size - 1) Separador()
-            }
-        }
-        val suma = r.gastosPropios.mapNotNull { it.montoCent }.sum()
-        Text("Gasto propio: S/ ${formatearSoles(suma)}. No va en el B-1.", style = tipos.chicoFuerte, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
-    }
-    Boton("Anotar un gasto propio", {
-        cambiar { x -> x.copy(gastosPropios = x.gastosPropios + GastoPropio(id = uuid(), fecha = hoyIso())) }
-    }, Modifier.padding(top = Medidas.e3), diminuto = true, icono = "mas")
 }
 
 @Composable
@@ -613,21 +655,6 @@ private fun FilaTotal(rotulo: String, valor: String?, destacado: Boolean = false
 }
 
 @Composable
-private fun PasoFirmas(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) -> Rendicion) -> Unit) {
-    TituloSeccion("Firmas")
-    Pista("Lo que va debajo de cada línea de firma. El sello se pone a mano.", Modifier.padding(bottom = Medidas.e3))
-    Leyenda("Presidenta")
-    Campo("Nombre y apellido", r.nombrePresidentaFirma, { v -> cambiar { it.copy(nombrePresidentaFirma = v) } }, pista = "Como en su DNI.", aviso = hs.avisoDe("nombrePresidentaFirma"))
-    Spacer(Modifier.height(Medidas.e2))
-    Campo("DNI N.º", r.dniPresidentaFirma, { v -> cambiar { it.copy(dniPresidentaFirma = v) } }, aviso = hs.avisoDe("dniPresidentaFirma"), soloDigitos = true, maxLargo = 8)
-    Spacer(Modifier.height(Medidas.e4))
-    Leyenda("Tesorera")
-    Campo("Nombre y apellido", r.nombreTesorera, { v -> cambiar { it.copy(nombreTesorera = v) } }, pista = "Como en su DNI.", aviso = hs.avisoDe("nombreTesorera"))
-    Spacer(Modifier.height(Medidas.e2))
-    Campo("DNI N.º", r.dniTesorera, { v -> cambiar { it.copy(dniTesorera = v) } }, error = hs.errorDe("dniTesorera"), soloDigitos = true, maxLargo = 8)
-}
-
-@Composable
 private fun PasoRevisar(
     r: Rendicion, rendiciones: List<Rendicion>, indice: Int, hs: List<Hallazgo>,
     irACampo: (String) -> Unit, abrir: (String) -> Unit, empezarMes: () -> Unit,
@@ -637,7 +664,7 @@ private fun PasoRevisar(
     TituloSeccion("Revisar antes de entregar")
     val errores = hs.filter { it.severidad == Severidad.ERROR }.sortedBy { pasoDe(it.campo) }
     if (errores.isEmpty()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.objetivoGuia("b1.estado"), verticalAlignment = Alignment.CenterVertically) {
             Icono("ok", 20.dp, c.ok)
             Spacer(Modifier.width(Medidas.e2))
             ParaLeer("El B-1 está completo. Revísalo con la tesorera y el fiscal antes de entregarlo.")
@@ -646,7 +673,7 @@ private fun PasoRevisar(
     } else {
         ParaLeer((if (errores.size == 1) "Antes de entregarlo, falta esto: " else "Antes de entregarlo, faltan ${errores.size} cosas: ") + errores.joinToString(". ") { it.mensaje.removeSuffix(".") })
         Text(if (errores.size == 1) "Antes de entregarlo, falta esto:" else "Antes de entregarlo, faltan ${errores.size} cosas:", style = tipos.texto, color = c.tinta, modifier = Modifier.padding(bottom = Medidas.e2))
-        Superficie {
+        Superficie(Modifier.objetivoGuia("b1.estado")) {
             errores.forEachIndexed { i, h ->
                 Row(Modifier.fillMaxWidth().padding(Medidas.e4, Medidas.e3), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                     Pastilla("Paso ${pasoDe(h.campo)}", TonoPastilla.ADVERTENCIA)
@@ -674,16 +701,17 @@ private fun PasoRevisar(
     BotonesExportar(
         pdf = { Documento(pdfDelB1(hojasDelB1(r), selloAhora(), "Formato B-1 $etiqueta"), "B-1 $etiqueta", "Formato B-1 $etiqueta (copia de referencia)", AlElegir.B1(r.id, "pdf")) },
         excel = { Documento(excelDelB1(r), "B-1 $etiqueta", "Formato B-1 $etiqueta", AlElegir.B1(r.id, "excel")) },
+        modifier = Modifier.objetivoGuia("b1.exportar"),
         puede = listoParaExportar,
         // En el último paso, mandar el B-1 es lo que se hace: la única acción rellena.
         pdfPrincipal = true
     )
 
     Spacer(Modifier.height(Medidas.e5))
-    TituloSeccion("Meses anteriores", apoyo = true)
+    TituloSeccion("Meses anteriores", apoyo = true, modifier = Modifier.objetivoGuia("b1.meses"))
     if (indice == 0) {
         Pista("Al entregar este B-1, empieza el del mes siguiente. Este queda guardado abajo.", Modifier.padding(bottom = Medidas.e3))
-        Boton("Empezar el B-1 del mes siguiente", empezarMes)
+        Boton("Empezar el B-1 del mes siguiente", empezarMes, Modifier.objetivoGuia("b1.mesSiguiente"))
     }
     val anteriores = rendiciones.drop(1)
     if (anteriores.isNotEmpty()) {
@@ -697,7 +725,7 @@ private fun PasoRevisar(
                         codigoPeriodo(x.periodo)?.takeIf { it != nombreDelMes(x) }?.let { Text(it, style = tipos.chico, color = c.tintaSuave) }
                     }
                     Text(if (tx.total == null) "sin subsidio" else "S/ ${formatearSoles(tx.total)}", style = tipos.chico, color = c.tintaSuave)
-                    if (i == indice) Text("abierto", style = tipos.chicoNegrita, color = c.acentoTexto) else Boton("Abrir", { abrir(x.id) }, diminuto = true)
+                    if (i == indice) Text("abierto", style = tipos.chicoNegrita, color = c.acentoTexto) else Boton(if (x.periodo.etiqueta.isNotBlank()) "Abrir ${x.periodo.etiqueta.trim()}" else "Abrir este B-1", { abrir(x.id) }, diminuto = true)
                 }
                 if (i < rendiciones.size - 1) Separador()
             }

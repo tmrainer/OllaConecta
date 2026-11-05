@@ -75,6 +75,10 @@ class Preferencias(context: Context) {
 
     fun marcarBienvenidaVista() { _bienvenidaVista.value = true; prefs.edit().putBoolean("bienvenidaVista", true).apply() }
 
+    /** Las guías generales ya vistas (la del B-1): después, «Ayuda» va directo a la del paso. */
+    fun guiaVista(clave: String): Boolean = prefs.getBoolean("guia.$clave", false)
+    fun marcarGuiaVista(clave: String) { prefs.edit().putBoolean("guia.$clave", true).apply() }
+
     /**
      * Lo de este teléfono que el APK 1.7 guardaba en localStorage (pi3.*, ver
      * MigracionDel17.kt). Solo lo que se reconoce; lo demás queda como está.

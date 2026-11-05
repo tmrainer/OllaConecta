@@ -30,17 +30,31 @@ import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelMes
 import io.github.tmrainer.asistencia.nucleo.documentos.reporteDelDia
 import io.github.tmrainer.asistencia.nucleo.documentos.reporteDelMes
 import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
+import io.github.tmrainer.asistencia.nucleo.modelo.GastoPropio
+import io.github.tmrainer.asistencia.nucleo.modelo.Rendicion
 import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
 import io.github.tmrainer.asistencia.nucleo.modelo.cuantos
+import io.github.tmrainer.asistencia.nucleo.modelo.formatearSoles
 import io.github.tmrainer.asistencia.nucleo.modelo.hoyIso
+import io.github.tmrainer.asistencia.nucleo.modelo.nuevaRendicion
+import io.github.tmrainer.asistencia.nucleo.modelo.uuid
+import io.github.tmrainer.asistencia.ui.GUIA_REPORTES
+import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
+import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
+import io.github.tmrainer.asistencia.ui.componentes.Campo
 import io.github.tmrainer.asistencia.ui.componentes.CampoFecha
+import io.github.tmrainer.asistencia.ui.componentes.CampoSoles
 import io.github.tmrainer.asistencia.ui.componentes.Documento
+import io.github.tmrainer.asistencia.ui.componentes.LocalAvisos
 import io.github.tmrainer.asistencia.ui.componentes.Opciones
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.Pista
+import io.github.tmrainer.asistencia.ui.componentes.Separador
+import io.github.tmrainer.asistencia.ui.componentes.Superficie
+import io.github.tmrainer.asistencia.ui.componentes.TipoBoton
 import io.github.tmrainer.asistencia.ui.componentes.TituloSeccion
 import io.github.tmrainer.asistencia.ui.tema.Medidas
 import io.github.tmrainer.asistencia.ui.tema.colores
@@ -64,38 +78,89 @@ fun PantallaReportes(ctx: Contexto) {
     var mes by remember { mutableStateOf(hoy.take(7)) }
 
     Column(Modifier.fillMaxWidth()) {
-        Cabecera(ctx, "Reportes", "Para presentar, en PDF o Excel")
+        Cabecera(ctx, "Reportes", "Para presentar, en PDF o Excel", guia = GUIA_REPORTES)
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
         ) {
-            TituloSeccion("Reporte del día")
-            Pista("Menú, raciones y quiénes recibieron. Con línea para firmar.", Modifier.padding(bottom = Medidas.e3))
-            CampoFecha("Día", fecha, { if (it.isNotEmpty()) fecha = it })
-            val dia = remember(padron, fecha) { reporteDelDia(padron, fecha) }
-            val textoDia = if (dia.servidas == 0 && dia.menuDelDia.isEmpty()) "Ese día no tiene nada anotado."
-            else "${aDdMmAa(fecha)}: ${cuantos(dia.servidas, "ración servida", "raciones servidas")}" +
-                (if (dia.preparadas != null) " de ${dia.preparadas} preparadas" else "") + (if (dia.menuDelDia.isNotEmpty()) ". Se cocinó: ${dia.menuDelDia}." else ".")
-            ParaLeer(textoDia)
-            Text(textoDia, style = tipos.texto, color = c.tinta, modifier = Modifier.padding(vertical = Medidas.e3))
-            BotonesExportar(
-                pdf = { Documento(pdfDelDia(estado.padron.value, fecha, centro, responsable, selloAhora()), "Reporte del dia $fecha", "Reporte del día ${aDdMmAa(fecha)}") },
-                excel = { Documento(excelDelDia(estado.padron.value, fecha, centro), "Reporte del dia $fecha", "Reporte del día ${aDdMmAa(fecha)}") }
-            )
+            Column(Modifier.objetivoGuia("reportes.dia")) {
+                TituloSeccion("Reporte del día")
+                Pista("Menú, raciones y quiénes recibieron. Con línea para firmar.", Modifier.padding(bottom = Medidas.e3))
+                CampoFecha("Día", fecha, { if (it.isNotEmpty()) fecha = it })
+                val dia = remember(padron, fecha) { reporteDelDia(padron, fecha) }
+                val textoDia = if (dia.servidas == 0 && dia.menuDelDia.isEmpty()) "Ese día no tiene nada anotado."
+                else "${aDdMmAa(fecha)}: ${cuantos(dia.servidas, "ración servida", "raciones servidas")}" +
+                    (if (dia.preparadas != null) " de ${dia.preparadas} preparadas" else "") + (if (dia.menuDelDia.isNotEmpty()) ". Se cocinó: ${dia.menuDelDia}." else ".")
+                ParaLeer(textoDia)
+                Text(textoDia, style = tipos.texto, color = c.tinta, modifier = Modifier.padding(vertical = Medidas.e3))
+                BotonesExportar(
+                    modifier = Modifier.objetivoGuia("reportes.exportar"),
+                    pdf = { Documento(pdfDelDia(estado.padron.value, fecha, centro, responsable, selloAhora()), "Reporte del dia $fecha", "Reporte del día ${aDdMmAa(fecha)}") },
+                    excel = { Documento(excelDelDia(estado.padron.value, fecha, centro), "Reporte del dia $fecha", "Reporte del día ${aDdMmAa(fecha)}") }
+                )
+            }
 
             Spacer(Modifier.height(Medidas.e6))
-            TituloSeccion("Reporte del mes")
-            Pista("Asistencia por persona, raciones del mes e insumos del B-1. El gasto propio va aparte.", Modifier.padding(bottom = Medidas.e3))
-            Opciones(meses.map { it to etiquetaMes(it) }, { it == mes }, { mes = it })
-            val delMes = remember(padron, rendiciones, mes) { reporteDelMes(padron, rendiciones, mes) }
-            val textoMes = "${delMes.etiqueta}: ${cuantos(delMes.dias.size, "día")} con atención, ${cuantos(delMes.servidas, "ración servida", "raciones servidas")}, " +
-                "${cuantos(delMes.personas.count { it.dias > 0 }, "persona")} que vinieron y ${cuantos(delMes.insumos.size, "compra")} del B-1."
-            ParaLeer(textoMes)
-            Text(textoMes, style = tipos.texto, color = c.tinta, modifier = Modifier.padding(vertical = Medidas.e3))
-            BotonesExportar(
-                pdf = { Documento(pdfDelMes(estado.padron.value, estado.rendiciones.value, mes, centro, responsable, selloAhora()), "Reporte del mes $mes", "Reporte del mes ${etiquetaMes(mes)}") },
-                excel = { Documento(excelDelMes(estado.padron.value, estado.rendiciones.value, mes, centro), "Reporte del mes $mes", "Reporte del mes ${etiquetaMes(mes)}") }
-            )
+            Column(Modifier.objetivoGuia("reportes.mes")) {
+                TituloSeccion("Reporte del mes")
+                Pista("Asistencia por persona, raciones del mes e insumos del B-1. El gasto propio va aparte.", Modifier.padding(bottom = Medidas.e3))
+                Opciones(meses.map { it to etiquetaMes(it) }, { it == mes }, { mes = it })
+                val delMes = remember(padron, rendiciones, mes) { reporteDelMes(padron, rendiciones, mes) }
+                val textoMes = "${delMes.etiqueta}: ${cuantos(delMes.dias.size, "día")} con atención, ${cuantos(delMes.servidas, "ración servida", "raciones servidas")}, " +
+                    "${cuantos(delMes.personas.count { it.dias > 0 }, "persona")} que vinieron y ${cuantos(delMes.insumos.size, "compra")} del B-1."
+                ParaLeer(textoMes)
+                Text(textoMes, style = tipos.texto, color = c.tinta, modifier = Modifier.padding(vertical = Medidas.e3))
+                BotonesExportar(
+                    pdf = { Documento(pdfDelMes(estado.padron.value, estado.rendiciones.value, mes, centro, responsable, selloAhora()), "Reporte del mes $mes", "Reporte del mes ${etiquetaMes(mes)}") },
+                    excel = { Documento(excelDelMes(estado.padron.value, estado.rendiciones.value, mes, centro), "Reporte del mes $mes", "Reporte del mes ${etiquetaMes(mes)}") }
+                )
+            }
+
+            // ---- gasto propio: fuera del B-1; se anota aquí porque sale en este reporte ----
+            Spacer(Modifier.height(Medidas.e6))
+            GastoPropioDelMes(ctx, rendiciones, mes, hoy)
         }
     }
+}
+
+/**
+ * Lo comprado con el dinero de las señoras en el mes [mes]: no va en el B-1,
+ * sale en el reporte del mes. Se guarda con el B-1 en curso (gastosPropios).
+ */
+@Composable
+private fun GastoPropioDelMes(ctx: Contexto, rendiciones: List<Rendicion>, mes: String, hoy: String) {
+    val estado = ctx.estado
+    val avisos = LocalAvisos.current
+    val c = colores
+    TituloSeccion("Gasto propio")
+    Pista("Lo que compraron con su propio dinero, como azúcar extra. No va en el B-1: sale en el reporte del mes.", Modifier.padding(bottom = Medidas.e3))
+    val gastos = rendiciones.flatMap { it.gastosPropios }.filter { it.fecha.take(7) == mes || it.fecha.isEmpty() }
+    fun cambiarGasto(id: String, cambio: (GastoPropio) -> GastoPropio) = estado.cambiarRendiciones { rs ->
+        rs.map { r -> if (r.gastosPropios.any { it.id == id }) r.copy(gastosPropios = r.gastosPropios.map { if (it.id == id) cambio(it) else it }) else r }
+    }
+    if (gastos.isNotEmpty()) {
+        Superficie {
+            gastos.forEachIndexed { i, g ->
+                Column(Modifier.fillMaxWidth().padding(Medidas.e4, Medidas.e3)) {
+                    CampoFecha("Fecha", g.fecha, { v -> cambiarGasto(g.id) { it.copy(fecha = v) } })
+                    Spacer(Modifier.height(Medidas.e2))
+                    Campo("Qué compraron", g.descripcion, { v -> cambiarGasto(g.id) { it.copy(descripcion = v) } })
+                    Spacer(Modifier.height(Medidas.e2))
+                    CampoSoles("Cuánto (S/)", g.montoCent, { v -> cambiarGasto(g.id) { it.copy(montoCent = v) } })
+                    Boton("Quitar este gasto", {
+                        val antes = estado.rendiciones.value
+                        estado.cambiarRendiciones { rs -> rs.map { r -> r.copy(gastosPropios = r.gastosPropios.filter { it.id != g.id }) } }
+                        avisos.mostrar("Quitaste el gasto propio") { estado.cambiarRendiciones { antes } }
+                    }, Modifier.padding(top = Medidas.e2), diminuto = true, tipo = TipoBoton.PELIGRO)
+                }
+                if (i < gastos.size - 1) Separador()
+            }
+        }
+        Text("Gasto propio de ${etiquetaMes(mes)}: S/ ${formatearSoles(gastos.mapNotNull { it.montoCent }.sum())}.", style = tipos.chicoFuerte, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
+    }
+    Boton("Anotar un gasto propio", {
+        // Con la fecha del mes elegido: si es el de hoy, hoy.
+        val g = GastoPropio(id = uuid(), fecha = if (hoy.take(7) == mes) hoy else "$mes-01")
+        estado.cambiarRendiciones { rs -> if (rs.isEmpty()) listOf(nuevaRendicion().copy(gastosPropios = listOf(g))) else listOf(rs[0].copy(gastosPropios = rs[0].gastosPropios + g)) + rs.drop(1) }
+    }, Modifier.padding(top = Medidas.e3).objetivoGuia("reportes.propio"), icono = "mas")
 }

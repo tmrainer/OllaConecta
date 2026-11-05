@@ -53,7 +53,8 @@ import io.github.tmrainer.asistencia.nucleo.padron.EleccionHoja
 import io.github.tmrainer.asistencia.nucleo.padron.aplicarHoja
 import io.github.tmrainer.asistencia.nucleo.padron.compararConHoja
 import io.github.tmrainer.asistencia.ui.Cabecera
-import io.github.tmrainer.asistencia.ui.GUIA_PADRON
+import io.github.tmrainer.asistencia.ui.GUIA_IMPORTAR
+import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
@@ -135,15 +136,15 @@ fun PantallaImportar(ctx: Contexto) {
     }
 
     Column(Modifier.fillMaxSize().background(c.fondo)) {
-        Cabecera(ctx, "Hoja de la Municipalidad", "Actualizar el padrón", guia = GUIA_PADRON)
+        Cabecera(ctx, "Hoja de la Municipalidad", "Actualizar el padrón", guia = GUIA_IMPORTAR)
         Column(
             Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, Medidas.e5)
         ) {
             Pista("Carga la hoja que te dio la Municipalidad. Antes de guardar verás qué cambia.", Modifier.padding(bottom = Medidas.e3))
-            CampoFecha("Fecha de la hoja", fechaHoja, { if (it.isNotEmpty()) fechaHoja = it }, pista = "La que dice la hoja, o el día que te la dieron.")
+            CampoFecha("Fecha de la hoja", fechaHoja, { if (it.isNotEmpty()) fechaHoja = it }, Modifier.objetivoGuia("importar.fecha"), pista = "La que dice la hoja, o el día que te la dieron.")
             Spacer(Modifier.height(Medidas.e4))
-            Acciones {
+            Acciones(Modifier.objetivoGuia("importar.archivo")) {
                 Boton("Elegir el archivo de Excel", {
                     elegir.launch(arrayOf(
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel",
@@ -153,11 +154,11 @@ fun PantallaImportar(ctx: Contexto) {
             }
             Spacer(Modifier.height(Medidas.e4))
             Campo(
-                "O pega aquí las filas (con la fila de títulos)", texto, { texto = it; if (revision != null) revision = null },
+                "O pega aquí las filas (con la fila de títulos)", texto, { texto = it; if (revision != null) revision = null }, Modifier.objetivoGuia("importar.pegar"),
                 placeholder = "Apellido paterno, Apellido materno, Nombres, DNI", unaLinea = false
             )
             Spacer(Modifier.height(Medidas.e2))
-            Boton("Revisar", ::revisar, diminuto = true, habilitado = texto.isNotBlank())
+            Boton("Ver los cambios", ::revisar, diminuto = true, habilitado = texto.isNotBlank())
             Pista("¿Hoja en papel? En «Inscribir», elige «Ya está en la hoja de la Municipalidad».", Modifier.padding(top = Medidas.e3))
 
             if (aviso.isNotEmpty()) AvisoSistema(aviso, Modifier.padding(top = Medidas.e3))
@@ -179,7 +180,7 @@ fun PantallaImportar(ctx: Contexto) {
                     Modifier.widthIn(max = Medidas.anchoColumna).align(Alignment.CenterHorizontally).fillMaxWidth()
                         .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime)).padding(Medidas.e4, Medidas.e3)
                 ) {
-                    Boton("Guardar la actualización", { confirmar = true }, Modifier.fillMaxWidth(), tipo = TipoBoton.PRINCIPAL, habilitado = esIso(fechaHoja))
+                    Boton("Guardar la actualización", { confirmar = true }, Modifier.fillMaxWidth().objetivoGuia("importar.guardar"), tipo = TipoBoton.PRINCIPAL, habilitado = esIso(fechaHoja))
                 }
             }
         }
@@ -204,7 +205,7 @@ fun PantallaImportar(ctx: Contexto) {
             title = { Text("¿Guardar la hoja del ${aDdMmAa(fechaHoja)}?", style = tipos.seccion, color = c.titulo) },
             text = { Text(if (partes.isEmpty()) "No elegiste nada para cambiar: solo se anota que cargaste esta hoja." else "Con esta hoja: ${partes.joinToString("; ")}.", style = tipos.texto, color = c.tinta) },
             confirmButton = {
-                Boton("Guardar", {
+                Boton("Guardar la actualización", {
                     confirmar = false
                     val antes = estado.padron.value
                     // Sobre el mismo padrón que se comparó: la comparación guarda sus personas.

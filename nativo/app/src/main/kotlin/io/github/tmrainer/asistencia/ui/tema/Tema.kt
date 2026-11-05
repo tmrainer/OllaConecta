@@ -5,6 +5,27 @@
 package io.github.tmrainer.asistencia.ui.tema
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.IndicationNodeFactory
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.material3.ripple
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.node.CompositionLocalConsumerModifierNode
+import androidx.compose.ui.node.DelegatableNode
+import androidx.compose.ui.node.DelegatingNode
+import androidx.compose.ui.node.DrawModifierNode
+import androidx.compose.ui.node.currentValueOf
+import androidx.compose.ui.node.invalidateDraw
+import kotlinx.coroutines.launch
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -31,7 +52,7 @@ data class Colores(
     val marca: Color, val marcaTexto: Color, val marcaSuave: Color, val acento: Color, val acentoTexto: Color,
     val borde: Color, val bordeFuerte: Color, val contorno: Color,
     val error: Color, val errorFondo: Color, val aviso: Color, val avisoFondo: Color,
-    val ok: Color, val okFondo: Color, val azul: Color, val azulFondo: Color, val pendiente: Color,
+    val ok: Color, val okFondo: Color, val azul: Color, val azulFondo: Color,
     val gNino: Color, val gAdolescente: Color, val gAdulto: Color, val gMayor: Color, val gSin: Color,
     val esOscuro: Boolean
 )
@@ -45,7 +66,6 @@ val COLORES_CLARO = Colores(
     borde = Color(0xFFDFE5D8), bordeFuerte = Color(0xFFB7C4AC), contorno = Color(0xFF6E9161),
     error = Color(0xFF8F2A1C), errorFondo = Color(0xFFFBECEA), aviso = Color(0xFF7D5300), avisoFondo = Color(0xFFFDF3DF),
     ok = Color(0xFF3F6B33), okFondo = Color(0xFFE7F1E1), azul = Color(0xFF2F6672), azulFondo = Color(0xFFE6F0F2),
-    pendiente = Color(0xFFA87A22),
     gNino = Color(0xFF9C4A14), gAdolescente = Color(0xFF6A4C96), gAdulto = Color(0xFF2F6672), gMayor = Color(0xFF7A4A36), gSin = Color(0xFF5B6657),
     esOscuro = false
 )
@@ -59,7 +79,6 @@ val COLORES_OSCURO = Colores(
     borde = Color(0xFF2A362C), bordeFuerte = Color(0xFF3D4C40), contorno = Color(0xFF7A9D6C),
     error = Color(0xFFF29B8C), errorFondo = Color(0xFF3A1D19), aviso = Color(0xFFF0C26C), avisoFondo = Color(0xFF33290F),
     ok = Color(0xFF9FCF8A), okFondo = Color(0xFF1B2E1C), azul = Color(0xFF8FC5D1), azulFondo = Color(0xFF16292D),
-    pendiente = Color(0xFFB88A35),
     gNino = Color(0xFF9C4A14), gAdolescente = Color(0xFF6A4C96), gAdulto = Color(0xFF2F6672), gMayor = Color(0xFF7A4A36), gSin = Color(0xFF5B6657),
     esOscuro = true
 )
@@ -126,7 +145,9 @@ fun TemaOlla(tema: Tema, letra: Letra, contenido: @Composable () -> Unit) {
         outline = c.contorno, outlineVariant = c.borde, error = c.error, onError = Color.White, errorContainer = c.errorFondo, onErrorContainer = c.error,
         surfaceContainer = c.superficie, surfaceContainerHigh = c.superficie2, surfaceContainerHighest = c.superficie2
     )
-    CompositionLocalProvider(LocalColores provides c, LocalTipos provides t) {
+    // El color del contenido es también el de la capa al tocar (y al tener el foco) de
+    // lo que no es un botón de Material: sin esto es negra, y en oscuro no se ve.
+    CompositionLocalProvider(LocalColores provides c, LocalTipos provides t, LocalContentColor provides c.tinta) {
         MaterialTheme(
             colorScheme = esquema,
             typography = Typography(
@@ -135,7 +156,48 @@ fun TemaOlla(tema: Tema, letra: Letra, contenido: @Composable () -> Unit) {
                 titleLarge = t.titulo, titleMedium = t.seccion, titleSmall = t.textoFuerte,
                 headlineSmall = t.titulo, headlineMedium = t.cifra
             ),
-            content = contenido
+            // Después de MaterialTheme, que pone su propia capa al tocar.
+            content = { CompositionLocalProvider(LocalIndication provides AnilloFoco(ripple()), content = contenido) }
         )
+    }
+}
+
+/**
+ * La capa al tocar de siempre ([capa]) y, cuando algo tiene el foco (teclado o acceso con
+ * interruptores), un anillo de 2 dp del color del texto: la capa sola, del 10 %, casi no se
+ * ve. Las esquinas siguen la forma: redondas hasta 24 dp, como las píldoras y los círculos.
+ */
+class AnilloFoco(private val capa: IndicationNodeFactory?, private val color: Color = Color.Unspecified) : IndicationNodeFactory {
+    override fun create(interactionSource: InteractionSource): DelegatableNode = NodoAnilloFoco(interactionSource, capa?.create(interactionSource), color)
+    override fun equals(other: Any?) = other is AnilloFoco && other.capa == capa && other.color == color
+    override fun hashCode() = 31 * capa.hashCode() + color.hashCode()
+}
+
+/** Solo el anillo, para los botones de Material, que ya traen su capa: con su [fuente]. */
+fun Modifier.anilloFoco(fuente: InteractionSource): Modifier = indication(fuente, AnilloFoco(null))
+
+private class NodoAnilloFoco(private val fuente: InteractionSource, capa: DelegatableNode?, private val color: Color) :
+    DelegatingNode(), DrawModifierNode, CompositionLocalConsumerModifierNode {
+    private var enfocado = false
+
+    init { if (capa != null) delegate(capa) }
+
+    override fun onAttach() {
+        coroutineScope.launch {
+            val focos = mutableListOf<FocusInteraction.Focus>()
+            fuente.interactions.collect { i ->
+                when (i) { is FocusInteraction.Focus -> focos.add(i); is FocusInteraction.Unfocus -> focos.remove(i.focus) }
+                if (focos.isNotEmpty() != enfocado) { enfocado = focos.isNotEmpty(); invalidateDraw() }
+            }
+        }
+    }
+
+    override fun ContentDrawScope.draw() {
+        drawContent()
+        if (!enfocado) return
+        val g = 2.dp.toPx()
+        val r = minOf(size.minDimension / 2, 24.dp.toPx()) - g / 2
+        val tinta = color.takeOrElse { currentValueOf(LocalContentColor) }
+        drawRoundRect(tinta, Offset(g / 2, g / 2), Size(size.width - g, size.height - g), CornerRadius(r), style = Stroke(g))
     }
 }

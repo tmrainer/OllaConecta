@@ -191,7 +191,7 @@ fun PantallaPadron(ctx: Contexto) {
                 val avisosAlmacen = estado.avisosAlmacenamiento()
                 if (avisosAlmacen.isNotEmpty()) item { AvisoSistema(avisosAlmacen.joinToString(" "), Modifier.padding(bottom = Medidas.e4)) }
                 item {
-                    PanelHallazgos(hallazgos) { campo ->
+                    PanelHallazgos(hallazgos, Modifier.objetivoGuia("padron.revisar")) { campo ->
                         // Puede estar oculta por el filtro o la búsqueda.
                         busqueda = ""; filtro = "todas"; abierta = campo.removePrefix("afiliado.")
                     }
@@ -342,8 +342,8 @@ private fun FilaPersona(
                 }
                 Text(meta.joinToString(" · "), style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 2.dp))
             }
-            if (errores > 0) { Spacer(Modifier.width(Medidas.e2)); Pastilla("faltan datos", TonoPastilla.ADVERTENCIA) }
-            else if (a.activo && a.registroMunicipal == "pendiente") { Spacer(Modifier.width(Medidas.e2)); Pastilla("falta la Municipalidad", TonoPastilla.ADVERTENCIA) }
+            if (errores > 0) { Spacer(Modifier.width(Medidas.e2)); Pastilla("faltan datos", TonoPastilla.FALTA) }
+            else if (a.activo && a.registroMunicipal == "pendiente") { Spacer(Modifier.width(Medidas.e2)); Pastilla("falta la Municipalidad", TonoPastilla.FALTA) }
             Spacer(Modifier.width(Medidas.e2))
             Icono("flecha", 18.dp, if (abierta) c.acentoTexto else c.tintaSuave, Modifier.rotate(if (abierta) 90f else 0f))
         }
@@ -574,8 +574,10 @@ fun PantallaInscribir(ctx: Contexto) {
             Modifier.weight(1f).fillMaxWidth().verticalScroll(desplazamiento).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, Medidas.e5)
         ) {
-            Leyenda("¿De dónde viene?", obligatorio = true)
-            Opciones(listOf(false to "Llegó a la olla", true to "Ya está en la hoja de la Municipalidad"), { it == deLaHoja }, { deLaHoja = it })
+            Column(Modifier.objetivoGuia("inscribir.origen")) {
+                Leyenda("¿De dónde viene?", obligatorio = true)
+                Opciones(listOf(false to "Llegó a la olla", true to "Ya está en la hoja de la Municipalidad"), { it == deLaHoja }, { deLaHoja = it })
+            }
             if (deLaHoja) {
                 Pista("Cópiala tal como está en la hoja.", Modifier.padding(top = Medidas.e2, bottom = Medidas.e2))
                 CampoFecha("Fecha de la hoja", fechaHoja, { if (it.isNotEmpty()) fechaHoja = it }, obligatorio = true)

@@ -247,7 +247,7 @@ fun PantallaAsistencia(ctx: Contexto) {
             if (activos.isEmpty()) {
                 item {
                     EstadoVacio("personas", "Todavía no hay personas", "Primero inscribe a las personas o carga la hoja de la Municipalidad.",
-                        "Inscribir a la primera persona" to { ctx.ir(Ruta.INSCRIBIR) })
+                        "Inscribir a la primera persona" to { ctx.ir(Ruta.INSCRIBIR) }, modifier = Modifier.objetivoGuia("asistencia.vacia"))
                 }
             } else {
                 // Lo que se usa mientras se pasa lista: el conteo, el buscador y «los que faltan».
@@ -294,28 +294,35 @@ fun PantallaAsistencia(ctx: Contexto) {
                         Boton("Quitar a todos", { marcarTodos(atHoy, activos, false) }, diminuto = true)
                     }
                 }
+                // Fin de la lista: la barra de buscar deja de quedar fija arriba (un encabezado vacío
+                // la empuja). Lo de abajo no es pasar lista y se ve entero, también en la guía.
+                stickyHeader(key = "finLista") { }
                 // Lo que se cocinó y cuántas raciones se prepararon, después de
                 // la lista: pasar lista es lo primero y la primera persona se ve al abrir.
                 item {
                     Spacer(Modifier.height(Medidas.e5))
-                    TituloSeccion("Hoy se cocinó")
-                    RegistroDelDia(atHoy) { cambio -> cambiarDia(atHoy, cambio) }
+                    Column(Modifier.objetivoGuia("asistencia.cocino")) {
+                        TituloSeccion("Hoy se cocinó")
+                        RegistroDelDia(atHoy) { cambio -> cambiarDia(atHoy, cambio) }
+                    }
                 }
                 // A UNACEM va la asistencia de HOY (el periodo del resumen es para exportar).
                 item {
                     Spacer(Modifier.height(Medidas.e5))
-                    TituloSeccion("Enviar a UNACEM")
-                    BloqueEnvio(
-                        ctx, "asistencia", hoy,
-                        "Envía la asistencia de hoy en Excel, desde tu correo.",
-                        siNoHay = "Hoy no marcaste a nadie: no hay nada que enviar.",
-                        armar = {
-                            val p = estado.padron.value
-                            val delDia = p.atenciones.firstOrNull { it.fecha == hoy }
-                            if (delDia == null || desgloseDelDia(delDia).total == 0) null
-                            else correoDeAsistencia(p, hoy, hoy, estado.config.value.ultimoCentro?.nombreCentro.orEmpty(), horaAhora(), ctx.preferencias.perfil.value.nombre)
-                        }
-                    )
+                    Column(Modifier.objetivoGuia("asistencia.unacem")) {
+                        TituloSeccion("Enviar a UNACEM")
+                        BloqueEnvio(
+                            ctx, "asistencia", hoy,
+                            "Envía la asistencia de hoy en Excel, desde tu correo.",
+                            siNoHay = "Hoy no marcaste a nadie: no hay nada que enviar.",
+                            armar = {
+                                val p = estado.padron.value
+                                val delDia = p.atenciones.firstOrNull { it.fecha == hoy }
+                                if (delDia == null || desgloseDelDia(delDia).total == 0) null
+                                else correoDeAsistencia(p, hoy, hoy, estado.config.value.ultimoCentro?.nombreCentro.orEmpty(), horaAhora(), ctx.preferencias.perfil.value.nombre)
+                            }
+                        )
+                    }
                 }
             }
 
@@ -423,7 +430,8 @@ private fun BarraHoy(at: Atencion, activos: Int) {
             Spacer(Modifier.width(Medidas.e3))
             Box(Modifier.weight(1f).height(8.dp).clip(RoundedCornerShape(999.dp)).background(c.seleccion)) {
                 val fraccion = if (activos > 0) minOf(1f, inscritos.toFloat() / activos) else 0f
-                Box(Modifier.fillMaxWidth(fraccion).height(8.dp).background(c.acento))
+                // El verde de los textos: el de los botones, en oscuro, casi no se ve sobre la pista.
+                Box(Modifier.fillMaxWidth(fraccion).height(8.dp).background(c.acentoTexto))
             }
         }
         val detalle = if (d.total == 0) listOf(if (activos == 0) "No hay nadie en el padrón todavía." else "Nadie marcado todavía.")
@@ -506,7 +514,7 @@ fun ContadorSinInscribir(at: Atencion, alCambiar: (SinInscribir) -> Unit) {
                         alCambiar(if (clave == "normal") SinInscribir(n, actual.ayudaSocial) else SinInscribir(actual.normal, n))
                     }
                     BotonPaso("−", "Uno menos, ${nombre.lowercase()}") { poner(-1) }
-                    Text("$valor", style = tipos.seccion, color = c.titulo, modifier = Modifier.width(40.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    Text("$valor", style = tipos.seccion, color = c.titulo, modifier = Modifier.widthIn(min = 40.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     BotonPaso("+", "Uno más, ${nombre.lowercase()}") { poner(1) }
                 }
             }
@@ -573,8 +581,8 @@ private fun FichaDia(
                     afiliadosActivos(padron, at.fecha.ifEmpty { hoyIso() }).sortedWith { a, b -> ORDEN_NOMBRES.compare(nombreCompleto(a), nombreCompleto(b)) }
                 }
                 Acciones(Modifier.padding(top = 10.dp)) {
-                    Boton("Marcar todos", { marcarTodos(activos, true) }, diminuto = true)
-                    Boton("Quitar todos", { marcarTodos(activos, false) }, diminuto = true)
+                    Boton("Marcar a todos", { marcarTodos(activos, true) }, diminuto = true)
+                    Boton("Quitar a todos", { marcarTodos(activos, false) }, diminuto = true)
                     Boton("Quitar el día", quitarDia, diminuto = true, tipo = TipoBoton.PELIGRO)
                 }
                 var filtro by remember { mutableStateOf("") }

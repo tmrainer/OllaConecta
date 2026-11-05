@@ -56,6 +56,7 @@ import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.Casilla
 import io.github.tmrainer.asistencia.ui.componentes.Chip
 import io.github.tmrainer.asistencia.ui.componentes.Chips
+import io.github.tmrainer.asistencia.ui.componentes.IconosBarras
 import io.github.tmrainer.asistencia.ui.componentes.Opciones
 import io.github.tmrainer.asistencia.ui.componentes.Pista
 import io.github.tmrainer.asistencia.ui.componentes.Separador
@@ -142,6 +143,7 @@ fun recibirPorQr(ctx: Contexto) {
 /** Un fondo de pantalla completa, desplazable, para lo que se abre encima de la app. */
 @Composable
 private fun PantallaEncima(contenido: @Composable () -> Unit) {
+    IconosBarras(colores.esOscuro, colores.esOscuro)
     Column(Modifier.fillMaxSize().background(colores.fondo).systemBarsPadding().verticalScroll(rememberScrollState()).padding(Medidas.e4)) {
         Column(Modifier.widthIn(max = Medidas.anchoColumna).align(Alignment.CenterHorizontally).fillMaxWidth()) { contenido() }
     }

@@ -4,7 +4,12 @@
 package io.github.tmrainer.asistencia.ui.componentes
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -104,7 +109,11 @@ fun BloqueEnvio(ctx: Contexto, tipo: String, fecha: String, pista: String, siNoH
             }
         }, tipo = TipoBoton.PRINCIPAL, icono = "nube")
         val estado = remember(cambios, fecha) { envios.ultimo(tipo, fecha) }
-        Text(estado ?: "Va a: ${correo.trim()}", style = tipos.chico, color = if (estado != null) c.ok else c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
+        // Lo enviado lleva ✓: el verde ok solo casi no se distingue del verde de los enlaces.
+        Row(Modifier.padding(top = Medidas.e2), verticalAlignment = Alignment.CenterVertically) {
+            if (estado != null) { Icono("ok", 16.dp, c.ok); Spacer(Modifier.width(6.dp)) }
+            Text(estado ?: "Va a: ${correo.trim()}", style = tipos.chico, color = if (estado != null) c.ok else c.tintaSuave)
+        }
     }
 }
 

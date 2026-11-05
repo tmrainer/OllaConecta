@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.tmrainer.asistencia.nucleo.alertas.Nivel
 import io.github.tmrainer.asistencia.nucleo.alertas.alertaProximaEntrega
 import io.github.tmrainer.asistencia.nucleo.calculos.desgloseDelDia
 import io.github.tmrainer.asistencia.nucleo.calculos.recaudacionDelDiaCent
@@ -44,6 +43,7 @@ import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
+import io.github.tmrainer.asistencia.ui.componentes.TonoPastilla
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.Icono
@@ -97,10 +97,10 @@ fun PantallaInicio(ctx: Contexto) {
                         dr == 0 -> "Hoy vence la entrega del B-1"
                         else -> "Faltan ${cuantos(n, "día")} para entregar el B-1"
                     }
-                    fondoEntrega = when (alerta.nivel) {
-                        Nivel.VENCIDA, Nivel.HOY, Nivel.URGENTE -> Color(0xFF8F2A1C)
-                        Nivel.PROXIMA -> Color(0xFF7D5300)
-                        Nivel.LEJANA -> Color.White.copy(alpha = .1f)
+                    fondoEntrega = when (tonoEntrega(alerta.nivel)) {
+                        TonoPastilla.ERROR -> Color(0xFF8F2A1C)
+                        TonoPastilla.ADVERTENCIA -> Color(0xFF7D5300)
+                        else -> Color.White.copy(alpha = .1f)
                     }
                 } else {
                     textoEntrega = "Anota cuándo entregas el B-1 y la app te avisa"
@@ -119,7 +119,7 @@ fun PantallaInicio(ctx: Contexto) {
 
             Spacer(Modifier.height(Medidas.e4))
             Row(
-                Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(Medidas.rL)).clip(RoundedCornerShape(Medidas.rL)).background(c.acento)
+                Modifier.objetivoGuia("inicio.lista").fillMaxWidth().shadow(1.dp, RoundedCornerShape(Medidas.rL)).clip(RoundedCornerShape(Medidas.rL)).background(c.acento)
                     .clickable(role = Role.Button) { ctx.ir(Ruta.ASISTENCIA) }.defaultMinSize(minHeight = 96.dp).padding(Medidas.e4),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -128,13 +128,13 @@ fun PantallaInicio(ctx: Contexto) {
                 Text("Pasar lista hoy", style = tipos.titulo, color = Color.White)
             }
             Spacer(Modifier.height(Medidas.e3))
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+            Row(Modifier.objetivoGuia("inicio.tareas").fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                 Tarea("personaMas", "Inscribir a una persona", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.INSCRIBIR) }
-                Tarea("boleta", "Anotar una compra", c.avisoFondo, c.aviso, Modifier.weight(1f)) { ctx.ir(Ruta.B1, "compras") }
+                Tarea("boleta", "Anotar una compra", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.B1, "compras") }
             }
             Spacer(Modifier.height(Medidas.e3))
-            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                Tarea("calendario", "Ver entregas", c.azulFondo, c.azul, Modifier.weight(1f)) { ctx.ir(Ruta.ENTREGAS) }
+            Row(Modifier.objetivoGuia("inicio.tareas2").fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+                Tarea("calendario", "Ver entregas", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.ENTREGAS) }
                 Tarea("archivo", "Reportes del día y del mes", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.REPORTES) }
             }
 
@@ -168,7 +168,7 @@ fun PantallaInicio(ctx: Contexto) {
                     Spacer(Modifier.width(10.dp))
                     Text("¿Tus datos están en otro teléfono?", style = tipos.pista, color = c.tinta, modifier = Modifier.weight(1f))
                     Spacer(Modifier.width(Medidas.e2))
-                    Boton("Traer mis datos", { ctx.ir(Ruta.DATOS) }, diminuto = true)
+                    Boton("Traer tus datos", { ctx.ir(Ruta.DATOS) }, diminuto = true)
                 }
             }
 

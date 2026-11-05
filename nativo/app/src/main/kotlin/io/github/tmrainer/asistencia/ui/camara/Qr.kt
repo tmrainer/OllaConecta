@@ -54,6 +54,7 @@ import io.github.tmrainer.asistencia.ui.tema.LocalColores
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.Enlace
+import io.github.tmrainer.asistencia.ui.componentes.IconosBarras
 import io.github.tmrainer.asistencia.ui.componentes.TipoBoton
 import io.github.tmrainer.asistencia.ui.componentes.vibrar
 import io.github.tmrainer.asistencia.ui.tema.Medidas
@@ -68,6 +69,7 @@ private const val CADA_MS = 800L
 @Composable
 fun MostrarQr(partes: List<String>, titulo: String, detalle: String, alCerrar: () -> Unit) {
     val c = colores
+    IconosBarras(c.esOscuro, c.esOscuro)
     // Cada cuadro se arma una vez y después solo se alternan.
     val matrices = remember(partes) { partes.map { matrizQr(it) } }
     val varias = partes.size > 1
@@ -94,7 +96,7 @@ fun MostrarQr(partes: List<String>, titulo: String, detalle: String, alCerrar: (
         if (varias && !deAUno) Enlace("¿No lo lee? Ver de a uno", { deAUno = true })
         Acciones {
             if (deAUno) {
-                Boton("Anterior", { i = maxOf(0, i - 1) }, habilitado = i > 0)
+                Boton("Atrás", { i = maxOf(0, i - 1) }, habilitado = i > 0)
                 Boton("Siguiente", { i = minOf(partes.size - 1, i + 1) }, tipo = TipoBoton.PRINCIPAL, habilitado = i < partes.size - 1)
             }
             Boton("Listo", alCerrar)
@@ -196,6 +198,7 @@ fun LeerQr(alRecibir: (Paquete) -> Unit, alCerrar: () -> Unit) {
     }
 
     // Fondo siempre negro: los botones con los colores del modo oscuro, también en el claro.
+    IconosBarras(arribaOscuro = true, abajoOscuro = true)
     CompositionLocalProvider(LocalColores provides COLORES_OSCURO) {
     val c = colores
     Column(
