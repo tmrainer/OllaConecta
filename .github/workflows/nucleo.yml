@@ -1,0 +1,28 @@
+# Corre las pruebas del núcleo Kotlin (JVM, sin emulador ni teléfono) en cada
+# push y en cada pull request. Incluye los oráculos que comparan con la web
+# (OraculoTest, DocumentosOraculoTest): un cambio en web/js puede romperlas,
+# por eso no se filtra por carpeta. Configurar el proyecto exige el SDK de
+# Android aunque solo se pruebe :nucleo; ubuntu-latest ya lo trae.
+
+name: Núcleo
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  nucleo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Pruebas del núcleo
+        working-directory: nativo
+        env:
+          TZ: America/Lima  # la hora de la app
+        run: ./gradlew :nucleo:test --no-daemon
