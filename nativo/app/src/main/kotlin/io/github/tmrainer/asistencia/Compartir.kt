@@ -123,3 +123,20 @@ class ReceptorEleccion : BroadcastReceiver() {
         }
     }
 }
+
+/** La prueba del escaneo del DNI (versión de prueba): el texto y las fotos de cada lado, juntos. */
+fun compartirPrueba(context: Context, texto: String, imagenes: List<Pair<String, ByteArray>>, titulo: String) {
+    val carpeta = File(context.cacheDir, "compartir")
+    carpeta.mkdirs()
+    carpeta.listFiles()?.forEach { it.delete() }
+    val uris = ArrayList(imagenes.map { (nombre, bytes) ->
+        val archivo = File(carpeta, nombre).apply { writeBytes(bytes) }
+        FileProvider.getUriForFile(context, "${context.packageName}.archivos", archivo)
+    })
+    val enviar = if (uris.isEmpty()) Intent(Intent.ACTION_SEND).setType("text/plain")
+    else Intent(Intent.ACTION_SEND_MULTIPLE).setType("image/jpeg").putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        .also { i -> i.clipData = ClipData.newRawUri(imagenes[0].first, uris[0]).apply { uris.drop(1).forEach { addItem(ClipData.Item(it)) } } }
+    enviar.putExtra(Intent.EXTRA_TEXT, texto).putExtra(Intent.EXTRA_TITLE, titulo)
+    context.startActivity(Intent.createChooser(enviar, titulo).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+}

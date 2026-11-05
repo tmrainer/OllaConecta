@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- La versión de prueba se ve con otro nombre: así no se confunde con la normal. -->
+<resources>
+    <string name="app_name">OllaConecta prueba</string>
+</resources>

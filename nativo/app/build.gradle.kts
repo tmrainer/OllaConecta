@@ -43,6 +43,12 @@ android {
     }
 
     buildTypes {
+        // La versión de prueba es otra app («OllaConecta prueba»): se instala junto a la
+        // normal sin tocarla, y trae las pruebas del escaneo del DNI (BuildConfig.DEBUG).
+        debug {
+            applicationIdSuffix = ".prueba"
+            versionNameSuffix = "-prueba"
+        }
         release {
             signingConfig = signingConfigs.getByName(if (archivoFirma.exists()) "final" else "debug")
             isMinifyEnabled = true
@@ -51,7 +57,7 @@ android {
         }
     }
 
-    buildFeatures { compose = true }
+    buildFeatures { compose = true; buildConfig = true }
 
     compileOptions {
         // java.time en API 24 y 25 (nucleo usa LocalDate).

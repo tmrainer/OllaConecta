@@ -28,11 +28,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.platform.LocalContext
 import io.github.tmrainer.asistencia.Letra
+import io.github.tmrainer.asistencia.BuildConfig
 import io.github.tmrainer.asistencia.OllaConectaApp
 import io.github.tmrainer.asistencia.nucleo.envio.pareceCorreo
 import io.github.tmrainer.asistencia.R
 import io.github.tmrainer.asistencia.ROLES
 import io.github.tmrainer.asistencia.Tema
+import io.github.tmrainer.asistencia.ui.GUIA_AJUSTES
+import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
@@ -63,63 +66,77 @@ fun PantallaAjustes(ctx: Contexto) {
     val c = colores
 
     Column(Modifier.fillMaxWidth()) {
-        Cabecera(ctx, "Ajustes", "De este teléfono")
+        Cabecera(ctx, "Ajustes", "De este teléfono", guia = GUIA_AJUSTES)
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
         ) {
-            TituloSeccion("Quién usa este teléfono")
-            Pista("Se usa para llenar el B-1. Queda solo en este teléfono.", Modifier.padding(bottom = Medidas.e3))
-            Campo("Tu nombre completo", perfil.nombre, { prefs.guardarPerfil(perfil.copy(nombre = it)) })
-            Spacer(Modifier.height(10.dp))
-            Leyenda("Tu rol en la olla")
-            Opciones(ROLES, { it == perfil.rol }, { prefs.guardarPerfil(perfil.copy(rol = it)) })
-            Spacer(Modifier.height(10.dp))
-            Campo("Tu DNI", perfil.dni, { prefs.guardarPerfil(perfil.copy(dni = it)) }, soloDigitos = true, maxLargo = 8)
-            Spacer(Modifier.height(10.dp))
-            Campo("Tu olla", perfil.olla, { prefs.guardarPerfil(perfil.copy(olla = it)) }, capitalizar = true)
-            Spacer(Modifier.height(10.dp))
-            Campo("Tu celular (opcional)", perfil.celular, { prefs.guardarPerfil(perfil.copy(celular = it)) }, soloDigitos = true, maxLargo = 9)
+            Column(Modifier.objetivoGuia("ajustes.quien")) {
+                TituloSeccion("Quién usa este teléfono")
+                Pista("Se usa para llenar el B-1. Queda solo en este teléfono.", Modifier.padding(bottom = Medidas.e3))
+                Campo("Tu nombre completo", perfil.nombre, { prefs.guardarPerfil(perfil.copy(nombre = it)) })
+                Spacer(Modifier.height(10.dp))
+                Leyenda("Tu rol en la olla")
+                Opciones(ROLES, { it == perfil.rol }, { prefs.guardarPerfil(perfil.copy(rol = it)) })
+                Spacer(Modifier.height(10.dp))
+                Campo("Tu DNI", perfil.dni, { prefs.guardarPerfil(perfil.copy(dni = it)) }, soloDigitos = true, maxLargo = 8)
+                Spacer(Modifier.height(10.dp))
+                Campo("Tu olla", perfil.olla, { prefs.guardarPerfil(perfil.copy(olla = it)) }, capitalizar = true)
+                Spacer(Modifier.height(10.dp))
+                Campo("Tu celular (opcional)", perfil.celular, { prefs.guardarPerfil(perfil.copy(celular = it)) }, soloDigitos = true, maxLargo = 9)
+            }
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Aspecto")
             Leyenda("Modo")
             Opciones(Tema.values().map { it to it.etiqueta }, { it == tema }, { prefs.cambiarTema(it) })
             Spacer(Modifier.height(Medidas.e3))
-            Leyenda("Tamaño de la letra")
-            Opciones(Letra.values().map { it to it.etiqueta }, { it == letra }, { prefs.cambiarLetra(it) })
-            ParaLeer("Así se verá: Rosa Quispe · 4 de 12 marcadas · S/ 12.00")
-            Text(
-                buildAnnotatedString { append("Así se verá: "); withStyle(tipos.textoNegrita.toSpanStyle()) { append("Rosa Quispe") }; append(" · 4 de 12 marcadas · S/ 12.00") },
-                style = tipos.texto, color = c.tinta,
-                modifier = Modifier.fillMaxWidth().padding(top = Medidas.e3).clip(RoundedCornerShape(Medidas.rS)).background(c.superficie2).padding(Medidas.e4, Medidas.e3)
-            )
+            Column(Modifier.objetivoGuia("ajustes.letra")) {
+                Leyenda("Tamaño de la letra")
+                Opciones(Letra.values().map { it to it.etiqueta }, { it == letra }, { prefs.cambiarLetra(it) })
+                ParaLeer("Así se verá: Rosa Quispe · 4 de 12 marcadas · S/ 12.00")
+                Text(
+                    buildAnnotatedString { append("Así se verá: "); withStyle(tipos.textoNegrita.toSpanStyle()) { append("Rosa Quispe") }; append(" · 4 de 12 marcadas · S/ 12.00") },
+                    style = tipos.texto, color = c.tinta,
+                    modifier = Modifier.fillMaxWidth().padding(top = Medidas.e3).clip(RoundedCornerShape(Medidas.rS)).background(c.superficie2).padding(Medidas.e4, Medidas.e3)
+                )
+            }
 
             Spacer(Modifier.height(Medidas.e5))
-            TituloSeccion("Leer en voz alta")
-            Pista("La app lee la pantalla en voz alta, sin internet, con el botón «Escuchar» de arriba.", Modifier.padding(bottom = Medidas.e3))
-            Leyenda("Botón «Escuchar» en cada pantalla")
-            Opciones(listOf(false to "No", true to "Sí, arriba a la derecha"), { it == vozBoton }, { prefs.cambiarVozBoton(it) })
-            Spacer(Modifier.height(Medidas.e3))
-            Leyenda("Velocidad de la voz")
-            Opciones(listOf(false to "Normal", true to "Lenta"), { it == vozLenta }, { prefs.cambiarVozLenta(it) })
-            Spacer(Modifier.height(Medidas.e3))
-            Boton("Probar la voz", { ctx.decir("Hola. Así suena la voz de la app.") }, icono = "voz")
+            Column(Modifier.objetivoGuia("ajustes.voz")) {
+                TituloSeccion("Leer en voz alta")
+                Pista("La app lee la pantalla en voz alta, sin internet, con el botón «Escuchar» de arriba.", Modifier.padding(bottom = Medidas.e3))
+                Leyenda("Botón «Escuchar» en cada pantalla")
+                Opciones(listOf(false to "No", true to "Sí, arriba a la derecha"), { it == vozBoton }, { prefs.cambiarVozBoton(it) })
+                Spacer(Modifier.height(Medidas.e3))
+                Leyenda("Velocidad de la voz")
+                Opciones(listOf(false to "Normal", true to "Lenta"), { it == vozLenta }, { prefs.cambiarVozLenta(it) })
+                Spacer(Modifier.height(Medidas.e3))
+                Boton("Probar la voz", { ctx.decir("Hola. Así suena la voz de la app.") }, icono = "voz")
+            }
 
             Spacer(Modifier.height(Medidas.e5))
-            TituloSeccion("Envío a UNACEM")
-            Pista("La asistencia y el padrón van en Excel desde tu correo. Escribe a dónde, una sola vez.", Modifier.padding(bottom = Medidas.e3))
-            Campo(
-                "Correo de UNACEM", correoUnacem, { envios.cambiarCorreo(it) }, correo = true,
-                placeholder = "nombre@unacem.com.pe",
-                error = if (correoUnacem.isNotBlank() && !pareceCorreo(correoUnacem)) "Revisa el correo: le falta la @ o el punto." else null
-            )
-            Spacer(Modifier.height(Medidas.e3))
-            Leyenda("Recordarme a las ${envios.horaRecordatorio}:00 si falta enviar")
-            Opciones(listOf(true to "Sí", false to "No"), { it == recordar }, { envios.cambiarRecordar(it) })
+            Column(Modifier.objetivoGuia("ajustes.unacem")) {
+                TituloSeccion("Envío a UNACEM")
+                Pista("La asistencia y el padrón van en Excel desde tu correo. Escribe a dónde, una sola vez.", Modifier.padding(bottom = Medidas.e3))
+                Campo(
+                    "Correo de UNACEM", correoUnacem, { envios.cambiarCorreo(it) }, correo = true,
+                    placeholder = "nombre@unacem.com.pe",
+                    error = if (correoUnacem.isNotBlank() && !pareceCorreo(correoUnacem)) "Revisa el correo: le falta la @ o el punto." else null
+                )
+                Spacer(Modifier.height(Medidas.e3))
+                Leyenda("Recordarme a las ${envios.horaRecordatorio}:00 si falta enviar")
+                Opciones(listOf(true to "Sí", false to "No"), { it == recordar }, { envios.cambiarRecordar(it) })
+            }
 
             Spacer(Modifier.height(Medidas.e5))
             EnlaceMas("escudo", "¿Buscas la copia de tus datos?", "Está en Tus datos, con borrar todo") { ctx.ir(Ruta.DATOS) }
+
+            if (BuildConfig.DEBUG) {
+                Spacer(Modifier.height(Medidas.e5))
+                TituloSeccion("Versión de prueba")
+                Boton("Probar el escaneo del DNI", { ctx.abrirCapa { PruebaDni(ctx) } }, icono = "camara")
+            }
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Acerca de")

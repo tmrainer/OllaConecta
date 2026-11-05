@@ -68,6 +68,7 @@ import io.github.tmrainer.asistencia.nucleo.dni.combinarMrzYAnverso
 import io.github.tmrainer.asistencia.nucleo.dni.evaluar
 import io.github.tmrainer.asistencia.nucleo.dni.unirFilasOcr
 import androidx.compose.runtime.CompositionLocalProvider
+import io.github.tmrainer.asistencia.ui.componentes.IconosBarras
 import io.github.tmrainer.asistencia.ui.componentes.TipoBoton
 import io.github.tmrainer.asistencia.ui.tema.COLORES_OSCURO
 import io.github.tmrainer.asistencia.ui.tema.LocalColores
@@ -104,7 +105,8 @@ class LecturaDni(val mrz: LecturaMrz, val anverso: LecturaAnverso?)
  * se entrega sin la pantalla «Revisa los datos»: quien lo pide ya lo compara
  * (confirmar los datos del primer uso). [yaEsta]: si el número leído de las
  * tres líneas ya está en el padrón, no se pide el otro lado ni se revisa: se
- * entrega enseguida y quien lo pidió avisa que ya está inscrita.
+ * entrega enseguida y quien lo pidió avisa que ya está inscrita. [registro]: solo
+ * en la versión de prueba, guarda el fotograma y el texto de cada lado.
  */
 @Composable
 fun CamaraDni(
@@ -112,7 +114,8 @@ fun CamaraDni(
     alLeer: (LecturaDni) -> Unit = {},
     alLeerDni: ((String) -> String)? = null,
     conRevision: Boolean = true,
-    yaEsta: ((String) -> Boolean)? = null
+    yaEsta: ((String) -> Boolean)? = null,
+    registro: RegistroDni? = null
 ) {
     val enAsistencia = alLeerDni != null
     val context = LocalContext.current
@@ -181,6 +184,7 @@ fun CamaraDni(
         if (b.cerrado) return
         principal.execute { if (abriendo) { abriendo = false; estadoTexto = "" } }
         val filas = unirFilasOcr(fragmentos)
+        registro?.let { it.fotogramas += 1 }
         val mrzLeida = b.mrz
         if (mrzLeida == null) {
             val mrz = buscarMrzTd1(filas)
@@ -188,6 +192,7 @@ fun CamaraDni(
             if (mrz != null && clave == b.anterior) {
                 b.anterior = ""
                 if (!enAsistencia) {
+                    registro?.let { it.reverso = it.capturar(imagen, filas) }
                     // Ya está en el padrón: con el número basta; no se pide el otro lado.
                     if (yaEsta?.invoke(mrz.campos.numeroDocumento) == true) { entregar(LecturaDni(mrz, null), revisar = false); return }
                     b.mrz = mrz
@@ -227,6 +232,7 @@ fun CamaraDni(
                 val cruzados = anverso.apellidoPaterno.estado == EstadoCampo.CONFIRMADO && anverso.nombres.estado == EstadoCampo.CONFIRMADO
                 val conMaterno = anverso.apellidoMaterno.estado != EstadoCampo.NO_LEIDO
                 if ((cruzados && (conMaterno || b.lecturasAnverso >= 4)) || anverso == b.anteriorAnverso) {
+                    registro?.let { it.anverso = it.capturar(imagen, filas) }
                     entregar(LecturaDni(mrzLeida, anverso))
                     return
                 }
@@ -275,6 +281,7 @@ fun CamaraDni(
     val antes = etapa == Etapa.ANTES_ATRAS || etapa == Etapa.ANTES_FOTO
     // El fondo de la cámara es siempre negro: sus botones usan los colores del modo
     // oscuro también en el claro (el verde del claro sobre negro no se lee bien).
+    IconosBarras(arribaOscuro = true, abajoOscuro = true)
     CompositionLocalProvider(LocalColores provides COLORES_OSCURO) { Box(Modifier.fillMaxSize()) {
         Column(
             Modifier.fillMaxSize().background(Color.Black).systemBarsPadding().padding(Medidas.e4)
@@ -328,7 +335,7 @@ fun CamaraDni(
             if (conOmitir && busqueda.mrz != null) Boton("Omitir este paso", ::omitir, Modifier.fillMaxWidth())
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                 if (hayLinterna) Boton(if (linterna) "Apagar la linterna" else "Prender la linterna", { linterna = !linterna }, Modifier.weight(1f), activo = linterna)
-                Boton(if (enAsistencia) "Terminar" else "Cancelar", ::cerrar, if (hayLinterna) Modifier else Modifier.fillMaxWidth())
+                Boton(if (enAsistencia) "Listo" else "Cancelar", ::cerrar, if (hayLinterna) Modifier else Modifier.fillMaxWidth())
             }
         }
         when (etapa) {
@@ -435,9 +442,9 @@ fun Recuadro(recorte: Recorte, destellos: Int, tarjeta: RectF? = null, bien: Boo
                     scaleX = .4f + .6f * m; scaleY = .4f + .6f * m
                     // Se va con el verde, en el último tramo.
                     alpha = m.coerceIn(0f, 1f) * (brillo.value / .3f).coerceAtMost(1f)
-                }.size(96.dp).shadow(8.dp, CircleShape).background(Color(0xFF2E7D32), CircleShape),
+                }.size(96.dp).shadow(8.dp, CircleShape).background(COLORES_OSCURO.ok, CircleShape),
                 contentAlignment = Alignment.Center
-            ) { Icono("ok", 56.dp, Color.White, trazo = 3f) }
+            ) { Icono("ok", 56.dp, COLORES_OSCURO.fondo, trazo = 3f) }
         }
     }
 }
