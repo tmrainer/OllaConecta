@@ -50,7 +50,7 @@ import io.github.tmrainer.asistencia.ui.tema.Medidas
 import io.github.tmrainer.asistencia.ui.tema.colores
 import io.github.tmrainer.asistencia.ui.tema.tipos
 
-const val VERSION_APP = "2.0.0"
+const val VERSION_APP = "2.1.0"
 
 @Composable
 fun PantallaAjustes(ctx: Contexto) {
