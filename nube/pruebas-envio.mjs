@@ -162,7 +162,7 @@ comprobar('un día sin marcas no manda asistencia', correos.length === 3 && (awa
 reloj = lima('2026-10-17', 21, 30);
 revisar();
 comprobar('un día con gente sin inscribir sí la manda', correos.length === 4 && ultimo().body.includes('Raciones: 2'), ultimo().body);
-comprobar('y la hoja los cuenta en «Sin inscribir»', hoja(ultimo()).includes('Sin inscribir'));
+comprobar('y la hoja los cuenta en «Sin estar en el padrón»', hoja(ultimo()).includes('Sin estar en el padrón'));
 
 console.log('Si el correo no sale, se reintenta y después se anota el fallo');
 reloj = lima('2026-10-16', 11);
