@@ -270,8 +270,10 @@ fun unirFilasOcr(fragmentos: List<FragmentoOcr>?): List<String> {
         if (fila != null) fila.partes.add(p.f)
         else filas.add(Fila(p.y, p.alto, mutableListOf(p.f)))
     }
+    // Con un espacio entre pedazo y pedazo: en el anverso un pedazo es una palabra o
+    // un rótulo de al lado («LOPEZ» + «Fecha de Emisión»); en la MRZ los espacios se quitan.
     return filas.sortedBy { it.y }
-        .map { x -> x.partes.sortedBy { it.izquierda }.joinToString("") { it.texto } }
+        .map { x -> x.partes.sortedBy { it.izquierda }.joinToString(" ") { it.texto } }
 }
 
 // El reconocimiento se come «<» seguidos. Solo se reponen donde la norma pone
@@ -398,42 +400,84 @@ data class LecturaAnverso(
     val nombres: CampoCruzado
 )
 
-private class FilaAnverso(val impreso: String, val normal: String)
+/** Una fila del anverso: sus palabras como están impresas (con tildes y ñ), cada una con alguna letra. */
+private class FilaAnverso(val palabras: List<String>) {
+    val normales = palabras.map(::normalizarLetras)
+    val impreso = palabras.joinToString(" ")
+    val normal = normales.joinToString(" ")
+    fun sin(quitar: (Int) -> Boolean) = FilaAnverso(palabras.filterIndexed { j, _ -> !quitar(j) })
+}
 
-private fun cruzar(valorMrz: String, filas: List<FilaAnverso>): CampoCruzado {
-    if (valorMrz.isEmpty()) return CampoCruzado("", EstadoCampo.NO_LEIDO)
-    val igual = filas.firstOrNull { it.normal == valorMrz }
-    if (igual != null) return CampoCruzado(igual.impreso, EstadoCampo.CONFIRMADO)
-    val parecidas = filas.filter { casiIguales(it.normal, valorMrz) }
+private fun filaAnverso(texto: String?) =
+    FilaAnverso(textoImpreso(texto).split(' ').filter { normalizarLetras(it).isNotEmpty() })
+
+/** Un nombre cruzado y en qué fila del anverso está (null si solo vino de la MRZ). */
+private class Cruce(val campo: CampoCruzado, val fila: Int?)
+
+private fun cruzar(valorMrz: String, filas: List<FilaAnverso>): Cruce {
+    if (valorMrz.isEmpty()) return Cruce(CampoCruzado("", EstadoCampo.NO_LEIDO), null)
+    val igual = filas.indexOfFirst { it.normal == valorMrz }
+    if (igual >= 0) return Cruce(CampoCruzado(filas[igual].impreso, EstadoCampo.CONFIRMADO), igual)
+    val parecidas = filas.indices.filter { casiIguales(filas[it].normal, valorMrz) }
     if (parecidas.size == 1) {
-        return CampoCruzado("", EstadoCampo.DUDOSO, listOf(parecidas[0].impreso, valorMrz))
+        return Cruce(CampoCruzado("", EstadoCampo.DUDOSO, listOf(filas[parecidas[0]].impreso, valorMrz)), parecidas[0])
     }
-    return CampoCruzado(valorMrz, EstadoCampo.SIN_CONFIRMAR)
+    return Cruce(CampoCruzado(valorMrz, EstadoCampo.SIN_CONFIRMAR), null)
 }
 
 // Rótulos del anverso que no son nombres. Se quitan palabra por palabra:
-// «FECHA DE EMISIÓN», «ESTADO CIVIL», «SEXO», «UBIGEO»…
+// «FECHA DE EMISIÓN», «ESTADO CIVIL», «SEXO», «UBIGEO», «NACIONALIDAD PERUANA»… y el
+// «DUPLICADO» vertical del DNI electrónico, que cae en la fila del primer apellido.
 private val OTRAS_PALABRAS = setOf("FECHA", "EMISION", "CADUCIDAD", "NACIMIENTO", "VENCIMIENTO", "INSCRIPCION",
-    "SEXO", "UBIGEO", "ESTADO", "CIVIL", "DNI", "REPUBLICA", "PERU", "DOCUMENTO", "NACIONAL", "IDENTIDAD")
+    "SEXO", "UBIGEO", "ESTADO", "CIVIL", "DNI", "REPUBLICA", "PERU", "DOCUMENTO", "NACIONAL", "IDENTIDAD",
+    "NACIONALIDAD", "PERUANA", "DUPLICADO")
 
-private fun sinOtrosRotulos(impreso: String): FilaAnverso {
-    val palabras = textoImpreso(impreso).split(' ').filter { it.isNotEmpty() }
-    val quedan = palabras.filterIndexed { j, w ->
-        val n = normalizarLetras(w)
-        if (n in OTRAS_PALABRAS) return@filterIndexed false
+/** Sin esos rótulos ni las letras sueltas que van con ellos («Sexo M», «Estado Civil S»). */
+private fun sinOtrosRotulos(fila: FilaAnverso): FilaAnverso = fila.sin { j ->
+    val n = fila.normales[j]
+    n in OTRAS_PALABRAS || n.length == 1 ||
         // «DE»/«DEL» entre dos palabras de un rótulo («FECHA DE EMISIÓN»).
-        !((n == "DE" || n == "DEL") && normalizarLetras(palabras.getOrElse(j - 1) { "" }) in OTRAS_PALABRAS)
-    }
-    val impresoLimpio = quedan.joinToString(" ")
-    return FilaAnverso(impresoLimpio, normalizarLetras(impresoLimpio))
+        ((n == "DE" || n == "DEL") && fila.normales.getOrElse(j - 1) { "" } in OTRAS_PALABRAS)
 }
 
-// «APELL?IDO»: el reconocimiento a veces se come una L del rótulo («Primer Apelido»).
-private val ROTULO = Regex("PRIMER ?APELL?IDO|SEGUNDO ?APELL?IDO|PRE ?NOMBRES|NOMBRES")
-private val RE_PRIMER_APELLIDO = Regex("PRIMER ?APELL?IDO")
-private val RE_SEGUNDO_APELLIDO = Regex("SEGUNDO ?APELL?IDO")
-private val RE_PRENOMBRES = Regex("PRE ?NOMBRES")
-private val HASTA_EL_ROTULO = Regex("^.*?(NOMBRES|APELL?IDO)\\s*")
+// Los rótulos de los nombres («Primer Apellido», «Segundo Apellido», «Pre Nombres»)
+// son la letra más chica del DNI: el reconocimiento les cambia o se come letras
+// («Primer Apelido», «Sequndo Apellldo»). Una palabra vale como rótulo con hasta
+// una letra distinta, dos en las largas; «PRE», solo exacta.
+private const val PRIMER = "PRIMER"
+private const val SEGUNDO = "SEGUNDO"
+private const val APELLIDO = "APELLIDO"
+private const val PRE = "PRE"
+private const val NOMBRES = "NOMBRES"
+
+/** Letras distintas entre dos palabras (cambiadas, de más o de menos). */
+private fun distancia(a: String, b: String): Int {
+    var previa = IntArray(b.length + 1) { it }
+    for (i in a.indices) {
+        val actual = IntArray(b.length + 1)
+        actual[0] = i + 1
+        for (j in b.indices) actual[j + 1] = minOf(previa[j + 1] + 1, actual[j] + 1, previa[j] + if (a[i] == b[j]) 0 else 1)
+        previa = actual
+    }
+    return previa[b.length]
+}
+
+private fun esPalabraDeRotulo(palabra: String, rotulo: String): Boolean =
+    palabra == rotulo || (rotulo.length >= 6 && distancia(palabra, rotulo) <= (if (rotulo.length >= 8) 2 else 1))
+
+/** Dónde termina el rótulo [primera] [segunda] en la fila (las dos palabras, o pegadas en una), o null. */
+private fun finDelRotulo(f: FilaAnverso, primera: String, segunda: String): Int? {
+    val n = f.normales
+    for (j in n.indices) {
+        if (esPalabraDeRotulo(n[j], primera + segunda)) return j + 1
+        if (j + 1 < n.size && esPalabraDeRotulo(n[j], primera) && esPalabraDeRotulo(n[j + 1], segunda)) return j + 2
+    }
+    return null
+}
+
+/** ¿La fila es (o lleva) un rótulo de nombres? */
+private fun esRotulo(f: FilaAnverso) =
+    f.normales.any { esPalabraDeRotulo(it, APELLIDO) || esPalabraDeRotulo(it, NOMBRES) || esPalabraDeRotulo(it, PRE + NOMBRES) }
 
 /**
  * Cruza los nombres de la MRZ con las filas leídas del anverso. NUNCA lanza.
@@ -445,55 +489,61 @@ private val HASTA_EL_ROTULO = Regex("^.*?(NOMBRES|APELL?IDO)\\s*")
  */
 fun combinarMrzYAnverso(camposMrz: CamposMrz?, filasAnverso: List<String>?): LecturaAnverso? {
     if (camposMrz == null || filasAnverso == null) return null
-    val filas = filasAnverso.map { FilaAnverso(textoImpreso(it), normalizarLetras(it)) }
-        .filter { it.normal.isNotEmpty() }
+    // Cada fila sin lo de al lado: en el DNI azul la otra columna («Fecha de
+    // Emisión», «Sexo M») cae a la altura de los nombres y se mete en su fila.
+    val filas = filasAnverso.map { sinOtrosRotulos(filaAnverso(it)) }.filter { it.normal.isNotEmpty() }
     var paterno = cruzar(normalizarLetras(camposMrz.apellidos.joinToString(" ")), filas)
     var nombres = cruzar(normalizarLetras(camposMrz.nombres), filas)
 
     // Por rótulo: el valor va en la misma fila, después del rótulo, o en la
-    // siguiente que no sea otro rótulo. En el DNI azul, la columna de al lado
-    // («Fecha de Emisión»…) cae casi a la misma altura y se mete entre el
-    // rótulo y su valor: esos rótulos se quitan.
-    fun porRotulo(re: Regex): FilaAnverso? {
-        val i = filas.indexOfFirst { re.containsMatchIn(it.normal) }
+    // siguiente que no sea otro rótulo.
+    fun porRotulo(primera: String, segunda: String): Cruce? {
+        val i = filas.indexOfFirst { finDelRotulo(it, primera, segunda) != null }
         if (i < 0) return null
-        val enLaFila = sinOtrosRotulos(filas[i].impreso.replaceFirst(HASTA_EL_ROTULO, ""))
-        if (enLaFila.normal.isNotEmpty() && !ROTULO.containsMatchIn(enLaFila.normal)) return enLaFila
-        for (f in filas.drop(i + 1)) {
-            if (ROTULO.containsMatchIn(f.normal)) return null
-            val limpia = sinOtrosRotulos(f.impreso)
-            if (limpia.normal.isNotEmpty()) return limpia
-        }
-        return null
+        val fin = finDelRotulo(filas[i], primera, segunda)!!
+        val enLaFila = filas[i].sin { it < fin }
+        if (enLaFila.normal.isNotEmpty() && !esRotulo(enLaFila)) return Cruce(CampoCruzado(enLaFila.impreso, EstadoCampo.SIN_CONFIRMAR), i)
+        val siguiente = filas.getOrNull(i + 1) ?: return null
+        return if (esRotulo(siguiente)) null else Cruce(CampoCruzado(siguiente.impreso, EstadoCampo.SIN_CONFIRMAR), i + 1)
     }
     // Las letras de la MRZ sin ningún separador: un «<» perdido o de más no
     // cambia nada. Lo del rótulo vale si coincide ahí, letra por letra.
     // El reconocimiento también lee un «<» como «K» (visto en un DNI azul:
     // «AAAAAA<<» salió «AAAAAAA<»). Si no coincide tal cual, se compara sin las K.
     val letras = normalizarLetras((camposMrz.apellidos + camposMrz.nombres).joinToString(" ")).replace(" ", "")
-    fun sinEspacios(f: FilaAnverso) = f.normal.replace(" ", "")
+    fun sinEspacios(c: Cruce) = c.campo.valor.let(::normalizarLetras).replace(" ", "")
     fun sinK(t: String) = t.replace("K", "")
     fun empieza(v: String) = letras.startsWith(v) || sinK(letras).startsWith(sinK(v))
     fun termina(v: String) = letras.length > v.length && (letras.endsWith(v) || sinK(letras).endsWith(sinK(v)))
-    val primero = porRotulo(RE_PRIMER_APELLIDO)
-    if (paterno.estado != EstadoCampo.CONFIRMADO && primero != null &&
+    val primero = porRotulo(PRIMER, APELLIDO)
+    if (paterno.campo.estado != EstadoCampo.CONFIRMADO && primero != null &&
         sinK(sinEspacios(primero)).isNotEmpty() && empieza(sinEspacios(primero))) {
-        paterno = CampoCruzado(primero.impreso, EstadoCampo.CONFIRMADO)
+        paterno = Cruce(CampoCruzado(primero.campo.valor, EstadoCampo.CONFIRMADO), primero.fila)
     }
-    val pre = porRotulo(RE_PRENOMBRES)
-    if (nombres.estado != EstadoCampo.CONFIRMADO && pre != null &&
+    val pre = porRotulo(PRE, NOMBRES)
+    if (nombres.campo.estado != EstadoCampo.CONFIRMADO && pre != null &&
         sinK(sinEspacios(pre)).isNotEmpty() && termina(sinEspacios(pre))) {
-        nombres = CampoCruzado(pre.impreso, EstadoCampo.CONFIRMADO)
+        nombres = Cruce(CampoCruzado(pre.campo.valor, EstadoCampo.CONFIRMADO), pre.fila)
     }
     // Sin ninguna fila que coincida, no es este DNI o no se leyó todavía.
-    val algoCoincide = listOf(paterno, nombres).any { it.estado == EstadoCampo.CONFIRMADO || it.estado == EstadoCampo.DUDOSO }
+    val algoCoincide = listOf(paterno, nombres).any { it.campo.estado == EstadoCampo.CONFIRMADO || it.campo.estado == EstadoCampo.DUDOSO }
     if (!algoCoincide) return null
 
-    // El segundo apellido solo está en el anverso.
-    val segundo = porRotulo(RE_SEGUNDO_APELLIDO)
-    val materno = if (segundo != null) CampoCruzado(segundo.impreso, EstadoCampo.SIN_CONFIRMAR)
-    else CampoCruzado("", EstadoCampo.NO_LEIDO)
-    return LecturaAnverso(apellidoPaterno = paterno, apellidoMaterno = materno, nombres = nombres)
+    // El segundo apellido solo está en el anverso: por su rótulo o, si el rótulo
+    // no se leyó, por su lugar: la única fila entre el primer apellido y los
+    // nombres que no sea un rótulo.
+    var materno = porRotulo(SEGUNDO, APELLIDO)?.campo
+    val iPaterno = paterno.fila
+    val iNombres = nombres.fila
+    if (materno == null && iPaterno != null && iNombres != null && iNombres > iPaterno) {
+        val entre = filas.subList(iPaterno + 1, iNombres).filter { !esRotulo(it) }
+        if (entre.size == 1) materno = CampoCruzado(entre[0].impreso, EstadoCampo.SIN_CONFIRMAR)
+    }
+    return LecturaAnverso(
+        apellidoPaterno = paterno.campo,
+        apellidoMaterno = materno ?: CampoCruzado("", EstadoCampo.NO_LEIDO),
+        nombres = nombres.campo
+    )
 }
 
 data class CamposPdf417(

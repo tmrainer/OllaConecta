@@ -94,6 +94,9 @@ internal val AMBAR_VISOR = Color(0xFFF0C26C)
 /** En el DNI azul los nombres están en la misma cara que la MRZ: unas vueltas antes de pedir voltear. */
 private const val VUELTAS_MISMA_CARA = 3
 
+/** Lecturas del lado de la foto con los nombres bien pero sin el segundo apellido, antes de darlo por no leído. */
+private const val LECTURAS_SIN_MATERNO = 6
+
 /** Las pantallas de leer el DNI: antes de cada lado, la cámara de cada lado, y la espera entre los dos. */
 private enum class Etapa { ANTES_ATRAS, ATRAS, REVISANDO_ATRAS, ANTES_FOTO, FOTO }
 
@@ -120,7 +123,7 @@ private fun copiaDelFotograma(imagen: android.graphics.Bitmap): android.graphics
  * (confirmar los datos del primer uso). [yaEsta]: si el número leído de las
  * tres líneas ya está en el padrón, no se pide el otro lado ni se revisa: se
  * entrega enseguida y quien lo pidió avisa que ya está inscrita. [registro]: solo
- * en la versión de prueba, guarda el fotograma y el texto de cada lado.
+ * desde «Probar el escaneo del DNI», guarda el fotograma y el texto de cada lado.
  */
 @Composable
 fun CamaraDni(
@@ -240,12 +243,13 @@ fun CamaraDni(
             val anverso = combinarMrzYAnverso(mrzLeida.campos, filas)
             if (anverso != null) {
                 b.lecturasAnverso += 1
-                // Paterno y nombres iguales a la MRZ ya son dos fuentes de acuerdo. El
-                // segundo apellido, si no aparece en unas lecturas, queda para escribirlo.
-                // Con una letra dudosa, sí se esperan dos lecturas iguales.
+                // Paterno y nombres iguales a la MRZ ya son dos fuentes de acuerdo; con una
+                // letra dudosa, se esperan dos lecturas iguales. El segundo apellido tarda
+                // más (su rótulo es la letra más chica): se insiste unas lecturas y, si no
+                // aparece, queda para escribirlo.
                 val cruzados = anverso.apellidoPaterno.estado == EstadoCampo.CONFIRMADO && anverso.nombres.estado == EstadoCampo.CONFIRMADO
                 val conMaterno = anverso.apellidoMaterno.estado != EstadoCampo.NO_LEIDO
-                if ((cruzados && (conMaterno || b.lecturasAnverso >= 4)) || anverso == b.anteriorAnverso) {
+                if ((cruzados || anverso == b.anteriorAnverso) && (conMaterno || b.lecturasAnverso >= LECTURAS_SIN_MATERNO)) {
                     registro?.let { it.anverso = it.capturar(imagen, filas) }
                     // El lado de la foto, derecho: la foto del DNI y el retrato salen de aquí, sin otra toma.
                     entregar(LecturaDni(mrzLeida, anverso, if (enAsistencia) null else copiaDelFotograma(imagen)))

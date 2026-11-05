@@ -135,6 +135,10 @@ function anverso(p, variante) {
     filas.push(`Primer Apellido ${pat}`, `Segundo Apellido ${mat}`, `Pre Nombres ${nom}`);
   } else if (variante === 'fecha-en-medio') {
     filas.push('Primer Apellido', pat, 'Segundo Apellido', 'Fecha de Emisión', mat + ' 12/03/2015', 'Prenombres', nom);
+  } else if (variante === 'sin-rotulo-segundo') {
+    filas.push('Primer Apellido', pat, mat, 'Pre Nombres', nom);
+  } else if (variante === 'rotulos-borrosos') {
+    filas.push('Primer Apelido', pat + ' Sexo M', 'Sequndo Apellldo', mat, 'Prenombre', nom);
   } else {
     filas.push('Primer Apellido', pat, 'Segundo Apellido', mat, 'Pre Nombres', nom);
   }
@@ -227,7 +231,7 @@ caso('unirFilasOcr', { fragmentos: [{ texto: 'ABC', arriba: 10, abajo: 10, izqui
   unirFilasOcr([{ texto: 'ABC', arriba: 10, abajo: 10, izquierda: 5 }, { texto: 'DEF', arriba: 10, abajo: 10, izquierda: 1 }]));
 
 // El anverso cruzado con la MRZ: tildes, ñ, rótulos, letras confundidas, otro DNI.
-const VARIANTES = ['normal', 'misma-fila', 'fecha-en-medio', 'sin-tildes', 'minusculas'];
+const VARIANTES = ['normal', 'misma-fila', 'fecha-en-medio', 'sin-tildes', 'minusculas', 'sin-rotulo-segundo', 'rotulos-borrosos'];
 for (const [k, p] of personas.entries()) {
   const mrz = leerMrzTd1(p.mrz, '2026-10-24').campos;
   const campos = { apellidos: mrz.apellidos, nombres: mrz.nombres };

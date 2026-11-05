@@ -233,6 +233,33 @@ class EscaneoDniTest {
         igual(combinarMrzYAnverso(mrz, listOf("Primer Apellido", "QUISPE", "Pre Nombres", "ROSA")), null)
     }
 
+    @Test
+    fun `Segundo apellido - sin su rótulo (la letra más chica) sale por su lugar, entre el primero y los nombres`() {
+        val mrz = CamposMrz(apellidos = listOf("GARCIA"), nombres = "JUAN CARLOS")
+        // El rótulo ni se leyó.
+        val sinRotulo = assertNotNull(combinarMrzYAnverso(mrz, listOf("Primer Apellido", "GARCIA", "LÓPEZ", "Pre Nombres", "JUAN CARLOS")))
+        igual(sinRotulo.apellidoMaterno.valor, "LÓPEZ")
+        igual(sinRotulo.apellidoMaterno.estado, EstadoCampo.SIN_CONFIRMAR)
+        // Los rótulos con letras cambiadas o de menos, o pegados.
+        val borroso = assertNotNull(combinarMrzYAnverso(mrz, listOf("Primer Apelido", "GARCIA", "Sequndo Apellldo", "LÓPEZ", "Prenombre", "JUAN CARLOS")))
+        igual(borroso.apellidoMaterno.valor, "LÓPEZ")
+        igual(assertNotNull(combinarMrzYAnverso(mrz, listOf("GARCIA", "SegundoApellido LÓPEZ", "JUAN CARLOS"))).apellidoMaterno.valor, "LÓPEZ")
+        // Lo de al lado en la misma fila («Sexo M») no estorba; sin rótulo y con dos filas en medio, no se adivina.
+        igual(assertNotNull(combinarMrzYAnverso(mrz, listOf("GARCIA Sexo M", "LÓPEZ Fecha de Emisión", "JUAN CARLOS"))).apellidoMaterno.valor, "LÓPEZ")
+        igual(assertNotNull(combinarMrzYAnverso(mrz, listOf("GARCIA", "XQZ", "LÓPEZ", "JUAN CARLOS"))).apellidoMaterno.estado, EstadoCampo.NO_LEIDO)
+        // DNI electrónico duplicado (visto en uno real): el «DUPLICADO T» vertical cae en la fila del primer apellido.
+        val duplicado = assertNotNull(combinarMrzYAnverso(mrz, listOf("Primer Apellido", "DUPLICADO T GARCIA 1509205", "Segundo Apellido", "LÓPEZ", "Prenombres", "JUAN CARLOS")))
+        igual(duplicado.apellidoPaterno.valor, "GARCIA")
+        igual(duplicado.apellidoPaterno.estado, EstadoCampo.CONFIRMADO)
+        // Los pedazos de una fila se unen con un espacio: «LOPEZ» + «Fecha de Emisión».
+        val filas = unirFilasOcr(listOf(
+            FragmentoOcr("GARCIA", 100, 140, 300), FragmentoOcr("LÓPEZ", 200, 240, 300),
+            FragmentoOcr("Fecha de Emisión", 205, 235, 700), FragmentoOcr("JUAN CARLOS", 300, 340, 300)
+        ))
+        igual(filas[1], "LÓPEZ Fecha de Emisión")
+        igual(assertNotNull(combinarMrzYAnverso(mrz, filas)).apellidoMaterno.valor, "LÓPEZ")
+    }
+
     // Un anverso inventado, como lo devuelve el reconocimiento de texto.
     @Test
     fun `Anverso - si coincide con la MRZ, vale como está impreso (tildes y ñ)`() {

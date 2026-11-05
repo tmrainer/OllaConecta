@@ -399,6 +399,7 @@ export const casos = [
       igual(edadEnFecha('2000-09-14', '2026-09-13'), 25, 'un día antes del cumpleaños');
       igual(edadEnFecha('2000-09-14', '2026-09-14'), 26, 'el día del cumpleaños');
       igual(edadEnFecha('2000-09-14', '2026-09-15'), 26);
+      igual(edadEnFecha('2026-12-31', '2026-09-14'), null, 'nacimiento futuro: sin edad, no -1');
       igual(edadEnFecha('', '2026-09-14'), null);
     }
   },
@@ -1204,6 +1205,35 @@ export const casos = [
       igual(conK.nombres.estado, 'confirmado');
       // Otro DNI frente a la cámara: no se confirma nada.
       igual(combinarMrzYAnverso(mrz, ['Primer Apellido', 'QUISPE', 'Pre Nombres', 'ROSA']), null);
+    }
+  },
+  {
+    grupo: 'Escaneo DNI',
+    nombre: 'Segundo apellido: sin su rótulo (la letra más chica) sale por su lugar, entre el primero y los nombres',
+    fn: () => {
+      const mrz = { apellidos: ['GARCIA'], nombres: 'JUAN CARLOS' };
+      // El rótulo ni se leyó.
+      const sinRotulo = combinarMrzYAnverso(mrz, ['Primer Apellido', 'GARCIA', 'LÓPEZ', 'Pre Nombres', 'JUAN CARLOS']);
+      igual(sinRotulo.apellidoMaterno.valor, 'LÓPEZ');
+      igual(sinRotulo.apellidoMaterno.estado, 'sin-confirmar');
+      // Los rótulos con letras cambiadas o de menos, o pegados.
+      const borroso = combinarMrzYAnverso(mrz, ['Primer Apelido', 'GARCIA', 'Sequndo Apellldo', 'LÓPEZ', 'Prenombre', 'JUAN CARLOS']);
+      igual(borroso.apellidoMaterno.valor, 'LÓPEZ');
+      igual(combinarMrzYAnverso(mrz, ['GARCIA', 'SegundoApellido LÓPEZ', 'JUAN CARLOS']).apellidoMaterno.valor, 'LÓPEZ');
+      // Lo de al lado en la misma fila («Sexo M») no estorba; sin rótulo y con dos filas en medio, no se adivina.
+      igual(combinarMrzYAnverso(mrz, ['GARCIA Sexo M', 'LÓPEZ Fecha de Emisión', 'JUAN CARLOS']).apellidoMaterno.valor, 'LÓPEZ');
+      igual(combinarMrzYAnverso(mrz, ['GARCIA', 'XQZ', 'LÓPEZ', 'JUAN CARLOS']).apellidoMaterno.estado, 'no-leido');
+      // DNI electrónico duplicado (visto en uno real): el «DUPLICADO T» vertical cae en la fila del primer apellido.
+      const duplicado = combinarMrzYAnverso(mrz, ['Primer Apellido', 'DUPLICADO T GARCIA 1509205', 'Segundo Apellido', 'LÓPEZ', 'Prenombres', 'JUAN CARLOS']);
+      igual(duplicado.apellidoPaterno.valor, 'GARCIA');
+      igual(duplicado.apellidoPaterno.estado, 'confirmado');
+      // Los pedazos de una fila se unen con un espacio: «LOPEZ» + «Fecha de Emisión».
+      const filas = unirFilasOcr([
+        { texto: 'GARCIA', arriba: 100, abajo: 140, izquierda: 300 }, { texto: 'LÓPEZ', arriba: 200, abajo: 240, izquierda: 300 },
+        { texto: 'Fecha de Emisión', arriba: 205, abajo: 235, izquierda: 700 }, { texto: 'JUAN CARLOS', arriba: 300, abajo: 340, izquierda: 300 }
+      ]);
+      igual(filas[1], 'LÓPEZ Fecha de Emisión');
+      igual(combinarMrzYAnverso(mrz, filas).apellidoMaterno.valor, 'LÓPEZ');
     }
   },
   // Un anverso inventado, como lo devuelve el reconocimiento de texto.
