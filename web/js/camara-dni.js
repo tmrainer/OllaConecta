@@ -1,20 +1,12 @@
 // camara-dni.js — el visor de cámara para leer el DNI: el PDF417 (DNI azul) con
-// BarcodeDetector y la MRZ con el ML Kit del APK («LectorTexto»; en el navegador, solo
-// el código). La MRZ vale cuando dos lecturas seguidas dan lo mismo.
+// BarcodeDetector. La zona de texto (MRZ) la lee solo la app nativa (nativo/).
 // Ningún fotograma se guarda ni sale del teléfono.
 
 import { crearElemento, icono, destelloLeido } from './ui.js';
-import { buscarMrzTd1, unirFilasOcr, combinarMrzYAnverso } from './escaneo-dni.js';
 import { abrirCamaraTrasera } from './camara-trasera.js';
 
 const PISTA_REVERSO = 'Pon dentro del recuadro el lado del DNI con tres líneas de «<», con buena luz, y mantén el teléfono quieto.';
 const PISTA_ASISTENCIA = 'Muestra el lado del DNI con tres líneas de «<». Puedes pasar uno tras otro.';
-const PISTA_ANVERSO = 'Ahora voltea el DNI: el lado de la foto, dentro del recuadro. De ahí salen las tildes, la ñ y el segundo apellido.';
-
-function lectorDeTexto() {
-  const C = window.Capacitor;
-  return C && C.isPluginAvailable && C.isPluginAvailable('LectorTexto') ? C.Plugins.LectorTexto : null;
-}
 
 /** ¿Hay con qué leer el DNI? { codigo, texto } */
 export async function lectoresDni() {
@@ -24,18 +16,17 @@ export async function lectoresDni() {
       (await window.BarcodeDetector.getSupportedFormats()).includes('pdf417');
   } catch (e) { codigo = false; }
   const camara = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  return { codigo: camara && codigo, texto: camara && !!lectorDeTexto() };
+  // La zona de texto la lee solo la app nativa: aquí nunca hay con qué, y las
+  // pantallas que dependen de ella (inscribir y pasar lista con el DNI) quedan ocultas.
+  return { codigo: camara && codigo, texto: false };
 }
 
 /**
- * Abre el visor y busca el DNI.
+ * Abre el visor y busca el PDF417 del DNI.
  *
- * modo «asistencia»: solo el reverso y solo la zona de texto (el número del
- * DNI ahí tiene dígito de control; el del código de barras está sin
- * verificar). Es continuo: tras cada DNI sigue buscando el siguiente, y
- * `alLeer` devuelve el mensaje que se muestra («Marcaste a…»).
- * @param {{ alLeer: (r: {tipo: 'pdf417', cadena: string} |
- *   {tipo: 'mrz', mrz: object, anverso: ?object}) => void,
+ * modo «asistencia» (pasar lista) necesitaba la zona de texto, que solo lee la
+ * app nativa: aquí no tiene con qué leer y lo dice.
+ * @param {{ alLeer: (r: {tipo: 'pdf417', cadena: string}) => void,
  *           alCerrar?: () => void, modo?: 'completo' | 'asistencia',
  *           conCodigo?: boolean }} opciones  conCodigo: false deja fuera el PDF417
  * @returns {Promise<void>}
@@ -44,7 +35,6 @@ export async function abrirCamaraDni({ alLeer, alCerrar = () => {}, modo = 'comp
   const enAsistencia = modo === 'asistencia';
   const lectores = await lectoresDni();
   const codigo = lectores.codigo && !enAsistencia && conCodigo;
-  const texto = lectores.texto;
   const video = crearElemento('video', { clase: 'camara-video', playsinline: '', muted: '', autoplay: '' });
   video.muted = true;
   const estado = crearElemento('p', { clase: 'camara-estado', role: 'status', 'aria-live': 'polite' });
@@ -71,10 +61,6 @@ export async function abrirCamaraDni({ alLeer, alCerrar = () => {}, modo = 'comp
       } catch (e) { linterna.hidden = true; /* este teléfono no deja */ }
     }
   });
-  const omitir = crearElemento('button', {
-    type: 'button', clase: 'boton secundario', texto: 'Omitir este paso', hidden: true,
-    onclick: () => entregar({ tipo: 'mrz', mrz: mrzLeida, anverso: null }, { leido: false })
-  });
   const visor = crearElemento('div', { clase: 'camara-visor' }, [
     video,
     crearElemento('div', { clase: 'camara-marco', 'aria-hidden': 'true' }),
@@ -85,12 +71,11 @@ export async function abrirCamaraDni({ alLeer, alCerrar = () => {}, modo = 'comp
     crearElemento('p', { clase: 'camara-pista', texto: enAsistencia ? PISTA_ASISTENCIA : PISTA_REVERSO }),
     visor,
     estado,
-    crearElemento('div', { clase: 'acciones' }, [linterna, omitir,
+    crearElemento('div', { clase: 'acciones' }, [linterna,
       crearElemento('button', {
         type: 'button', clase: 'boton secundario', texto: enAsistencia ? 'Terminar' : 'Cancelar', onclick: () => cerrar()
       })])
   ]);
-  const pista = dialogo.querySelector('.camara-pista');
   document.body.append(dialogo);
   dialogo.addEventListener('cancel', (e) => { e.preventDefault(); cerrar(); });
   dialogo.showModal();
@@ -98,7 +83,6 @@ export async function abrirCamaraDni({ alLeer, alCerrar = () => {}, modo = 'comp
   let flujo = null;
   let abierto = true;
   let temporizador = 0;
-  const lienzo = document.createElement('canvas');
 
   function cerrar() {
     if (!abierto) return;
@@ -107,7 +91,6 @@ export async function abrirCamaraDni({ alLeer, alCerrar = () => {}, modo = 'comp
     document.removeEventListener('visibilitychange', alOcultar);
     if (flujo) flujo.getTracks().forEach((t) => t.stop());
     video.srcObject = null;
-    lienzo.width = 0;                       // suelta el último fotograma
     dialogo.close();
     dialogo.remove();
     alCerrar();
@@ -119,19 +102,18 @@ export async function abrirCamaraDni({ alLeer, alCerrar = () => {}, modo = 'comp
   document.addEventListener('visibilitychange', alOcultar);
 
   // Leído: el visor se pone verde un instante y recién entonces se cierra.
-  // «Omitir» no leyó nada: cierra sin destello.
   let entregando = false;
-  async function entregar(resultado, { leido = true } = {}) {
+  async function entregar(resultado) {
     if (!abierto || entregando) return;
     entregando = true;
     if (navigator.vibrate) { try { navigator.vibrate(60); } catch (e) { /* sin vibración */ } }
-    if (leido) await destelloLeido(visor);
+    await destelloLeido(visor);
     if (!abierto) return;                   // se canceló durante el destello
     cerrar();
     alLeer(resultado);
   }
 
-  if (!codigo && !texto) {
+  if (!codigo) {
     estado.textContent = 'Este teléfono no puede leer el DNI con la cámara. Escribe los datos a mano.';
     cargando.hidden = true;
     return;
@@ -152,123 +134,20 @@ export async function abrirCamaraDni({ alLeer, alCerrar = () => {}, modo = 'comp
   try { await video.play(); } catch (e) { /* autoplay: se reintenta en el bucle */ }
   estado.textContent = 'Buscando…';
 
-  const detector = codigo ? new window.BarcodeDetector({ formats: ['pdf417'] }) : null;
-  const lector = texto ? lectorDeTexto() : null;
-  let fase = 'reverso';
-  let mrzLeida = null;
-  let anterior = '';                         // la lectura previa, para exigir dos iguales
-  let lecturasAnverso = 0;
-  let ultimoDni = '';
-  let ultimoEn = 0;
-
-  // Solo el recuadro del DNI, y ampliado: más píxeles por letra, menos
-  // confusiones (B por S, O por 0). El visor recorta el video (object-fit:
-  // cover), así que se calcula qué parte del video cae dentro del recuadro.
-  // En el reverso basta la FRANJA de abajo, la de las tres líneas con «<»:
-  // menos de un tercio de la imagen, y el reconocimiento tarda la mitad.
-  function fotogramaDelRecuadro(soloFranja) {
-    const visor = video.parentElement;
-    const W = visor.clientWidth;
-    const H = visor.clientHeight;
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
-    const escala = Math.max(W / vw, H / vh);
-    const ancho = Math.min(vw, (0.86 * W * 1.1) / escala);
-    const alto = Math.min(vh, ancho * (54 / 85.6));
-    // La franja: el 45 % de abajo de la tarjeta (las líneas ocupan ~35 %; el
-    // resto es margen para un DNI un poco corrido dentro del recuadro).
-    const desde = soloFranja ? 0.55 : 0;
-    const altoFuente = alto * (1 - desde);
-    const destino = soloFranja ? 1200 : 1400;
-    lienzo.width = destino;
-    lienzo.height = Math.round(destino * (altoFuente / ancho));
-    lienzo.getContext('2d', { alpha: false }).drawImage(video, (vw - ancho) / 2, (vh - alto) / 2 + alto * desde, ancho, altoFuente,
-      0, 0, lienzo.width, lienzo.height);
-    // toDataURL y no toBlob: en el WebView de Android toBlob espera a que el
-    // teléfono «esté libre» (~4 s por fotograma); toDataURL tarda ~15 ms.
-    return lienzo.toDataURL('image/jpeg', 0.75).split(',')[1];
-  }
-
-  // En el DNI azul las líneas con «<» están en la MISMA cara que la foto; en
-  // el electrónico, atrás. Primero se buscan los nombres sin voltear: si en
-  // unas vueltas no aparecen, recién se pide el lado de la foto.
-  const VUELTAS_MISMA_CARA = 3;
-  let vueltasMismaCara = 0;
-
-  function pasarAlAnverso(mrz) {
-    mrzLeida = mrz;
-    fase = 'anverso';
-    anterior = '';
-    vueltasMismaCara = 0;
-    if (navigator.vibrate) { try { navigator.vibrate(40); } catch (e) { /* sin vibración */ } }
-    destelloLeido(visor);                   // sin esperar: sigue buscando los nombres
-    estado.textContent = 'Listas las tres líneas. Buscando los nombres…';
-  }
-
-  function pedirVoltear() {
-    pista.textContent = PISTA_ANVERSO;
-    estado.textContent = 'Ahora el lado de la foto…';
-    omitir.hidden = false;
-  }
+  const detector = new window.BarcodeDetector({ formats: ['pdf417'] });
 
   async function buscar() {
     if (!abierto) return;
     if (video.readyState >= 2) {
       try {
-        if (detector && fase === 'reverso') {
-          const hallados = await detector.detect(video);
-          const pdf = hallados.find((h) => h.format === 'pdf417' && h.rawValue);
-          if (pdf) return entregar({ tipo: 'pdf417', cadena: pdf.rawValue });
-        }
-        // Si se cerró mientras se buscaba el código, el lienzo ya está vacío.
-        if (lector && abierto) {
-          const { fragmentos } = await lector.leer({ imagen: fotogramaDelRecuadro(fase === 'reverso') });
-          if (!abierto) return;
-          const filas = unirFilasOcr(fragmentos);
-          if (fase === 'reverso') {
-            const mrz = buscarMrzTd1(filas);
-            const clave = mrz ? mrz.lineas.join('') : '';
-            if (mrz && clave === anterior) {
-              if (!enAsistencia) pasarAlAnverso(mrz);
-              else {
-                // El mismo DNI sigue frente a la cámara: no se vuelve a marcar.
-                const dni = mrz.campos.numeroDocumento;
-                if (dni !== ultimoDni || Date.now() - ultimoEn > 5000) {
-                  if (navigator.vibrate) { try { navigator.vibrate(60); } catch (e) { /* sin vibración */ } }
-                  destelloLeido(visor);     // sin esperar: el siguiente DNI ya puede ir
-                  estado.textContent = alLeer({ tipo: 'mrz', mrz }) || '';
-                }
-                ultimoDni = dni;
-                ultimoEn = Date.now();
-                anterior = '';
-              }
-            } else anterior = clave;
-          } else {
-            vueltasMismaCara += 1;
-            if (vueltasMismaCara === VUELTAS_MISMA_CARA) pedirVoltear();
-            const anverso = combinarMrzYAnverso(mrzLeida.campos, filas);
-            const clave = anverso ? JSON.stringify(anverso) : '';
-            if (anverso) {
-              lecturasAnverso += 1;
-              // Paterno y nombres iguales a la MRZ ya son dos fuentes de acuerdo:
-              // no hace falta repetir. El segundo apellido, si no aparece en
-              // unas pocas lecturas, queda para escribirlo. Con una letra
-              // dudosa, sí se esperan dos lecturas iguales.
-              const cruzados = anverso.apellidoPaterno.estado === 'confirmado' && anverso.nombres.estado === 'confirmado';
-              const conMaterno = anverso.apellidoMaterno.estado !== 'no-leido';
-              if ((cruzados && (conMaterno || lecturasAnverso >= 4)) || clave === anterior) {
-                return entregar({ tipo: 'mrz', mrz: mrzLeida, anverso });
-              }
-            }
-            anterior = clave;
-          }
-        }
+        const hallados = await detector.detect(video);
+        const pdf = hallados.find((h) => h.format === 'pdf417' && h.rawValue);
+        if (pdf) return entregar({ tipo: 'pdf417', cadena: pdf.rawValue });
       } catch (e) {
         /* un fotograma que no se pudo leer: se prueba con el siguiente */
       }
     }
-    // El siguiente intento enseguida: la espera ya la pone el reconocimiento.
-    temporizador = setTimeout(buscar, lector ? 60 : 250);
+    temporizador = setTimeout(buscar, 250);
   }
   buscar();
 }

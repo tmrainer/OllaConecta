@@ -5,7 +5,7 @@
 const VERSION_APP = '1.7.0';
 import {
   buscar, crearElemento, montarCabecera, icono,
-  pintarAvisosAlmacenamiento, decir, puedeHablar, sincronizarBarras, avisoAbajo
+  pintarAvisosAlmacenamiento, decir, puedeHablar, avisoAbajo
 } from './ui.js';
 import { leerPerfil, guardarPerfil, ROLES } from './perfil.js';
 
@@ -19,7 +19,6 @@ function leerPreferencia(clave, porDefecto) {
 function guardarPreferencia(clave, valor) {
   try { localStorage.setItem(clave, valor); } catch (e) { /* solo mientras dure esta pantalla */ }
   window.aplicarPreferencias();
-  sincronizarBarras();
 }
 
 /** Opciones de una sola elección (radios con forma de ficha). */

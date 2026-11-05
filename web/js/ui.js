@@ -6,7 +6,6 @@ import {
   cifrarRespaldo, descifrarRespaldo, esRespaldoCifrado, revisarRespaldo, restaurarRespaldo,
   usoAlmacenamiento, ollaVinculada
 } from './modelo.js';
-import { esAppNativa, reprogramarAvisos, abrirEntregasAlTocarAviso } from './avisos-nativos.js';
 import { compartirArchivo } from './compartir-archivo.js';
 
 /**
@@ -280,20 +279,8 @@ export function montarCabecera(claveActiva, subtitulo) {
   montarBarraTitulo(claveActiva);
   vigilarAltoFijo(document.getElementById('panel'));
   vigilarAltoFijo(nav, '--alto-nav-abajo', 'fixed');
-  if (esAppNativa()) {
-    // Dentro del APK los archivos vienen en la app: no hace falta el service
-    // worker ni ofrecer instalarla. Sí, los avisos con la app cerrada.
-    document.documentElement.classList.add('app-nativa');
-    // Íconos claros en la barra de estado: la cabecera es verde oscuro en los
-    // dos modos, y por defecto seguirían al tema del teléfono.
-    sincronizarBarras();
-    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', sincronizarBarras);
-    reprogramarAvisos(leer(CLAVES.calendario, null));
-    abrirEntregasAlTocarAviso();
-  } else {
-    registrarTrabajador();
-    ofrecerInstalar();
-  }
+  registrarTrabajador();
+  ofrecerInstalar();
   pedirAlmacenPersistente();
 }
 
@@ -376,27 +363,15 @@ export function estadoVacio({ icono: nombre, titulo, texto, boton, tono = '' }) 
   ]);
 }
 
-/** La voz nativa del APK (plugin de Capacitor): el WebView de Android no trae speechSynthesis. */
-function vozNativa() {
-  const C = window.Capacitor;
-  return (C && C.isNativePlatform && C.isNativePlatform() && C.Plugins && C.Plugins.TextToSpeech) || null;
-}
-
 /** ¿Este equipo puede leer en voz alta? */
 export function puedeHablar() {
-  return !!vozNativa() || 'speechSynthesis' in window;
+  return 'speechSynthesis' in window;
 }
 
 export function decir(texto) {
   if (!texto || !puedeHablar()) return false;
   let lenta = false;
   try { lenta = localStorage.getItem('pi3.voz.velocidad') === 'lenta'; } catch (e) { /* normal */ }
-  const nativa = vozNativa();
-  if (nativa) {
-    nativa.stop().catch(() => {}).then(() => nativa.speak({ text: texto, lang: 'es-PE', rate: lenta ? 0.75 : 0.95 }))
-      .catch(() => {});
-    return true;
-  }
   const voz = new SpeechSynthesisUtterance(texto);
   voz.lang = 'es-PE';
   voz.rate = lenta ? 0.75 : 0.95;
@@ -407,9 +382,7 @@ export function decir(texto) {
 
 /** Calla lo que se esté leyendo. */
 export function callar() {
-  const nativa = vozNativa();
-  if (nativa) nativa.stop().catch(() => {});
-  else if ('speechSynthesis' in window) speechSynthesis.cancel();
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
 }
 
 export function leerPantalla() {
@@ -525,17 +498,6 @@ export function vigilarAltoFijo(el, variable = '--alto-panel', posicion = 'stick
  */
 function registrarTrabajador() {
   if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
-  // Dentro del APK los archivos ya vienen en el teléfono: el trabajador solo
-  // sumaba una copia más, que tras instalar un APK nuevo seguía sirviendo la
-  // versión vieja hasta recargar. Se quita el que haya quedado de antes.
-  const C = window.Capacitor;
-  if (C && C.isNativePlatform && C.isNativePlatform()) {
-    navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister())).catch(() => {});
-    if (window.caches) {
-      caches.keys().then((ks) => ks.filter((k) => k.startsWith('pi3-app-')).forEach((k) => caches.delete(k))).catch(() => {});
-    }
-    return;
-  }
   navigator.serviceWorker.register('./sw.js').catch(() => { /* sin él, la app funciona igual con red */ });
   // La app se sirve de su copia guardada; las novedades se bajan aparte, ya
   // cargada la página, y se avisa para que se use la versión nueva al recargar.
@@ -615,21 +577,6 @@ function pintarOfertaInstalar() {
       }
     })
   ]));
-}
-
-/**
- * APK: la barra de estado siempre con íconos claros (la cabecera es verde
- * oscuro en los dos modos); la de navegación, según el modo que se ve (el del
- * teléfono, o el elegido en Ajustes).
- */
-export function sincronizarBarras() {
-  const C = window.Capacitor;
-  const barras = C && C.Plugins && C.Plugins.SystemBars;
-  if (!barras || !barras.setStyle) return;
-  const tema = document.documentElement.getAttribute('data-tema');
-  const oscuro = tema ? tema === 'oscuro' : matchMedia('(prefers-color-scheme: dark)').matches;
-  barras.setStyle({ style: 'DARK', bar: 'StatusBar' }).catch(() => {});
-  barras.setStyle({ style: oscuro ? 'DARK' : 'LIGHT', bar: 'NavigationBar' }).catch(() => {});
 }
 
 /** null mientras no se sabe; true/false según lo que conceda el navegador. */
@@ -740,12 +687,9 @@ export function bannerAlerta(alerta, { mostrarEnlace = true, pedirConfigurar = t
 
 /**
  * «Dónde se guardan» (página Tus datos): cada lugar donde quedan los datos,
- * dicho con claridad. En el APK, Android puede sumarlos a la copia de
- * seguridad de Google del teléfono (allowBackup en AndroidManifest.xml): se
- * dice, para que nadie se sorprenda ni confíe solo en ella.
+ * dicho con claridad.
  */
 export function lugaresDeLosDatos() {
-  const nativa = esAppNativa();
   const lugar = (nombreIcono, titulo, textos, extra = []) => crearElemento('li', { clase: 'lugar' }, [
     icono(nombreIcono, { tam: 24 }),
     crearElemento('div', {}, [
@@ -756,13 +700,11 @@ export function lugaresDeLosDatos() {
   ]);
   const olla = ollaVinculada();
   const lugares = [
-    lugar('escudo', nativa ? 'En este teléfono, dentro de la app' : 'En este teléfono, dentro del navegador', [
+    lugar('escudo', 'En este teléfono, dentro del navegador', [
       olla ? 'Todo se guarda primero aquí: funciona sin señal.'
         : 'El padrón, la asistencia, el B-1 y las entregas no se mandan a internet. Funciona sin señal.',
-      nativa
-        ? 'Si desinstalas la app o cambias de teléfono, pueden perderse.'
-        : 'Si borras los datos del navegador o cambias de teléfono, se pierden.'
-    ], nativa ? [] : [
+      'Si borras los datos del navegador o cambias de teléfono, se pierden.'
+    ], [
       crearElemento('p', { clase: 'dato-fuerte estado-proteccion', texto: textoProteccion() }),
       crearElemento('button', {
         type: 'button', clase: 'boton diminuto boton-instalar', texto: 'Instalar la aplicación',
@@ -777,13 +719,6 @@ export function lugaresDeLosDatos() {
       'Cada cambio queda con quién lo hizo y cuándo. El B-1 y las entregas no suben.'
     ]));
   }
-  if (nativa) {
-    lugares.push(lugar('nube', 'En la copia de seguridad de Google, si está activada', [
-      'Android puede guardar los datos de esta app en la copia de seguridad de la cuenta Google del ' +
-        'teléfono. Se prende o se apaga en los ajustes del teléfono: Google → Copia de seguridad.',
-      'El equipo del proyecto no la ve. No siempre se recupera: no te fíes solo de ella.'
-    ]));
-  }
   lugares.push(lugar('archivo', 'En las copias que guardas tú', [
     'Solo cuando tocas «Guardar una copia»: un archivo que queda donde tú lo guardes.'
   ]));
@@ -792,7 +727,7 @@ export function lugaresDeLosDatos() {
 
 /** Qué tan protegidos están los datos contra el borrado automático del navegador. */
 function textoProteccion() {
-  if (almacenPersistente === true || esAppInstalada() || esAppNativa()) return '';
+  if (almacenPersistente === true || esAppInstalada()) return '';
   if (pedidoInstalar) return 'Para que el teléfono no borre tus datos, instala la aplicación.';
   return 'Para que el teléfono no borre tus datos: menú del navegador → «Agregar a pantalla de inicio».';
 }

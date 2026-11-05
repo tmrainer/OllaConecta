@@ -1,17 +1,5 @@
-// compartir-archivo.js — entregar un archivo que arma la app: menú «Compartir» o descarga.
-// En el APK el WebView no tiene navigator.share y una descarga no llega a ninguna parte:
-// se usa el complemento propio CompartirArchivo (mobile/CompartirArchivoPlugin.java).
-
-function complemento() {
-  const C = window.Capacitor;
-  return C && C.isPluginAvailable && C.isPluginAvailable('CompartirArchivo') ? C.Plugins.CompartirArchivo : null;
-}
-
-function aBase64(bytes) {
-  let s = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-  return btoa(s);
-}
+// compartir-archivo.js — entregar un archivo que arma la app: menú «Compartir» del
+// teléfono (navigator.share) o, si no hay, una descarga.
 
 function descargar(nombre, tipo, bytes) {
   const url = URL.createObjectURL(new Blob([bytes], { type: tipo }));
@@ -29,11 +17,6 @@ function descargar(nombre, tipo, bytes) {
  * @returns {Promise<'compartido'|'descargado'|'cancelado'>}
  */
 export async function compartirArchivo({ nombre, tipo, bytes, titulo }) {
-  const c = complemento();
-  if (c) {
-    await c.compartir({ nombre, tipo, titulo, base64: aBase64(bytes) });
-    return 'compartido';
-  }
   if (typeof File !== 'undefined' && navigator.canShare && matchMedia('(pointer: coarse)').matches) {
     const archivo = new File([bytes], nombre, { type: tipo });
     if (navigator.canShare({ files: [archivo] })) {

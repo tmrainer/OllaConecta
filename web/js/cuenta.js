@@ -6,7 +6,6 @@
 // Quién puede qué lo deciden las reglas de nube/firestore.rules, no este archivo.
 
 import { CONFIG_FIREBASE, hayCuentas } from './firebase-config.js';
-import { esAppNativa } from './avisos-nativos.js';
 import { desvincularOlla } from './modelo.js';
 
 export { hayCuentas };
@@ -44,11 +43,6 @@ export async function firebase() {
   return cargando;
 }
 
-function complementoNativo() {
-  const C = typeof window !== 'undefined' ? window.Capacitor : null;
-  return (C && C.Plugins && C.Plugins.FirebaseAuthentication) || null;
-}
-
 /** @returns {{uid: string, correo: string, nombre: string} | null} */
 export async function quien() {
   const f = await firebase();
@@ -61,25 +55,15 @@ export async function entrar() {
   const f = await firebase();
   if (!f) throw new Error('Esta copia de la app no tiene cuentas configuradas.');
   const { auth, Auth } = f;
-  if (esAppNativa()) {
-    const P = complementoNativo();
-    if (!P) throw new Error('Este APK no trae el inicio de sesión con Google.');
-    const r = await P.signInWithGoogle();
-    const cred = Auth.GoogleAuthProvider.credential(r.credential && r.credential.idToken);
-    await Auth.signInWithCredential(auth, cred);
-  } else {
-    const proveedor = new Auth.GoogleAuthProvider();
-    proveedor.setCustomParameters({ prompt: 'select_account' });
-    await Auth.signInWithPopup(auth, proveedor);
-  }
+  const proveedor = new Auth.GoogleAuthProvider();
+  proveedor.setCustomParameters({ prompt: 'select_account' });
+  await Auth.signInWithPopup(auth, proveedor);
   return quien();
 }
 
 export async function salir() {
   const f = await firebase();
   if (!f) return;
-  const P = complementoNativo();
-  if (P) { try { await P.signOut(); } catch (e) { /* la sesión de la librería es la que importa */ } }
   await f.Auth.signOut(f.auth);
   desvincularOlla();   // sin cuenta no hay con qué subir; los datos del teléfono se quedan
 }
