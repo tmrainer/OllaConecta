@@ -1,7 +1,7 @@
 Asistencia
 Olla ficticia Los Ñandúes · del 01-09-26 al 30-09-26
 
-Fecha	Día	Menú normal	Ayuda social	Sin inscribir*	Raciones	Recaudado (S/)
+Fecha	Día	Menú normal	Ayuda social	Sin estar en el padrón*	Raciones servidas	Recaudado (S/)
 01-09-26	Martes	27	4	0	31	85
 02-09-26	Miércoles	17	5	0	22	56
 03-09-26	Jueves	19	5	0	24	62
@@ -29,5 +29,7 @@ Fecha	Día	Menú normal	Ayuda social	Sin inscribir*	Raciones	Recaudado (S/)
 29-09-26	Martes	19	8	0	27	65
 30-09-26	Miércoles	20	3	2	23	63
 Total	26 días	547	157	7	704	1751
+Con precio del menú					677	1751
+Sin precio del menú (1 día)					27	no suma al recaudado
 
-* Quienes comieron sin estar en el padrón. Ya están contados en «Menú normal» y «Ayuda social».
+* Sin estar en el padrón: quienes comieron sin estar inscritos. Ya están contados en «Menú normal» y «Ayuda social».

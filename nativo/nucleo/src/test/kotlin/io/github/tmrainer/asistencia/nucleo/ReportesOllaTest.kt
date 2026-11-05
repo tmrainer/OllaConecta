@@ -72,6 +72,28 @@ class ReportesOllaTest {
     }
 
     @Test
+    fun `Día y mes - las servidas se parten en marcadas, sin padrón y a mano, y lo que no tiene precio se ve`() {
+        val mes = padron.atenciones.map { it.fecha.take(7) }.groupingBy { it }.eachCount().maxBy { it.value }.key
+        val r = reporteDelMes(padron, rendiciones, mes)
+        igual(r.marcadas + r.sinInscribir + r.anotadasAMano, r.servidas)
+        igual(r.servidas - r.racionesSinPrecio, resumenEconomicoRaciones(padron, r.inicio, r.fin).racionesConPrecio)
+        for (fecha in r.dias.map { it.fecha }) {
+            val d = reporteDelDia(padron, fecha)
+            igual(d.asistentes.size + d.marcasSinPersona + d.sinInscribir + d.anotadasAMano, d.servidas, fecha)
+        }
+        // Un día sin precio: «falta el precio», nunca vacío ni cero; el mes dice cuántas raciones quedan fuera.
+        val fecha = r.dias.first { it.servidas > 0 }.fecha
+        val sinPrecio = padron.copy(atenciones = padron.atenciones.map {
+            if (it.fecha == fecha) it.copy(precioMenuNormalCent = null, precioMenuAyudaSocialCent = null) else it
+        })
+        ok("Recaudado (S/)\tfalta el precio" in leerXlsx(excelDelDia(sinPrecio, fecha)))
+        val m2 = reporteDelMes(sinPrecio, rendiciones, mes)
+        ok(m2.diasSinPrecio == r.diasSinPrecio + 1, "un día más sin precio")
+        val texto = leerXlsx(excelDelMes(sinPrecio, rendiciones, mes))
+        ok(Regex("Raciones sin precio del menú \\(\\d+ días?\\), no suman al recaudado\t${m2.racionesSinPrecio}\n").containsMatchIn(texto), texto)
+    }
+
+    @Test
     fun `El gasto propio va aparte y no suma a los insumos del B-1`() {
         val r0 = rendiciones.first()
         val conCompra = r0.egresos.firstOrNull { it.fechaCompra.isNotEmpty() } ?: return

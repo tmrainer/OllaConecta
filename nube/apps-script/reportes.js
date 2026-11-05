@@ -1535,7 +1535,7 @@ const periodoTexto = (inicio, fin) => `del ${aDdMmAa(inicio)} al ${aDdMmAa(fin)}
 // Los mismos títulos que entiende la importación (importar.js): el archivo se
 // puede volver a cargar en otro teléfono.
 const CABECERA_PADRON = ['N°', 'Apellido paterno', 'Apellido materno', 'Nombres', 'Tipo de documento',
-  'Número de documento', 'Grupo de edad', 'Edad', 'Tipo', 'Días asistidos'];
+  'Número de documento', 'Grupo de edad', 'Edad', 'Sexo', 'Tipo', 'Días asistidos'];
 
 /**
  * Hoja «Padrón»: las personas activas a `fechaRef`, numeradas y por apellido,
@@ -1560,12 +1560,12 @@ function excelDelPadron(padron, { fechaRef, inicio, fin, centro = '' }) {
   return armarXlsx([
     {
       nombre: 'Padrón',
-      anchos: [5, 18, 18, 22, 10, 14, 15, 6, 13, 9],
+      anchos: [5, 18, 18, 22, 10, 14, 15, 6, 6, 13, 9],
       filas: [
         [negrita('Padrón de personas')], [subtitulo], [],
         CABECERA_PADRON.map(negrita),
         ...filas.map((f) => [f.n, f.apellidoPaterno, f.apellidoMaterno, f.nombres, f.tipoDocumento, f.numeroDocumento,
-          f.grupoEtarioEtiqueta, f.edad, f.tipoAfiliadoEtiqueta, dias.get(f.afiliadoId) || 0])
+          f.grupoEtarioEtiqueta, f.edad, f.sexo, f.tipoAfiliadoEtiqueta, dias.get(f.afiliadoId) || 0])
       ]
     },
     {
@@ -1595,23 +1595,27 @@ function excelDeAsistencia(padron, { inicio, fin, centro = '' }) {
   const dias = atencionesDelPeriodo(padron, inicio, fin).slice().sort((a, b) => a.fecha.localeCompare(b.fecha));
   const subtitulo = `${centro ? centro + ' · ' : ''}${periodoTexto(inicio, fin)}`;
 
-  const suma = { normal: 0, ayuda: 0, fuera: 0, total: 0, soles: 0 };
-  const filasDia = dias.map((at) => {
-    const d = desgloseDelDia(at);
+  const desgloses = dias.map(desgloseDelDia);
+  const suma = { normal: 0, ayuda: 0, fuera: 0, total: 0, soles: 0, conPrecio: 0, sinPrecio: 0, diasSinPrecio: 0 };
+  const filasDia = dias.map((at, i) => {
+    const d = desgloses[i];
     const rec = recaudacionDelDiaCent(at);
-    suma.normal += d.normal; suma.ayuda += d.ayudaSocial; suma.fuera += d.sinInscribir; suma.total += d.total; suma.soles += rec || 0;
+    suma.normal += d.normal; suma.ayuda += d.ayudaSocial; suma.fuera += d.sinInscribir; suma.total += d.total;
+    if (rec === null) { suma.sinPrecio += d.total; suma.diasSinPrecio += 1; } else { suma.soles += rec; suma.conPrecio += d.total; }
     return [aDdMmAa(at.fecha), DIAS[diaDeSemana(at.fecha)], d.normal, d.ayudaSocial, d.sinInscribir, d.total,
       rec === null ? 'falta el precio' : soles(rec)];
   });
   const resumen = [
     [negrita('Asistencia')], [subtitulo], [],
-    ['Fecha', 'Día', 'Menú normal', 'Ayuda social', 'Sin inscribir*', 'Raciones', 'Recaudado (S/)'].map(negrita),
+    ['Fecha', 'Día', 'Menú normal', 'Ayuda social', 'Sin estar en el padrón*', 'Raciones servidas', 'Recaudado (S/)'].map(negrita),
     ...filasDia
   ];
   if (dias.length) {
     resumen.push([negrita('Total'), negrita(cuantos(dias.length, 'día')), negrita(suma.normal), negrita(suma.ayuda),
       negrita(suma.fuera), negrita(suma.total), soles(suma.soles, true)]);
-    resumen.push([], ['* Quienes comieron sin estar en el padrón. Ya están contados en «Menú normal» y «Ayuda social».']);
+    // El total recaudado suma solo los días con precio: lo que queda fuera, a la vista.
+    resumen.push(...filasDelPrecio(5, suma.conPrecio, suma.soles, suma.sinPrecio, suma.diasSinPrecio));
+    resumen.push([], [NOTA_SIN_PADRON]);
   } else {
     resumen.push(['No hay días con asistencia en estas fechas.']);
   }
@@ -1629,13 +1633,42 @@ function excelDeAsistencia(padron, { inicio, fin, centro = '' }) {
       const fila = marcas.map((m) => (m.has(a.id) ? (m.get(a.id) === 'ayuda_social' ? 'A' : 'X') : ''));
       return [i + 1, nombreCompleto(a), a.numeroDocumento || '', ...fila, fila.filter(Boolean).length];
     }),
-    [null, negrita('Total del día'), null, ...marcas.map((m) => negrita(m.size)), negrita(marcas.reduce((s, m) => s + m.size, 0))]
+    // Las marcas más quienes comieron sin estar en el padrón son las raciones del «Resumen por día».
+    ...filasQueCuadran(marcas.map((m) => m.size), desgloses)
   ];
+  if (desgloses.some((d) => d.origen === 'legado')) porPersona.push([], [NOTA_LEGADO]);
 
   return armarXlsx([
     { nombre: 'Resumen por día', anchos: [10, 11, 12, 12, 13, 10, 15], filas: resumen },
     { nombre: 'Por persona', anchos: [5, 34, 12, ...dias.map(() => 9), 6], filas: porPersona }
   ]);
+}
+
+const NOTA_SIN_PADRON = '* Sin estar en el padrón: quienes comieron sin estar inscritos. Ya están contados en «Menú normal» y «Ayuda social».';
+const NOTA_LEGADO = 'Los días anotados a mano en la versión anterior no tienen lista por persona: cuentan solo en «Raciones servidas».';
+
+/**
+ * Debajo del total: las raciones con precio (las que suman al recaudado) y las
+ * que no lo tienen. `col` es la columna de las raciones; la de al lado, la de soles.
+ */
+function filasDelPrecio(col, conPrecio, solesCent, sinPrecio, diasSinPrecio) {
+  const vacias = Array(col - 1).fill(null);
+  return [
+    ['Con precio del menú', ...vacias, conPrecio, soles(solesCent)],
+    [`Sin precio del menú (${cuantos(diasSinPrecio, 'día')})`, ...vacias, sinPrecio, sinPrecio > 0 ? 'no suma al recaudado' : '']
+  ];
+}
+
+/** Por día y en total: marcadas en la lista + sin estar en el padrón = raciones servidas. */
+function filasQueCuadran(marcadas, desgloses) {
+  const fuera = desgloses.map((d) => d.sinInscribir);
+  const raciones = desgloses.map((d) => d.total);
+  const sumar = (xs) => xs.reduce((s, x) => s + x, 0);
+  return [
+    [null, negrita('Marcadas en la lista'), null, ...marcadas.map(negrita), negrita(sumar(marcadas))],
+    [null, 'Sin estar en el padrón', null, ...fuera, sumar(fuera)],
+    [null, negrita('Raciones servidas'), null, ...raciones.map(negrita), negrita(sumar(raciones))]
+  ];
 }
 
 const CANTIDAD = (e) => (e.cantidadVarios ? 'varios' : Number.isFinite(e.cantidad) ? e.cantidad : '');

@@ -1563,7 +1563,7 @@ export const casos = [
       const p = padronVacio();
       p.afiliados = [Object.assign(nuevoAfiliado(), {
         id: 'x1', apellidoPaterno: 'Álvarez', apellidoMaterno: 'Rojas', nombres: 'Rosa', numeroDocumento: '01234567',
-        grupoEtarioManual: 'adulto_mayor', tipoAfiliado: 'caso_social', altaEn: '2026-01-01'
+        grupoEtarioManual: 'adulto_mayor', sexo: 'F', tipoAfiliado: 'caso_social', altaEn: '2026-01-01'
       })];
       const bytes = excelDelPadron(p, { fechaRef: '2026-10-17', inicio: '2026-10-01', fin: '2026-10-17' });
       ok(pareceXlsx(bytes.buffer), 'debe ser un .xlsx');
@@ -1575,6 +1575,7 @@ export const casos = [
       igual(a.numeroDocumento, '01234567');
       igual(a.apellidoPaterno, 'Álvarez');
       igual(a.grupoEtarioManual, 'adulto_mayor');
+      igual(a.sexo, 'F');
       igual(a.tipoAfiliado, 'caso_social');
     }
   },
@@ -1606,6 +1607,24 @@ export const casos = [
       ok(/Gastos con el subsidio económico(\t)+200(\n|$)/.test(b1), 'gastos con el subsidio: 200');
       ok(/Aporte del centro de atención(\t)+9.85(\n|$)/.test(b1), 'aporte: 9.85');
       ok(/Total de rendición de gastos(\t)+209.85(\n|$)/.test(b1), 'total: 209.85');
+    }
+  },
+  {
+    grupo: 'Exportar',
+    nombre: 'Asistencia en Excel: las raciones sin precio quedan a la vista y fuera del recaudado',
+    fn: async () => {
+      const p = padronVacio();
+      p.afiliados = [Object.assign(nuevoAfiliado(), { id: 'a', apellidoPaterno: 'A', nombres: 'Uno', numeroDocumento: '11111111', tipoAfiliado: 'habitual', altaEn: '2026-01-01' })];
+      p.atenciones = [
+        Object.assign(nuevaAtencion({ precioMenuNormalCent: 150, precioMenuAyudaSocialCent: 0 }),
+          { fecha: '2026-10-05', asistencias: [{ afiliadoId: 'a', tipoMenu: 'normal' }], sinInscribir: { normal: 2 } }),
+        Object.assign(nuevaAtencion(null), { fecha: '2026-10-06', asistencias: [{ afiliadoId: 'a', tipoMenu: 'normal' }] })
+      ];
+      const filas = (await leerXlsx(excelDeAsistencia(p, { inicio: '2026-10-01', fin: '2026-10-31' }).buffer)).split('\n');
+      igual(filas[5], ['06-10-26', 'Martes', '1', '0', '0', '1', 'falta el precio'].join('\t'));
+      igual(filas[6], ['Total', '2 días', '4', '0', '2', '4', '4.5'].join('\t'), 'el recaudado suma solo el día con precio');
+      igual(filas[7], ['Con precio del menú', '', '', '', '', '3', '4.5'].join('\t'));
+      igual(filas[8], ['Sin precio del menú (1 día)', '', '', '', '', '1', 'no suma al recaudado'].join('\t'));
     }
   },
   {

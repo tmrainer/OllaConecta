@@ -18,6 +18,7 @@ import io.github.tmrainer.asistencia.nucleo.modelo.Padron
 import io.github.tmrainer.asistencia.nucleo.modelo.Rendicion
 import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
 import io.github.tmrainer.asistencia.nucleo.modelo.aFecha
+import io.github.tmrainer.asistencia.nucleo.modelo.cuantos
 import io.github.tmrainer.asistencia.nucleo.modelo.esIso
 import io.github.tmrainer.asistencia.nucleo.modelo.fechaLarga
 import io.github.tmrainer.asistencia.nucleo.modelo.formatearSoles
@@ -40,21 +41,28 @@ data class ReporteDia(
     val sinInscribir: Int,
     val servidas: Int,
     val recaudadoCent: Long?,
-    val asistentes: List<AsistenteDelDia>
+    val asistentes: List<AsistenteDelDia>,
+    /** Marcas de personas que ya no están en el padrón (se borraron): cuentan en las servidas, sin nombre. */
+    val marcasSinPersona: Int,
+    /** Raciones anotadas a mano en la versión anterior, sin lista por persona. */
+    val anotadasAMano: Int
 )
 
 fun reporteDelDia(padron: Padron, fecha: String): ReporteDia {
     val at = padron.atenciones.firstOrNull { it.fecha == fecha }
     val d = desgloseDelDia(at)
     val porId = padron.afiliados.associateBy { it.id }
-    val asistentes = asistenciasDelDia(at).mapNotNull { a -> porId[a.afiliadoId]?.let { it to a.tipoMenu } }
+    val marcas = asistenciasDelDia(at)
+    val asistentes = marcas.mapNotNull { a -> porId[a.afiliadoId]?.let { it to a.tipoMenu } }
         .sortedWith { x, y -> ORDEN_NOMBRES.compare(nombreCompleto(x.first), nombreCompleto(y.first)) }
         .mapIndexed { i, (p, menu) -> AsistenteDelDia(i + 1, nombreCompleto(p), p.numeroDocumento, if (menu == "ayuda_social") "Ayuda social" else "Normal") }
     return ReporteDia(fecha, at?.menuDelDia?.trim().orEmpty(), at?.racionesPreparadas, d.normal, d.ayudaSocial, d.sinInscribir, d.total,
-        if (at != null) recaudacionDelDiaCent(at) else null, asistentes)
+        if (at != null) recaudacionDelDiaCent(at) else null, asistentes,
+        marcasSinPersona = marcas.size - asistentes.size, anotadasAMano = d.total - marcas.size - d.sinInscribir)
 }
 
-data class DiaDelMes(val fecha: String, val menuDelDia: String, val preparadas: Int?, val servidas: Int, val normal: Int, val ayudaSocial: Int, val sinInscribir: Int)
+data class DiaDelMes(val fecha: String, val menuDelDia: String, val preparadas: Int?, val servidas: Int, val normal: Int, val ayudaSocial: Int, val sinInscribir: Int,
+    val marcadas: Int, val recaudadoCent: Long?)
 
 /** Una persona en el consolidado del mes: cuántos días vino. */
 data class PersonaDelMes(val n: Int, val nombre: String, val documento: String, val dias: Int, val normal: Int, val ayudaSocial: Int, val activa: Boolean)
@@ -75,6 +83,12 @@ data class ReporteMes(
     val preparadas: Int,
     val diasConPreparadas: Int,
     val recaudadoCent: Long?,
+    /** Raciones de días sin precio del menú: no suman a [recaudadoCent]. */
+    val racionesSinPrecio: Int,
+    val diasSinPrecio: Int,
+    /** Las servidas son marcadas + sin estar en el padrón + anotadas a mano. */
+    val marcadas: Int,
+    val anotadasAMano: Int,
     val personas: List<PersonaDelMes>,
     /** Marcas de personas que ya no están en el padrón (se borraron): cuentan en las raciones, sin nombre. */
     val marcasSinPersona: Int,
@@ -102,7 +116,8 @@ fun reporteDelMes(padron: Padron, rendiciones: List<Rendicion>, mes: String): Re
     val (inicio, fin) = diasDelMes(mes)
     val dias = atencionesDelPeriodo(padron, inicio, fin).sortedBy { it.fecha }.map { at ->
         val d = desgloseDelDia(at)
-        DiaDelMes(at.fecha, at.menuDelDia.trim(), at.racionesPreparadas, d.total, d.normal, d.ayudaSocial, d.sinInscribir)
+        DiaDelMes(at.fecha, at.menuDelDia.trim(), at.racionesPreparadas, d.total, d.normal, d.ayudaSocial, d.sinInscribir,
+            asistenciasDelDia(at).size, recaudacionDelDiaCent(at))
     }
     val economico = resumenEconomicoRaciones(padron, inicio, fin)
     // Todas las personas activas en el mes (también las que no vinieron) y quienes vinieron.
@@ -124,12 +139,17 @@ fun reporteDelMes(padron: Padron, rendiciones: List<Rendicion>, mes: String): Re
         InsumoDelMes(e.fechaCompra, e.descripcion.trim(), cantidad, e.montoTotalCent, ORIGEN[e.origenFondo] ?: "Subsidio")
     }
     val gastos = rendiciones.flatMap { it.gastosPropios }.filter { enElMes(it.fecha) }.sortedBy { it.fecha }
+    val servidas = dias.sumOf { it.servidas }
+    val sinInscribir = dias.sumOf { it.sinInscribir }
+    val marcadas = dias.sumOf { it.marcadas }
     return ReporteMes(
         mes, inicio, fin, dias,
-        servidas = dias.sumOf { it.servidas }, normal = dias.sumOf { it.normal }, ayudaSocial = dias.sumOf { it.ayudaSocial },
-        sinInscribir = dias.sumOf { it.sinInscribir },
+        servidas = servidas, normal = dias.sumOf { it.normal }, ayudaSocial = dias.sumOf { it.ayudaSocial },
+        sinInscribir = sinInscribir,
         preparadas = dias.sumOf { it.preparadas ?: 0 }, diasConPreparadas = dias.count { it.preparadas != null },
         recaudadoCent = economico.recaudacionCent,
+        racionesSinPrecio = servidas - economico.racionesConPrecio, diasSinPrecio = economico.diasSinPrecio,
+        marcadas = marcadas, anotadasAMano = servidas - marcadas - sinInscribir,
         personas = personas,
         marcasSinPersona = acumulado.filterKeys { id -> padron.afiliados.none { it.id == id } }.values.sumOf { it.dias },
         insumos = insumos, insumosCent = insumos.sumOf { it.montoCent ?: 0L },
@@ -259,6 +279,19 @@ fun pdfDelMes(padron: Padron, rendiciones: List<Rendicion>, mes: String, centro:
 private fun n(v: Any?) = Celda(v, negrita = true)
 private fun soles(cent: Long?): Any = if (cent != null) Celda(cent / 100.0, soles = true) else ""
 
+/** Lo recaudado, o «falta el precio» si hubo raciones de un menú sin precio: nunca un total a medias. */
+private fun recaudado(cent: Long?, servidas: Int): Any = if (cent == null && servidas > 0) "falta el precio" else soles(cent)
+
+/**
+ * Las raciones servidas, partidas de dos maneras que suman lo mismo: por menú
+ * (normal + ayuda social) y por lista (marcadas + sin estar en el padrón + anotadas a mano).
+ */
+private fun partesDeLasServidas(normal: Int, ayudaSocial: Int, marcadas: Int, sinPersona: Int, sinPadron: Int, aMano: Int): List<List<Any?>> =
+    listOf<List<Any?>>(listOf("Menú normal", normal), listOf("Ayuda social", ayudaSocial), listOf("Marcadas en la lista", marcadas)) +
+        (if (sinPersona > 0) listOf(listOf<Any?>("Incluye marcas de personas que ya no están en el padrón", sinPersona)) else emptyList()) +
+        listOf(listOf<Any?>("Sin estar en el padrón", sinPadron)) +
+        (if (aMano > 0) listOf(listOf<Any?>("Anotadas a mano (versión anterior)", aMano)) else emptyList())
+
 fun excelDelDia(padron: Padron, fecha: String, centro: String = ""): ByteArray {
     val r = reporteDelDia(padron, fecha)
     val filas = mutableListOf<List<Any?>>(
@@ -267,14 +300,12 @@ fun excelDelDia(padron: Padron, fecha: String, centro: String = ""): ByteArray {
         emptyList(),
         listOf(n("Qué se cocinó"), r.menuDelDia.ifEmpty { NO_ANOTADO }),
         listOf(n("Raciones preparadas"), r.preparadas ?: NO_ANOTADO),
-        listOf(n("Raciones servidas"), r.servidas),
-        listOf("Menú normal", r.normal),
-        listOf("Ayuda social", r.ayudaSocial),
-        listOf("Sin estar en el padrón", r.sinInscribir),
-        listOf(n("Recaudado (S/)"), soles(r.recaudadoCent)),
-        emptyList(),
-        listOf(n("N°"), n("Apellidos y nombres"), n("DNI"), n("Menú"))
+        listOf(n("Raciones servidas"), n(r.servidas))
     )
+    filas.addAll(partesDeLasServidas(r.normal, r.ayudaSocial, r.asistentes.size + r.marcasSinPersona, r.marcasSinPersona, r.sinInscribir, r.anotadasAMano))
+    filas.add(listOf(n("Recaudado (S/)"), recaudado(r.recaudadoCent, r.servidas)))
+    filas.add(emptyList())
+    filas.add(listOf(n("N°"), n("Apellidos y nombres"), n("Documento"), n("Menú")))
     r.asistentes.forEach { filas.add(listOf(it.n, it.nombre, it.documento, it.menu)) }
     return armarXlsx(listOf(HojaXlsx("Reporte del día", filas, listOf(22, 40, 14, 14))))
 }
@@ -282,24 +313,42 @@ fun excelDelDia(padron: Padron, fecha: String, centro: String = ""): ByteArray {
 fun excelDelMes(padron: Padron, rendiciones: List<Rendicion>, mes: String, centro: String = ""): ByteArray {
     val r = reporteDelMes(padron, rendiciones, mes)
     val titulo = encabezado(centro, r.etiqueta)
-    val resumen = listOf(
+    val resumen = listOf<List<Any?>>(
         listOf(n("Reporte del mes")), listOf(titulo), emptyList(),
         listOf(n("Días con atención"), r.dias.size),
-        listOf(n("Raciones servidas"), r.servidas),
-        listOf("Menú normal", r.normal),
-        listOf("Ayuda social", r.ayudaSocial),
-        listOf("Sin estar en el padrón", r.sinInscribir),
         listOf(n("Raciones preparadas"), if (r.diasConPreparadas == 0) NO_ANOTADO else r.preparadas),
         listOf("Días con preparadas anotadas", r.diasConPreparadas),
-        listOf(n("Recaudado (S/)"), soles(r.recaudadoCent)),
+        listOf(n("Raciones servidas"), n(r.servidas))
+    ) + partesDeLasServidas(r.normal, r.ayudaSocial, r.marcadas, r.marcasSinPersona, r.sinInscribir, r.anotadasAMano) + listOf(
+        listOf(n("Recaudado (S/)"), recaudado(r.recaudadoCent, r.servidas)),
+        listOf("Raciones con precio del menú", r.servidas - r.racionesSinPrecio),
+        listOf("Raciones sin precio del menú (${cuantos(r.diasSinPrecio, "día")}), no suman al recaudado", r.racionesSinPrecio),
         listOf(n("Insumos del B-1 (S/)"), soles(r.insumosCent)),
         listOf(n("Gasto propio, fuera del B-1 (S/)"), if (r.gastosPropios.isEmpty()) "no se anotó" else soles(r.gastoPropioCent))
     )
-    val porDia = listOf(listOf(n("Fecha"), n("Qué se cocinó"), n("Preparadas"), n("Servidas"), n("Menú normal"), n("Ayuda social"), n("Sin estar en el padrón"))) +
-        r.dias.map { listOf(aDdMmAa(it.fecha), it.menuDelDia, it.preparadas ?: "", it.servidas, it.normal, it.ayudaSocial, it.sinInscribir) }
-    val porPersona = listOf(listOf(n("N°"), n("Apellidos y nombres"), n("DNI"), n("Días"), n("Menú normal"), n("Ayuda social"), n("Estado"))) +
+    val porDia = mutableListOf<List<Any?>>(listOf("Fecha", "Qué se cocinó", "Raciones preparadas", "Menú normal", "Ayuda social",
+        "Sin estar en el padrón*", "Raciones servidas", "Recaudado (S/)").map(::n))
+    r.dias.forEach { porDia.add(listOf(aDdMmAa(it.fecha), it.menuDelDia, it.preparadas ?: "", it.normal, it.ayudaSocial, it.sinInscribir, it.servidas,
+        recaudado(it.recaudadoCent, it.servidas))) }
+    if (r.dias.isNotEmpty()) {
+        val solesConPrecio = r.recaudadoCent ?: 0L
+        porDia.add(listOf(n("Total"), n(cuantos(r.dias.size, "día")), n(if (r.diasConPreparadas == 0) "" else r.preparadas), n(r.normal), n(r.ayudaSocial),
+            n(r.sinInscribir), n(r.servidas), Celda(solesConPrecio / 100.0, soles = true, negrita = true)))
+        // El total recaudado suma solo los días con precio: lo que queda fuera, a la vista.
+        porDia.addAll(filasDelPrecio(6, r.servidas - r.racionesSinPrecio, solesConPrecio, r.racionesSinPrecio, r.diasSinPrecio))
+        porDia.add(emptyList())
+        porDia.add(listOf(NOTA_SIN_PADRON))
+    } else {
+        porDia.add(listOf("No hay días con atención en este mes."))
+    }
+    // Debajo de las personas, las mismas partes que en el «Resumen»: cuadra con las raciones servidas.
+    val porPersona = listOf(listOf(n("N°"), n("Apellidos y nombres"), n("Documento"), n("Días"), n("Menú normal"), n("Ayuda social"), n("Estado"))) +
         r.personas.map { listOf(it.n, it.nombre, it.documento, it.dias, it.normal, it.ayudaSocial, if (it.activa) "Activa" else "De baja") } +
-        (if (r.marcasSinPersona > 0) listOf(emptyList(), listOf("", "Marcas de personas que ya no están en el padrón", "", r.marcasSinPersona)) else emptyList())
+        listOf(listOf(null, n("Marcadas en la lista"), null, n(r.marcadas))) +
+        (if (r.marcasSinPersona > 0) listOf(listOf(null, "Incluye marcas de personas que ya no están en el padrón", null, r.marcasSinPersona)) else emptyList()) +
+        listOf(listOf(null, "Sin estar en el padrón", null, r.sinInscribir)) +
+        (if (r.anotadasAMano > 0) listOf(listOf(null, "Anotadas a mano (versión anterior)", null, r.anotadasAMano)) else emptyList()) +
+        listOf(listOf(null, n("Raciones servidas"), null, n(r.servidas)))
     val insumos = listOf(listOf(n("Fecha"), n("Descripción"), n("Cantidad"), n("Dinero"), n("Monto (S/)"))) +
         r.insumos.map { listOf(aDdMmAa(it.fecha), it.descripcion, it.cantidad, it.origen, soles(it.montoCent)) } +
         listOf(listOf(n("Total"), "", "", "", soles(r.insumosCent)))
@@ -308,7 +357,7 @@ fun excelDelMes(padron: Padron, rendiciones: List<Rendicion>, mes: String, centr
         listOf(listOf(n("Total"), "", soles(r.gastoPropioCent)))
     return armarXlsx(listOf(
         HojaXlsx("Resumen", resumen, listOf(34, 30)),
-        HojaXlsx("Día por día", porDia, listOf(12, 40, 12, 10, 12, 12, 20)),
+        HojaXlsx("Día por día", porDia, listOf(12, 40, 12, 12, 12, 13, 12, 15)),
         HojaXlsx("Por persona", porPersona, listOf(6, 40, 14, 8, 12, 12, 10)),
         HojaXlsx("Insumos del B-1", insumos, listOf(12, 40, 14, 14, 12)),
         HojaXlsx("Gasto propio", gastos, listOf(12, 40, 12))

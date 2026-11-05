@@ -14,6 +14,7 @@ import io.github.tmrainer.asistencia.nucleo.documentos.leerXlsx
 import io.github.tmrainer.asistencia.nucleo.documentos.pareceXlsx
 import io.github.tmrainer.asistencia.nucleo.modelo.Asistencia
 import io.github.tmrainer.asistencia.nucleo.modelo.PreciosMenu
+import io.github.tmrainer.asistencia.nucleo.modelo.SinInscribir
 import io.github.tmrainer.asistencia.nucleo.modelo.nuevaAtencion
 import io.github.tmrainer.asistencia.nucleo.modelo.nuevaRendicion
 import io.github.tmrainer.asistencia.nucleo.modelo.nuevoAfiliado
@@ -28,14 +29,42 @@ class ExportarTest {
     fun `El padrón exportado a Excel vuelve igual al importar, con los ceros del DNI`() {
         val p = padronVacio().copy(afiliados = listOf(nuevoAfiliado().copy(
             id = "x1", apellidoPaterno = "Álvarez", apellidoMaterno = "Rojas", nombres = "Rosa", numeroDocumento = "01234567",
-            grupoEtarioManual = "adulto_mayor", tipoAfiliado = "caso_social", altaEn = "2026-01-01"
+            grupoEtarioManual = "adulto_mayor", sexo = "F", tipoAfiliado = "caso_social", altaEn = "2026-01-01"
         )))
         val bytes = excelDelPadron(p, fechaRef = "2026-10-17", inicio = "2026-10-01", fin = "2026-10-17")
         ok(pareceXlsx(bytes), "debe ser un .xlsx")
         val filas = leerXlsx(bytes).split("\n")
         ok(filas[3].startsWith(CABECERA_PADRON.joinToString("\t")), "la cuarta fila son los títulos")
         igual(filas.size, 5, "solo la persona: el título de arriba y el resumen no entran")
-        igual(filas[4], "1\tÁlvarez\tRojas\tRosa\tDNI\t01234567\tAdulto/a mayor\t\tAyuda social\t0", "el DNI con su 0")
+        igual(filas[4], "1\tÁlvarez\tRojas\tRosa\tDNI\t01234567\tAdulto/a mayor\t\tF\tAyuda social\t0", "el DNI con su 0")
+    }
+
+    @Test
+    fun `Asistencia en Excel - lo que no tiene precio y lo que no tiene nombre queda a la vista y cuadra`() {
+        val p = padronVacio().copy(
+            afiliados = listOf(nuevoAfiliado().copy(id = "a", apellidoPaterno = "A", nombres = "Uno", numeroDocumento = "11111111",
+                tipoAfiliado = "habitual", altaEn = "2026-01-01")),
+            atenciones = listOf(
+                nuevaAtencion(PreciosMenu(150, 0)).copy(fecha = "2026-10-05",
+                    asistencias = listOf(Asistencia(afiliadoId = "a", tipoMenu = "normal")), sinInscribir = SinInscribir(normal = 2)),
+                nuevaAtencion(PreciosMenu(null, null)).copy(fecha = "2026-10-06",
+                    asistencias = listOf(Asistencia(afiliadoId = "a", tipoMenu = "normal")))
+            )
+        )
+        val bytes = excelDeAsistencia(p, inicio = "2026-10-01", fin = "2026-10-31")
+        val filas = leerXlsx(bytes).split("\n")
+        igual(filas[5], "06-10-26\tMartes\t1\t0\t0\t1\tfalta el precio")
+        igual(filas[6], "Total\t2 días\t4\t0\t2\t4\t4.5", "el recaudado suma solo el día con precio")
+        igual(filas[7], "Con precio del menú\t\t\t\t\t3\t4.5")
+        igual(filas[8], "Sin precio del menú (1 día)\t\t\t\t\t1\tno suma al recaudado")
+        // Hoja «Por persona» (leerXlsx lee solo la primera): marcadas + sin estar en el padrón = raciones servidas.
+        val xml = bytes.decodeToString()
+        fun fila(rotulo: String) = Regex("<row r=\"\\d+\">((?:(?!</row>).)*>$rotulo</t>(?:(?!</row>).)*)</row>").findAll(xml)
+            .map { it.groupValues[1] }.single { "<v>" in it }
+            .let { Regex("<v>([^<]*)</v>").findAll(it).map { m -> m.groupValues[1] }.toList() }
+        igual(fila("Marcadas en la lista"), listOf("1", "1", "2"))
+        igual(fila("Sin estar en el padrón"), listOf("2", "0", "2"))
+        igual(fila("Raciones servidas"), listOf("3", "1", "4"), "igual a la columna del «Resumen por día»")
     }
 
     @Test
