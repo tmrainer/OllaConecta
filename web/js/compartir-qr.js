@@ -8,6 +8,9 @@
 // que usa justo las letras que el QR guarda en modo alfanumérico. El «:» del
 // final protege los espacios del trozo si un lector recorta el texto.
 // También se leen los QR de antes (solo cifras, lista-qr.js).
+// La app del teléfono puede sumar al padrón la clave «f» (su libro de socias:
+// quién es socia, de quién es familiar cada uno, parentesco y dirección). La
+// web no lleva esos datos: no la manda y, si llega, no la usa.
 
 import { asistenciasDelDia, afiliadosActivos, sinInscribirDelDia, TRAMOS_ETARIOS } from './calculos.js';
 import { nombreCompleto, normalizarNombre, nuevaAtencion, nuevaEntrega, nuevoAfiliado } from './modelo.js';
@@ -88,10 +91,13 @@ export async function codificarParaQr(tipo, paquete, { porParte = POR_PARTE } = 
   }
   const total = texto.length <= porParte ? 1 : Math.ceil(texto.length / Math.min(porParte, POR_CUADRO));
   if (total > MAX_PARTES) return [];
-  const largo = Math.ceil(texto.length / total);
+  // Partes parejas: lo que sobra se reparte de a una letra entre las primeras.
+  const largo = Math.floor(texto.length / total);
+  const sobra = texto.length % total;
+  const corte = (i) => i * largo + Math.min(i, sobra);
   const id = idCorto();
   return Array.from({ length: total }, (_, i) =>
-    'P3' + LETRA[tipo] + id + dos(i + 1) + dos(total) + texto.slice(i * largo, (i + 1) * largo) + ':');
+    'P3' + LETRA[tipo] + id + dos(i + 1) + dos(total) + texto.slice(corte(i), corte(i + 1)) + ':');
 }
 
 /**

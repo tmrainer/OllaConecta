@@ -4,6 +4,7 @@
 // ni sale del teléfono.
 package io.github.tmrainer.asistencia.ui.camara
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import android.graphics.Rect
@@ -38,6 +39,12 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.google.android.gms.common.api.OptionalModuleApi
+import com.google.android.gms.common.moduleinstall.InstallStatusListener
+import com.google.android.gms.common.moduleinstall.ModuleInstall
+import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
+import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate
+import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate.InstallState
 import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.common.MlKitException
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
@@ -320,6 +327,77 @@ private fun aLaFuente(r: Rect, giro: Int, sw: Int, sh: Int): Rect {
 /** El lector no está (sin servicios de Google Play) o todavía se instala. */
 class LectorNoDisponible : Exception()
 
+/** Cómo va la instalación de un lector que falta en el teléfono. */
+sealed interface InstalacionLector {
+    /** Bajando o instalando; [porciento], cuando Google Play ya dice cuánto va. */
+    data class EnCurso(val porciento: Int? = null) : InstalacionLector
+    data object Fallo : InstalacionLector
+}
+
+/**
+ * Pide a los servicios de Google Play los lectores que falten: los baja una
+ * vez, con internet. [alCambiar] recibe cómo va y, cuando ya están, null;
+ * siempre en el hilo principal.
+ */
+fun instalarLectores(context: Context, vararg modulos: OptionalModuleApi, alCambiar: (InstalacionLector?) -> Unit) {
+    val principal = ContextCompat.getMainExecutor(context)
+    val cliente = ModuleInstall.getClient(context)
+    lateinit var oyente: InstallStatusListener
+    fun terminar(estado: InstalacionLector?) { cliente.unregisterListener(oyente); alCambiar(estado) }
+    oyente = InstallStatusListener { e: ModuleInstallStatusUpdate ->
+        when (e.installState) {
+            InstallState.STATE_COMPLETED -> terminar(null)
+            InstallState.STATE_FAILED, InstallState.STATE_CANCELED -> terminar(InstalacionLector.Fallo)
+            else -> alCambiar(InstalacionLector.EnCurso(
+                e.progressInfo?.takeIf { it.totalBytesToDownload > 0 }?.let { (it.bytesDownloaded * 100 / it.totalBytesToDownload).toInt() }
+            ))
+        }
+    }
+    val pedido = ModuleInstallRequest.newBuilder().apply { modulos.forEach { addApi(it) } }.setListener(oyente, principal).build()
+    cliente.installModules(pedido)
+        .addOnSuccessListener(principal) { if (it.areModulesAlreadyInstalled()) terminar(null) }
+        .addOnFailureListener(principal) { terminar(InstalacionLector.Fallo) }
+}
+
+/**
+ * Pide los dos lectores con la app recién abierta, para que ya estén al abrir
+ * la cámara: los APK se reparten a mano y, sin Play, nadie los instala antes
+ * del primer uso. Sin internet no pasa nada: la cámara los vuelve a pedir.
+ */
+fun pedirLectores(context: Context, alEstar: () -> Unit) {
+    val texto = LectorTexto()
+    val qr = LectorQr()
+    instalarLectores(context, texto.modulo, qr.modulo) { estado ->
+        if (estado is InstalacionLector.EnCurso) return@instalarLectores
+        texto.close(); qr.close()
+        if (estado == null) alEstar()
+    }
+}
+
+/**
+ * Lo que hace una cámara cuando al leer falta el lector: la primera vez lo pide
+ * sola y, cuando está, [estado] vuelve a null y la cámara sigue. Si ya se pidió
+ * y sigue sin estar, queda en «falló» hasta que la persona vuelva a intentar.
+ * Solo se usa desde el hilo principal.
+ */
+class EsperaDelLector(private val context: Context, private val modulo: OptionalModuleApi) {
+    var estado by mutableStateOf<InstalacionLector?>(null)
+        private set
+    private var pedido = false
+
+    /** Un fotograma no se pudo leer porque falta el lector. */
+    fun falta() {
+        if (estado != null) return
+        if (pedido) estado = InstalacionLector.Fallo else pedir()
+    }
+
+    fun pedir() {
+        pedido = true
+        estado = InstalacionLector.EnCurso()
+        instalarLectores(context, modulo) { estado = it }
+    }
+}
+
 private fun <T> esperar(tarea: com.google.android.gms.tasks.Task<T>): T = try {
     Tasks.await(tarea)
 } catch (e: ExecutionException) {
@@ -331,6 +409,9 @@ private fun <T> esperar(tarea: com.google.android.gms.tasks.Task<T>): T = try {
 /** Texto de un fotograma, una línea de ML Kit por fragmento. */
 class LectorTexto : AutoCloseable {
     private val reconocedor = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+
+    /** Lo que se le pide a Google Play si falta (instalarLectores). */
+    val modulo: OptionalModuleApi get() = reconocedor
 
     /** Bloquea hasta leer: llamar desde el hilo del visor. */
     fun leer(imagen: Bitmap): List<FragmentoOcr> =
@@ -347,6 +428,9 @@ class LectorTexto : AutoCloseable {
 /** Los QR de un fotograma, su texto tal cual. */
 class LectorQr : AutoCloseable {
     private val lector = BarcodeScanning.getClient(BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build())
+
+    /** Lo que se le pide a Google Play si falta (instalarLectores). */
+    val modulo: OptionalModuleApi get() = lector
 
     /** Bloquea hasta leer: llamar desde el hilo del visor. */
     fun leer(imagen: Bitmap): List<String> =

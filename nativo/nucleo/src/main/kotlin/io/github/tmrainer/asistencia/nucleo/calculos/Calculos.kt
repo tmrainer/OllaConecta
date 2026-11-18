@@ -202,6 +202,12 @@ fun tipoBeneficiarioMunicipal(a: Afiliado): String = when {
 fun familiaresDe(padron: Padron, titularId: String): List<Afiliado> =
     padron.afiliados.filter { it.condicion == "familiar" && it.titularId == titularId }
 
+/** Un parentesco anotado con otra socia no se puede atribuir a la nueva. */
+fun conSocia(a: Afiliado, titularId: String): Afiliado = a.copy(
+    titularId = titularId,
+    parentesco = if (a.titularId.isNotEmpty() && a.titularId != titularId) "" else a.parentesco
+)
+
 /** Menú que le corresponde por defecto a una persona, según cómo se inscribió. */
 fun menuPorDefecto(afiliado: Afiliado): String =
     TIPOS_AFILIADO.firstOrNull { it.clave == afiliado.tipoAfiliado }?.menu ?: "normal"

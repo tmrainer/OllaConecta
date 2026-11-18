@@ -16,6 +16,7 @@ import io.github.tmrainer.asistencia.nucleo.qr.EleccionAsistencia
 import io.github.tmrainer.asistencia.nucleo.qr.EleccionEntregas
 import io.github.tmrainer.asistencia.nucleo.qr.EleccionPadron
 import io.github.tmrainer.asistencia.nucleo.qr.EntregaQr
+import io.github.tmrainer.asistencia.nucleo.qr.FamiliaQr
 import io.github.tmrainer.asistencia.nucleo.qr.FilaPersonaQr
 import io.github.tmrainer.asistencia.nucleo.qr.MarcaLista
 import io.github.tmrainer.asistencia.nucleo.qr.MarcaQr
@@ -106,6 +107,110 @@ class CompartirQrTest {
         igual(nuevo.afiliados[5].origenDato, "qr")
         ok(nuevo.afiliados[5].id.isNotEmpty(), "la agregada tiene id propio")
         igual(aqui.afiliados.size, 5, "no toca el original")
+    }
+
+    @Test
+    fun `El padrón lleva el libro de socias aparte, y la socia de cada familiar por su documento`() {
+        fun p(doc: String, nom: String) = nuevoAfiliado().copy(apellidoPaterno = "FICTICIA", nombres = nom,
+            numeroDocumento = doc, tipoAfiliado = "habitual", grupoEtarioManual = "adulto")
+        val ana = p("00000031", "ANA").copy(condicion = "socia", direccion = "Jr. Inventado 123")
+        val hijo = p("00000032", "HIJO DE ANA").copy(condicion = "familiar", titularId = ana.id, parentesco = "hijo/a")
+        val bea = p("00000033", "BEA").copy(condicion = "socia")
+        val nieta = p("00000034", "NIETA DE BEA").copy(condicion = "familiar", titularId = bea.id, parentesco = "nieto/a")
+        val suelta = p("00000035", "SIN LIBRO")
+        val alla = padronVacio().copy(afiliados = listOf(ana, hijo, bea, nieta, suelta))
+
+        val paquete = paqueteDelPadron(alla)
+        igual(paquete.familia.size, 4, "solo quien tiene algo anotado")
+        igual(paquete.familia[1], FamiliaQr(1, "familiar", "00000031", "hijo/a", ""))
+        ok(textoJson(paquete).endsWith(""","f":[[0,"socia","","","Jr. Inventado 123"],[1,"familiar","00000031","hijo/a",""],""" +
+            """[2,"socia","","",""],[3,"familiar","00000033","nieto/a",""]]}"""), "va aparte, después de las filas de 13 campos")
+        ok("\"f\"" !in textoJson(paqueteDelPadron(padronVacio().copy(afiliados = listOf(suelta)))), "sin familia anotada, el JSON de antes")
+        igual(idaYVuelta(paquete), paquete)
+
+        // Aquí ya está Bea (con otro id y sin anotar como socia) y falta el resto.
+        val beaAqui = p("00000033", "BEA")
+        val aqui = padronVacio().copy(afiliados = listOf(beaAqui))
+        val c = compararPadron(aqui, paquete)
+        igual(c.nuevas.size, 4)
+        ok(c.distintas.single().soloCompleta, "a Bea solo se le completa que es socia")
+        val nuevo = aplicarPadron(aqui, EleccionPadron(agregar = c.nuevas, usarRecibida = c.distintas))
+        fun de(doc: String) = nuevo.afiliados.first { it.numeroDocumento == doc }
+        igual(de("00000033").id, beaAqui.id)
+        igual(de("00000033").condicion, "socia")
+        igual(de("00000032").titularId, de("00000031").id, "el hijo, con Ana, que entró en el mismo envío")
+        igual(de("00000034").titularId, beaAqui.id, "la nieta, con la Bea de este teléfono")
+        igual(de("00000032").parentesco, "hijo/a")
+        igual(de("00000031").direccion, "Jr. Inventado 123")
+        igual(de("00000035").condicion, "")
+        igual(compararPadron(nuevo, paquete).iguales, 5, "recibir lo mismo otra vez no propone nada")
+
+        // Si Ana no se agrega, su hijo entra sin socia: nunca queda apuntando a nadie.
+        val sinAna = aplicarPadron(aqui, EleccionPadron(agregar = c.nuevas.filter { it.numeroDocumento != "00000031" }, usarRecibida = c.distintas))
+        igual(sinAna.afiliados.first { it.numeroDocumento == "00000032" }.titularId, "")
+
+        // Un familiar que aquí tiene otra socia: se propone, con los nombres, y no viene marcado.
+        val conOtra = nuevo.copy(afiliados = nuevo.afiliados.map { if (it.numeroDocumento == "00000032") it.copy(titularId = beaAqui.id) else it })
+        val d = compararPadron(conOtra, paquete).distintas.single()
+        igual(d.campos.single().campo, "titularId")
+        igual(d.campos.single().mio, "FICTICIA BEA")
+        igual(d.campos.single().recibido, "FICTICIA ANA")
+        ok(!d.soloCompleta, "no es llenar un vacío")
+        igual(aplicarPadron(conOtra, EleccionPadron(usarRecibida = listOf(d))).afiliados.first { it.numeroDocumento == "00000032" }.titularId, de("00000031").id)
+
+        // Quien pasa a ser socia deja de tener socia y parentesco, como en la ficha.
+        val hijoSocia = PaquetePadron(paquete.personas, listOf(FamiliaQr(1, "socia", "", "", "")))
+        val e = compararPadron(nuevo, hijoSocia).distintas.single()
+        val cambiado = aplicarPadron(nuevo, EleccionPadron(usarRecibida = listOf(e))).afiliados.first { it.numeroDocumento == "00000032" }
+        igual(cambiado.condicion, "socia"); igual(cambiado.titularId, ""); igual(cambiado.parentesco, "")
+
+        // Lo que no es un valor de la app no entra; una fila que no existe invalida el envío.
+        val raro = PaquetePadron(paquete.personas, listOf(
+            FamiliaQr(1, "ahijado", "00000031", "primo", ""), FamiliaQr(3, "familiar", "00000034", "bisnieto", "")))
+        val r = compararPadron(padronVacio(), raro)
+        igual(r.nuevas[1].condicion, ""); igual(r.nuevas[1].titularId, ""); igual(r.nuevas[1].parentesco, "")
+        igual(r.nuevas[3].titularId, "", "nadie es familiar de sí misma")
+        igual(r.nuevas[3].parentesco, "")
+        igual(idaYVuelta(PaquetePadron(paquete.personas, listOf(FamiliaQr(9, "socia", "", "", "")))), null)
+    }
+
+    @Test
+    fun `Elegir solo parte de un QR no convierte a un familiar en titular ni deja a una familia sin socia`() {
+        val socia = nuevoAfiliado().copy(nombres = "Ana", numeroDocumento = "00000041", condicion = "socia")
+        val hija = nuevoAfiliado().copy(nombres = "Bea", numeroDocumento = "00000042", condicion = "familiar",
+            titularId = socia.id, parentesco = "hijo/a", activo = false)
+        val nieto = nuevoAfiliado().copy(nombres = "Carlos", numeroDocumento = "00000043", condicion = "familiar",
+            titularId = hija.id, parentesco = "hijo/a")
+        val aqui = Padron(afiliados = listOf(socia, hija))
+        val hijaSocia = hija.copy(condicion = "socia", titularId = "", parentesco = "")
+        val anaFamiliar = socia.copy(condicion = "familiar", titularId = hija.id, parentesco = "madre/padre")
+        val envio = paqueteDelPadron(Padron(afiliados = listOf(nieto, hijaSocia, anaFamiliar)))
+        val c = compararPadron(aqui, envio)
+        val soloNieto = EleccionPadron(agregar = c.nuevas)
+        igual(aplicarPadron(aqui, soloNieto), aqui, "Bea aún es familiar en este teléfono")
+        val soloAna = EleccionPadron(usarRecibida = c.distintas.filter { it.mia.id == socia.id })
+        igual(aplicarPadron(aqui, soloAna), aqui, "su hija de baja aún la tiene como titular")
+        val completo = aplicarPadron(aqui, EleccionPadron(c.nuevas, c.distintas))
+        igual(completo.afiliados.single { it.id == hija.id }.condicion, "socia")
+        igual(completo.afiliados.filter { it.id != hija.id }.map { it.titularId }, listOf(hija.id, hija.id))
+    }
+
+    @Test
+    fun `El parentesco pertenece a la relación con una socia concreta`() {
+        val ana = nuevoAfiliado().copy(nombres = "Ana", numeroDocumento = "00000051", condicion = "socia")
+        val bea = nuevoAfiliado().copy(nombres = "Bea", numeroDocumento = "00000052", condicion = "socia")
+        val hija = nuevoAfiliado().copy(nombres = "Cris", numeroDocumento = "00000053", condicion = "familiar",
+            titularId = ana.id, parentesco = "hijo/a")
+        val aqui = Padron(afiliados = listOf(ana, bea, hija))
+        fun comparar(titular: String, parentesco: String) = compararPadron(aqui, paqueteDelPadron(
+            aqui.copy(afiliados = listOf(ana, bea, hija.copy(titularId = titular, parentesco = parentesco)))))
+
+        val traslado = comparar(bea.id, "")
+        igual(traslado.distintas.single().campos.map { it.campo }, listOf("titularId", "parentesco"))
+        val resultado = aplicarPadron(aqui, EleccionPadron(usarRecibida = traslado.distintas))
+        igual(resultado.afiliados.last().titularId, bea.id)
+        igual(resultado.afiliados.last().parentesco, "", "la hoja no indicó qué parentesco tiene con Bea")
+        igual(comparar("", "nieto/a").distintas.size, 0, "se desconoce con quién se declaró ese parentesco")
     }
 
     @Test

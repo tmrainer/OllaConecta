@@ -308,8 +308,10 @@ fun buscarMrzTd1(lineasOcr: List<String>?, fechaRef: String = hoyIso()): Lectura
     val limpias = lineasOcr.map(::limpiarLineaMrz).filter { it.length >= 3 }
     var i = 0
     while (i + 2 < limpias.size) {
-        if (limpias[i].startsWith("I")) {
-            val tres = limpias.subList(i, i + 3).mapIndexed { n, l ->
+        // La «I» del principio a veces sale «1» o «l»: se toma como «I», y los dígitos de control deciden.
+        if (limpias[i][0] in "I1L") {
+            val tres = limpias.subList(i, i + 3).mapIndexed { n, leida ->
+                val l = if (n == 0) "I" + leida.substring(1) else leida
                 // Primero las cifras (para que la línea 2 tenga su largo real), después el relleno.
                 val ajustada = ajustarLineaTd1(conCifras(l, n), n) ?: return@mapIndexed null
                 val cifras = if (n == 1) conCifras(ajustada, 1) else ajustada

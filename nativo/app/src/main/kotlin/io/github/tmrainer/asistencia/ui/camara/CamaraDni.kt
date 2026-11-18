@@ -166,6 +166,7 @@ fun CamaraDni(
     // El estado de la búsqueda vive en el hilo del visor; lo que se ve, en el principal.
     val busqueda = remember { Busqueda() }
     val lector = remember { LectorTexto() }
+    val espera = remember { EsperaDelLector(context, lector.modulo) }
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { busqueda.cerrado = true; lector.close() } }
     // Mientras se ve una pantalla de antes, la cámara sigue abierta pero no se lee.
     SideEffect { busqueda.pausa = etapa == Etapa.ANTES_ATRAS || etapa == Etapa.ANTES_FOTO }
@@ -194,8 +195,7 @@ fun CamaraDni(
         // Llegan fotogramas: la cámara ya está abierta, aunque todavía no se lea.
         if (b.pausa) { principal.execute { if (abriendo) { abriendo = false; estadoTexto = "" } }; return }
         val fragmentos = try { lector.leer(imagen) } catch (e: LectorNoDisponible) {
-            principal.execute { falla = "El lector aún no está listo. Prueba en unos minutos, con internet." }
-            b.cerrado = true
+            principal.execute { espera.falta() }    // se pide el lector; cuando está, la cámara sigue sola
             return
         } catch (e: Exception) { return }    // un fotograma que no se pudo leer: se prueba con el siguiente
         if (b.cerrado) return
@@ -235,8 +235,11 @@ fun CamaraDni(
                 }
             } else b.anterior = clave
         } else {
-            b.vueltas += 1
-            if (b.vueltas == VUELTAS_MISMA_CARA) principal.execute {
+            // Solo cuentan los fotogramas de la tarjeta entera: el cambio de recorte llega por el
+            // hilo principal y el siguiente todavía puede venir recortado a la franja (más de 2,5 a 1).
+            val tarjetaEntera = imagen.width < imagen.height * 2.5f
+            if (tarjetaEntera) b.vueltas += 1
+            if (tarjetaEntera && b.vueltas == VUELTAS_MISMA_CARA) principal.execute {
                 paso = 2; pista = PISTA_ANVERSO; estadoTexto = ""; conOmitir = true
                 if (etapa == Etapa.REVISANDO_ATRAS) etapa = Etapa.ANTES_FOTO
             }
@@ -322,9 +325,11 @@ fun CamaraDni(
             }
             Box(Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(Medidas.rM)).background(Color(0xFF111111)), contentAlignment = Alignment.Center) {
                 val mensajeFalla = falla
+                val sinLector = espera.estado
                 when {
                     negado -> Text("La app necesita permiso para usar la cámara.", style = tipos.texto, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.padding(Medidas.e4))
                     mensajeFalla != null -> Text(mensajeFalla, style = tipos.texto, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.padding(Medidas.e4))
+                    sinLector != null -> LectorPendiente(sinLector, espera::pedir)
                     permiso -> {
                         VisorCamara(
                             recorte = recorte, linterna = linterna,
@@ -342,7 +347,7 @@ fun CamaraDni(
                 }
             }
             val abajo = estadoTexto.ifEmpty { consejo?.texto ?: "" }
-            if (!abriendo && falla == null && !negado && abajo.isNotEmpty()) {
+            if (!abriendo && falla == null && !negado && espera.estado == null && abajo.isNotEmpty()) {
                 Text(abajo, style = tipos.textoFuerte, color = if (consejo == Consejo.BIEN && estadoTexto.isEmpty()) VERDE_VISOR else Color.White,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             }
@@ -363,6 +368,29 @@ fun CamaraDni(
             else -> {}
         }
     } }
+}
+
+/** En lugar del visor mientras el teléfono instala el lector (la primera vez, con internet), o si no pudo. */
+@Composable
+fun LectorPendiente(estado: InstalacionLector, reintentar: () -> Unit) {
+    Column(Modifier.padding(Medidas.e4), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+        val aviso = Modifier.semantics { liveRegion = LiveRegionMode.Polite }
+        when (estado) {
+            is InstalacionLector.EnCurso -> {
+                val p = estado.porciento
+                if (p == null) CircularProgressIndicator(color = VERDE_VISOR, strokeWidth = 4.dp, modifier = Modifier.size(48.dp))
+                else {
+                    CircularProgressIndicator(progress = { p / 100f }, color = VERDE_VISOR, strokeWidth = 4.dp, modifier = Modifier.size(48.dp))
+                    Text("$p %", style = tipos.textoFuerte, color = Color.White)
+                }
+                Text("Preparando el lector de la cámara. Solo pasa la primera vez y necesita internet.", style = tipos.texto, color = Color.White, textAlign = TextAlign.Center, modifier = aviso)
+            }
+            InstalacionLector.Fallo -> {
+                Text("No se pudo preparar el lector de la cámara. Conéctate a internet y vuelve a intentar.", style = tipos.texto, color = Color.White, textAlign = TextAlign.Center, modifier = aviso)
+                Boton("Volver a intentar", reintentar, tipo = TipoBoton.PRINCIPAL)
+            }
+        }
+    }
 }
 
 /**

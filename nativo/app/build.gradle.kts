@@ -19,8 +19,8 @@ android {
         targetSdk = 36
         // Por encima del APK 1.7 (versionCode 11), para instalarse ENCIMA y
         // traer sus datos (MigracionDel17). Del 12 al 19 quedan para arreglos del 1.x.
-        versionCode = 21
-        versionName = "2.1.0"
+        versionCode = 22
+        versionName = "2.1.1"
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -100,6 +100,8 @@ dependencies {
     implementation("androidx.camera:camera-view:$camerax")
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
     implementation("com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.1")
+    // Pedir esos modelos y ver cómo va su instalación (ModuleInstall). Ya venía con ML Kit: no suma peso.
+    implementation("com.google.android.gms:play-services-base:18.5.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
 

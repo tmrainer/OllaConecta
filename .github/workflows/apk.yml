@@ -1,0 +1,40 @@
+name: APK para Android
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el APK firmado de la versión
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ETIQUETA: ${{ github.ref_name }}
+        run: |
+          gh release download "$ETIQUETA" --repo "$GITHUB_REPOSITORY" --pattern "OllaConecta-${ETIQUETA#v}.apk" --dir descarga
+
+      - name: Verificar la firma, la aplicación y la versión del APK
+        env:
+          ETIQUETA: ${{ github.ref_name }}
+        run: |
+          apk="descarga/OllaConecta-${ETIQUETA#v}.apk"
+          herramientas=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1 | xargs dirname)
+          "$herramientas/apksigner" verify --print-certs "$apk" > firma.txt
+          grep -Fx 'Signer #1 certificate SHA-256 digest: b2116a7e55f425a7f84797f23c93f1a51124c953f053a4e78d1c9c3491f169c1' firma.txt
+          "$herramientas/aapt" dump badging "$apk" > aplicacion.txt
+          grep '^package:' aplicacion.txt | grep -F "name='io.github.tmrainer.asistencia'" | grep -F "versionName='${ETIQUETA#v}'"
+          sha256sum "$apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OllaConecta-${{ github.ref_name }}
+          path: descarga/*.apk
+          if-no-files-found: error
+          compression-level: 0

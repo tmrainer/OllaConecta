@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <exclude domain="file" path="fotos" />
+    <exclude domain="external" path="pruebas-dni" />
+    <exclude domain="file" path="pruebas-dni" />
+</full-backup-content>

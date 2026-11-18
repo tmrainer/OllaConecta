@@ -19,7 +19,9 @@
 // versión de zlib), pero cada lado lee lo que arma el otro (QrCruzadoTest).
 package io.github.tmrainer.asistencia.nucleo.qr
 
+import io.github.tmrainer.asistencia.nucleo.calculos.CONDICIONES
 import io.github.tmrainer.asistencia.nucleo.calculos.ConteoSinInscribir
+import io.github.tmrainer.asistencia.nucleo.calculos.PARENTESCOS
 import io.github.tmrainer.asistencia.nucleo.calculos.TRAMOS_ETARIOS
 import io.github.tmrainer.asistencia.nucleo.calculos.afiliadosActivos
 import io.github.tmrainer.asistencia.nucleo.calculos.asistenciasDelDia
@@ -84,7 +86,7 @@ enum class TipoEnvio(val clave: String, val letra: Char) {
 
 // Lo que viaja, ya revisado. En el QR va como JSON con claves cortas y filas
 // en arreglos (mismo formato que la web, versión 1):
-//   padrón      {"t":"P","v":1,"p":[[13 campos], …]}
+//   padrón      {"t":"P","v":1,"p":[[13 campos], …],"f":[[fila, condición, documento de su socia, parentesco, dirección], …]?}
 //   asistencia  {"t":"A","v":1,"d":[[fecha, normal|null, ayuda|null, [[doc] | [doc,1], …], [fueraN, fueraA]?], …]}
 //   entregas    {"t":"E","v":1,"c":[periodicidad, fechaBase, [días de aviso]],"e":[[fecha, estado, nota], …]}
 
@@ -114,7 +116,24 @@ data class FilaPersonaQr(
     )
 }
 
-data class PaquetePadron(val personas: List<FilaPersonaQr>) : Paquete {
+/**
+ * Lo del libro de socias de la persona que va en `personas[fila]`. La socia de
+ * un familiar va por su documento: los ids son de cada teléfono.
+ */
+data class FamiliaQr(
+    val fila: Int,
+    val condicion: String,
+    val documentoSocia: String,
+    val parentesco: String,
+    val direccion: String
+)
+
+/**
+ * `familia` va aparte de `personas` («f» en el JSON) y solo de quien tiene algo
+ * anotado. Las versiones anteriores y la web exigen filas de 13 campos y pasan
+ * por alto una clave de más: leen el mismo QR, sin la familia.
+ */
+data class PaquetePadron(val personas: List<FilaPersonaQr>, val familia: List<FamiliaQr> = emptyList()) : Paquete {
     override val tipo get() = TipoEnvio.PADRON
 }
 
@@ -245,10 +264,12 @@ fun codificarParaQr(paquete: Paquete, porParte: Int = POR_PARTE, id: String = id
     val porCuadro = minOf(porParte, POR_CUADRO)
     val total = if (texto.length <= porParte) 1 else (texto.length + porCuadro - 1) / porCuadro
     if (total > MAX_PARTES) return emptyList()
-    val largo = (texto.length + total - 1) / total
+    // Partes parejas: lo que sobra se reparte de a una letra entre las primeras.
+    val largo = texto.length / total
+    val sobra = texto.length % total
+    fun corte(i: Int) = i * largo + minOf(i, sobra)
     return List(total) { i ->
-        "P3" + paquete.tipo.letra + id + dos(i + 1) + dos(total) +
-            texto.substring(minOf(i * largo, texto.length), minOf((i + 1) * largo, texto.length)) + ":"
+        "P3" + paquete.tipo.letra + id + dos(i + 1) + dos(total) + texto.substring(corte(i), corte(i + 1)) + ":"
     }
 }
 
@@ -332,9 +353,16 @@ internal fun textoJson(paquete: Paquete): String = buildJsonObject {
     put("t", paquete.tipo.letra.toString())
     put("v", 1)
     when (paquete) {
-        is PaquetePadron -> putJsonArray("p") {
-            for (f in paquete.personas) addJsonArray {
-                for (x in f.campos()) if (x is Int) add(x) else add(x as String)
+        is PaquetePadron -> {
+            putJsonArray("p") {
+                for (f in paquete.personas) addJsonArray {
+                    for (x in f.campos()) if (x is Int) add(x) else add(x as String)
+                }
+            }
+            if (paquete.familia.isNotEmpty()) putJsonArray("f") {
+                for (f in paquete.familia) addJsonArray {
+                    add(f.fila); add(f.condicion); add(f.documentoSocia); add(f.parentesco); add(f.direccion)
+                }
             }
         }
         is PaqueteAsistencia -> putJsonArray("d") {
@@ -387,12 +415,20 @@ private fun revisarPaquete(tipo: TipoEnvio, p: JsonElement): Paquete? {
     return when (tipo) {
         TipoEnvio.PADRON -> {
             val filas = p["p"].arreglo() ?: return null
-            PaquetePadron(filas.map { f ->
+            val personas = filas.map { f ->
                 val c = f.arreglo()?.takeIf { it.size == 13 } ?: return null
                 val activo = c[9].entero()?.takeIf { it == 0L || it == 1L } ?: return null
                 val t = (0 until 13).map { i -> if (i == 9) "" else c[i].texto() ?: return null }
                 FilaPersonaQr(t[0], t[1], t[2], t[3], t[4], t[5], t[6], t[7], t[8], activo.toInt(), t[10], t[11], t[12])
-            })
+            }
+            // Sin «f» (una versión anterior, la web, o nadie con familia anotada) no hay familia.
+            val familia = if (p["f"] == null) emptyList() else p["f"].arreglo()?.map { f ->
+                val c = f.arreglo()?.takeIf { it.size == 5 } ?: return null
+                val fila = c[0].entero()?.takeIf { it in personas.indices } ?: return null
+                val t = (1..4).map { i -> c[i].texto() ?: return null }
+                FamiliaQr(fila.toInt(), t[0], t[1], t[2], t[3])
+            } ?: return null
+            PaquetePadron(personas, familia)
         }
         TipoEnvio.ASISTENCIA -> {
             val dias = p["d"].arreglo() ?: return null
@@ -437,14 +473,26 @@ private fun revisarPaquete(tipo: TipoEnvio, p: JsonElement): Paquete? {
 }
 
 /** Todas las personas del padrón, con lo necesario para inscribirlas en otro teléfono (sin notas). */
-fun paqueteDelPadron(padron: Padron): PaquetePadron = PaquetePadron(padron.afiliados.map { a ->
+fun paqueteDelPadron(padron: Padron): PaquetePadron {
     fun t(s: String) = s.take(200)
-    FilaPersonaQr(
-        t(a.apellidoPaterno), t(a.apellidoMaterno), t(a.nombres), t(docDe(a)), t(a.tipoDocumento.ifEmpty { "dni" }),
-        t(a.fechaNacimiento), t(a.grupoEtarioManual ?: ""), t(a.sexo), t(a.tipoAfiliado),
-        if (a.activo) 1 else 0, t(a.altaEn), t(a.bajaEn), t(a.motivoBaja)
+    val porId = padron.afiliados.associateBy { it.id }
+    return PaquetePadron(
+        padron.afiliados.map { a ->
+            FilaPersonaQr(
+                t(a.apellidoPaterno), t(a.apellidoMaterno), t(a.nombres), t(docDe(a)), t(a.tipoDocumento.ifEmpty { "dni" }),
+                t(a.fechaNacimiento), t(a.grupoEtarioManual ?: ""), t(a.sexo), t(a.tipoAfiliado),
+                if (a.activo) 1 else 0, t(a.altaEn), t(a.bajaEn), t(a.motivoBaja)
+            )
+        },
+        padron.afiliados.mapIndexedNotNull { i, a ->
+            val esFamiliar = a.condicion == "familiar"
+            val socia = if (esFamiliar) docDe(porId[a.titularId]) else ""
+            val parentesco = if (esFamiliar) a.parentesco else ""
+            if (a.condicion.isEmpty() && a.direccion.isBlank()) null
+            else FamiliaQr(i, t(a.condicion), t(socia), t(parentesco), t(a.direccion.trim()))
+        }
     )
-})
+}
 
 // Lo que no es un valor de la app se descarta, no se guarda tal cual: un tipo
 // desconocido queda vacío y la persona aparece en «Les faltan datos».
@@ -456,10 +504,12 @@ private val PERMITIDOS = mapOf(
     "tipoDocumento" to listOf("dni", "ce"),
     "sexo" to listOf("F", "M"),
     "tipoAfiliado" to listOf("habitual", "caso_social"),
-    "grupoEtarioManual" to TRAMOS_ETARIOS.map { it.clave }
+    "grupoEtarioManual" to TRAMOS_ETARIOS.map { it.clave },
+    "condicion" to CONDICIONES.map { it.first },
+    "parentesco" to PARENTESCOS
 )
 
-/** La persona que viene en una fila. Sin id: aplicarPadron() le da uno al agregarla. */
+/** La persona que viene en una fila, sin id y sin lo del libro de socias (personasRecibidas). */
 private fun personaDeFila(f: FilaPersonaQr) = Afiliado(
     apellidoPaterno = f.apellidoPaterno, apellidoMaterno = f.apellidoMaterno, nombres = f.nombres,
     numeroDocumento = f.numeroDocumento,
@@ -517,7 +567,8 @@ val CAMPOS_PERSONA = listOf(
     "apellidoPaterno" to "Apellido paterno", "apellidoMaterno" to "Apellido materno", "nombres" to "Nombres",
     "tipoDocumento" to "Tipo de documento", "fechaNacimiento" to "Fecha de nacimiento",
     "grupoEtarioManual" to "Grupo de edad", "sexo" to "Sexo", "tipoAfiliado" to "Tipo",
-    "activo" to "Activa en la olla", "bajaEn" to "Fecha de baja", "motivoBaja" to "Motivo de baja"
+    "activo" to "Activa en la olla", "bajaEn" to "Fecha de baja", "motivoBaja" to "Motivo de baja",
+    "condicion" to "Socia o familiar", "titularId" to "Su socia", "parentesco" to "Parentesco", "direccion" to "Dirección"
 )
 
 /** El valor tal cual: String, String? (grupoEtarioManual) o Boolean (activo). */
@@ -533,6 +584,10 @@ private fun valorCrudo(p: Afiliado, campo: String): Any? = when (campo) {
     "activo" -> p.activo
     "bajaEn" -> p.bajaEn
     "motivoBaja" -> p.motivoBaja
+    "condicion" -> p.condicion
+    "titularId" -> p.titularId
+    "parentesco" -> p.parentesco
+    "direccion" -> p.direccion
     else -> error("Campo desconocido: $campo")
 }
 
@@ -549,6 +604,12 @@ private fun conCampo(a: Afiliado, campo: String, de: Afiliado): Afiliado = when 
     "activo" -> a.copy(activo = de.activo)
     "bajaEn" -> a.copy(bajaEn = de.bajaEn)
     "motivoBaja" -> a.copy(motivoBaja = de.motivoBaja)
+    // Como en la ficha: quien deja de ser familiar ya no tiene socia ni parentesco.
+    "condicion" -> if (de.condicion == "familiar") a.copy(condicion = de.condicion)
+    else a.copy(condicion = de.condicion, titularId = "", parentesco = "")
+    "titularId" -> a.copy(titularId = de.titularId)
+    "parentesco" -> a.copy(parentesco = de.parentesco)
+    "direccion" -> a.copy(direccion = de.direccion)
     else -> error("Campo desconocido: $campo")
 }
 
@@ -566,7 +627,10 @@ private fun claveNombre(p: Afiliado) = normalizarNombre(nombreCompleto(p))
 /** No está su documento aquí, pero sí alguien con el mismo nombre y otro documento (¿un DNI mal escrito?). */
 data class PersonaDudosa(val recibida: Afiliado, val mia: Afiliado)
 
-/** Un campo que no coincide. `mio` y `recibido` son String, String? (grupo de edad) o Boolean (activa). */
+/**
+ * Un campo que no coincide. `mio` y `recibido` son String, String? (grupo de
+ * edad) o Boolean (activa); de `titularId`, el nombre de la socia y no su id.
+ */
 data class CampoDistinto(val campo: String, val etiqueta: String, val mio: Any?, val recibido: Any?)
 
 /**
@@ -591,6 +655,30 @@ data class ComparacionPadron(
 )
 
 /**
+ * Las personas del paquete, con lo del libro de socias. Cada una lleva ya el id
+ * con el que entraría: la socia de un familiar llega por su documento, y aquí
+ * es la de este teléfono con ese documento o, si no está, la del mismo envío.
+ */
+private fun personasRecibidas(paquete: PaquetePadron, porDoc: Map<String, Afiliado>): List<Afiliado> {
+    val recibidas = paquete.personas.map { personaDeFila(it).copy(id = uuid()) }
+    val llegan = HashMap<String, Afiliado>()
+    for (r in recibidas) if (docDe(r).isNotEmpty()) llegan.putIfAbsent(docDe(r), r)
+    val familia = paquete.familia.associateBy { it.fila }
+    return recibidas.mapIndexed { i, r ->
+        val f = familia[i] ?: return@mapIndexed r
+        val condicion = unoDe(f.condicion, PERMITIDOS.getValue("condicion"), "")
+        val esFamiliar = condicion == "familiar"
+        val doc = f.documentoSocia.trim().uppercase()
+        val socia = if (esFamiliar && doc.isNotEmpty() && doc != docDe(r)) porDoc[doc] ?: llegan[doc] else null
+        r.copy(
+            condicion = condicion, titularId = socia?.id ?: "",
+            parentesco = if (esFamiliar) unoDe(f.parentesco, PERMITIDOS.getValue("parentesco"), "") else "",
+            direccion = f.direccion.trim()
+        )
+    }
+}
+
+/**
  * Compara el padrón recibido con el de este teléfono, persona por persona,
  * por el número de documento. `mia` en dudosas y distintas es la MISMA
  * instancia que está en `padron.afiliados` (aplicarPadron la busca así): se
@@ -610,8 +698,10 @@ fun compararPadron(padron: Padron, paquete: PaquetePadron): ComparacionPadron {
     var iguales = 0
     val tocadas = Collections.newSetFromMap(IdentityHashMap<Afiliado, Boolean>())
     val vistas = HashSet<String>()
-    for (fila in paquete.personas) {
-        val recibida = personaDeFila(fila)
+    val recibidas = personasRecibidas(paquete, porDoc)
+    val porId = (mias + recibidas).associateBy { it.id }
+    fun socia(p: Afiliado) = if (p.titularId.isEmpty()) null else porId[p.titularId]?.let { nombreCompleto(it) }
+    for (recibida in recibidas) {
         val doc = docDe(recibida)
         val clave = doc.ifEmpty { "nombre:${claveNombre(recibida)}" }
         if (!vistas.add(clave)) continue
@@ -627,8 +717,18 @@ fun compararPadron(padron: Padron, paquete: PaquetePadron): ComparacionPadron {
         }
         tocadas.add(mia)
         val campos = CAMPOS_PERSONA
-            .filter { (k) -> !(vacio(valorCampo(recibida, k)) && k != "activo") && valorCampo(mia, k) != valorCampo(recibida, k) }
-            .map { (campo, etiqueta) -> CampoDistinto(campo, etiqueta, valorCrudo(mia, campo), valorCrudo(recibida, campo)) }
+            .filter { (k) ->
+                val recibido = valorCampo(recibida, k)
+                val comparar = when {
+                    k == "parentesco" && mia.titularId != recibida.titularId -> recibida.titularId.isNotEmpty()
+                    else -> !vacio(recibido)
+                }
+                comparar && valorCampo(mia, k) != recibido
+            }
+            .map { (campo, etiqueta) ->
+                if (campo == "titularId") CampoDistinto(campo, etiqueta, socia(mia), socia(recibida))
+                else CampoDistinto(campo, etiqueta, valorCrudo(mia, campo), valorCrudo(recibida, campo))
+            }
         if (campos.isEmpty()) {
             iguales += 1
             continue
@@ -648,19 +748,36 @@ fun compararPadron(padron: Padron, paquete: PaquetePadron): ComparacionPadron {
  */
 data class EleccionPadron(val agregar: List<Afiliado> = emptyList(), val usarRecibida: List<PersonaDistinta> = emptyList())
 
-/** Aplica lo elegido. No cambia `padron`: devuelve uno nuevo. */
-fun aplicarPadron(padron: Padron, eleccion: EleccionPadron, hoy: String = hoyIso()): Padron {
-    val cambios = IdentityHashMap<Afiliado, PersonaDistinta>()
-    for (d in eleccion.usarRecibida) cambios[d.mia] = d
-    val afiliados = padron.afiliados.map { a ->
-        val d = cambios[a] ?: return@map a
+data class RevisionFamiliasQr(val padron: Padron, val aviso: String = "")
+
+/** Comprueba la selección completa: la socia puede llegar después de su familiar. */
+fun revisarEleccionPadron(padron: Padron, eleccion: EleccionPadron, hoy: String = hoyIso()): RevisionFamiliasQr {
+    val cambios = eleccion.usarRecibida.associateBy { it.mia.id }
+    val existentes = padron.afiliados.associateBy { it.id }
+    val elegidas = padron.afiliados.map { a ->
+        val d = cambios[a.id] ?: return@map a
         d.campos.fold(a) { nuevo, c -> conCampo(nuevo, c.campo, d.recibida) }
-    }.toMutableList()
-    for (p in eleccion.agregar) {
-        afiliados.add(p.copy(id = uuid(), altaEn = p.altaEn.ifEmpty { hoy }, origenDato = "qr"))
     }
-    return padron.copy(afiliados = afiliados)
+    val agregadas = eleccion.agregar.map { p ->
+        p.copy(id = p.id.ifEmpty { uuid() }, altaEn = p.altaEn.ifEmpty { hoy }, origenDato = "qr")
+    }
+    val porId = (elegidas + agregadas).associateBy { it.id }
+    // Una persona nueva puede entrar sin su socia si se dejó fuera esa fila.
+    val afiliados = elegidas + agregadas.map { a ->
+        if (a.titularId.isNotEmpty() && a.titularId !in porId) a.copy(titularId = "") else a
+    }
+    for (a in afiliados) {
+        if (a.condicion != "familiar" || a.titularId.isEmpty() || porId[a.titularId]?.condicion == "socia") continue
+        val anterior = existentes[a.id]
+        if (anterior?.titularId == a.titularId && existentes[a.titularId]?.condicion != "socia") continue
+        return RevisionFamiliasQr(padron, "Revisa la selección de ${nombreCompleto(a)} y su socia. Su titular debe figurar como socia.")
+    }
+    return RevisionFamiliasQr(padron.copy(afiliados = afiliados))
 }
+
+/** Devuelve el padrón original si la selección deja una relación incompatible. */
+fun aplicarPadron(padron: Padron, eleccion: EleccionPadron, hoy: String = hoyIso()): Padron =
+    revisarEleccionPadron(padron, eleccion, hoy).padron
 
 data class PorAgregar(val afiliado: Afiliado, val tipoMenu: String)
 

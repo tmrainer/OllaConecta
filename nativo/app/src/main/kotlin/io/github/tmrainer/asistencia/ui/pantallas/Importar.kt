@@ -42,6 +42,7 @@ import io.github.tmrainer.asistencia.nucleo.documentos.pareceXlsx
 import io.github.tmrainer.asistencia.nucleo.importar.FilaImportada
 import io.github.tmrainer.asistencia.nucleo.importar.Importacion
 import io.github.tmrainer.asistencia.nucleo.importar.prepararImportacion
+import io.github.tmrainer.asistencia.nucleo.modelo.Afiliado
 import io.github.tmrainer.asistencia.nucleo.modelo.Padron
 import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
 import io.github.tmrainer.asistencia.nucleo.modelo.cuantos
@@ -52,6 +53,8 @@ import io.github.tmrainer.asistencia.nucleo.padron.ComparacionHoja
 import io.github.tmrainer.asistencia.nucleo.padron.EleccionHoja
 import io.github.tmrainer.asistencia.nucleo.padron.aplicarHoja
 import io.github.tmrainer.asistencia.nucleo.padron.compararConHoja
+import io.github.tmrainer.asistencia.nucleo.padron.sociasSegunLaHoja
+import io.github.tmrainer.asistencia.nucleo.padron.unirASusSocias
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.GUIA_IMPORTAR
 import io.github.tmrainer.asistencia.ui.objetivoGuia
@@ -92,7 +95,7 @@ fun PantallaImportar(ctx: Contexto) {
     var aviso by remember { mutableStateOf("") }
     var revision by remember { mutableStateOf<Revision?>(null) }
     var confirmar by remember { mutableStateOf(false) }
-    // Lo que se aplica: marcado = se aplica. Clave: «e<i>» entra, «v<id>» vuelve, «s<id>» sale, «n<id>» nombre de la hoja.
+    // Lo que se aplica: marcado = se aplica. Clave: «e<i>» entra, «v<id>» vuelve, «s<id>» sale, «n<id>» nombre de la hoja, «familia» une cada familiar a su socia.
     val elegido = remember { mutableStateMapOf<String, Boolean>() }
 
     fun revisar() {
@@ -135,6 +138,12 @@ fun PantallaImportar(ctx: Contexto) {
         }
     }
 
+    val r = revision
+    val k = r?.comparacion
+    val marcadas = k?.entran.orEmpty().filterIndexed { i, _ -> elegido["e$i"] == true }
+    val socias = remember(r, marcadas) {
+        if (r == null || marcadas.isEmpty()) emptyMap() else sociasSegunLaHoja(r.padron, r.lectura, marcadas)
+    }
     Column(Modifier.fillMaxSize().background(c.fondo)) {
         Cabecera(ctx, "Hoja de la Municipalidad", "Actualizar el padrón", guia = GUIA_IMPORTAR)
         Column(
@@ -162,17 +171,14 @@ fun PantallaImportar(ctx: Contexto) {
             Pista("¿Hoja en papel? En «Inscribir», elige «Ya está en la hoja de la Municipalidad».", Modifier.padding(top = Medidas.e3))
 
             if (aviso.isNotEmpty()) AvisoSistema(aviso, Modifier.padding(top = Medidas.e3))
-            val r = revision
             if (r != null) {
                 Spacer(Modifier.height(Medidas.e4))
                 val error = r.lectura.error
-                val k = r.comparacion
                 if (error != null || k == null) AvisoSistema(error ?: "No se pudo leer la hoja.")
-                else VistaComparacion(r.lectura, k, elegido, fechaHoja)
+                else VistaComparacion(r.lectura, k, socias, elegido, fechaHoja)
             }
         }
         // Abajo y siempre a la vista: guardar la actualización.
-        val k = revision?.comparacion
         if (k != null && k.hayCambios) {
             Column(Modifier.fillMaxWidth().background(c.superficie)) {
                 Separador()
@@ -186,10 +192,8 @@ fun PantallaImportar(ctx: Contexto) {
         }
     }
 
-    val r = revision
-    val k = r?.comparacion
     if (confirmar && r != null && k != null) {
-        val entran = k.entran.filterIndexed { i, _ -> elegido["e$i"] == true }
+        val entran = if (elegido["familia"] == true) unirASusSocias(marcadas, socias) else marcadas
         val vuelven = k.vuelven.filter { elegido["v${it.id}"] == true }
         val salen = k.salen.filter { elegido["s${it.id}"] == true }
         val nombres = k.nombreDistinto.filter { elegido["n${it.mia.id}"] == true }
@@ -226,7 +230,7 @@ fun PantallaImportar(ctx: Contexto) {
 
 /** Lo que cambiaría la hoja, por grupos, con una casilla por persona. */
 @Composable
-private fun VistaComparacion(lectura: Importacion, k: ComparacionHoja, elegido: MutableMap<String, Boolean>, fechaHoja: String) {
+private fun VistaComparacion(lectura: Importacion, k: ComparacionHoja, socias: Map<String, Afiliado>, elegido: MutableMap<String, Boolean>, fechaHoja: String) {
     val c = colores
     val hoy = hoyIso()
     Chips {
@@ -265,8 +269,17 @@ private fun VistaComparacion(lectura: Importacion, k: ComparacionHoja, elegido: 
     }
     if (k.entran.isNotEmpty()) {
         Grupo("Entran (${k.entran.size})", "No están en el padrón. Se agregan las marcadas.") {
+            val unir = elegido["familia"] == true
+            if (socias.isNotEmpty()) {
+                Casilla(
+                    unir, { elegido["familia"] = it }, "Unir a cada familiar con la socia que tiene encima en la hoja",
+                    "${cuantos(socias.size, "familiar", "familiares")}. Márcala solo si en la hoja cada socia va seguida de su familia. El parentesco se anota después."
+                )
+                Separador()
+            }
             k.entran.forEachIndexed { i, f ->
-                Casilla(elegido["e$i"] == true, { elegido["e$i"] = it }, f.nombreCompleto.ifEmpty { "—" }, "Fila ${f.linea} · ${datos(f)}", f.avisos.joinToString("; ").ifEmpty { null })
+                val deQuien = socias[f.afiliado.id]?.takeIf { unir }?.let { " · familiar de ${nombreCompleto(it)}" }.orEmpty()
+                Casilla(elegido["e$i"] == true, { elegido["e$i"] = it }, f.nombreCompleto.ifEmpty { "—" }, "Fila ${f.linea} · ${datos(f)}$deQuien", f.avisos.joinToString("; ").ifEmpty { null })
                 if (i < k.entran.size - 1) Separador()
             }
         }

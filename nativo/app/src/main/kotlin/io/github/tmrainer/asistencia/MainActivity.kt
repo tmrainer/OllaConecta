@@ -11,6 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import io.github.tmrainer.asistencia.ui.App
+import io.github.tmrainer.asistencia.ui.camara.pedirLectores
 
 class MainActivity : ComponentActivity() {
 
@@ -21,6 +22,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         if (savedInstanceState == null) tomarDestino(intent)
+        // Los lectores de la cámara, solo hasta que estén y con la app ya a la vista: no frenan el arranque.
+        if (!app.preferencias.lectoresListos) window.decorView.postDelayed({
+            pedirLectores(applicationContext) { app.preferencias.lectoresListos = true }
+        }, 2_000)
         val migracion = MigracionDel17(app)
         if (migracion.pendiente()) {
             var trayendo = true

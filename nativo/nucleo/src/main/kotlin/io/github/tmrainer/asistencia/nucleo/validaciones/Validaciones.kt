@@ -339,9 +339,9 @@ fun validarAfiliado(
         }
     }
 
-    // Grupo etario OBLIGATORIO: por fecha de nacimiento, o elegido a mano.
+    // Grupo etario OBLIGATORIO, y sale de la fecha de nacimiento (la app ya no lo pide a mano).
     if (grupoEtario(a, hoy) == null) {
-        hs.add(h(ERROR, campo, "Falta el grupo de edad. Elígelo, o anota la fecha de nacimiento y sale solo."))
+        hs.add(h(ERROR, campo, "Falta la fecha de nacimiento: con ella sale el grupo de edad."))
     }
     val manual = a.grupoEtarioManual
     if (!manual.isNullOrEmpty() && TRAMOS_ETARIOS.none { it.clave == manual }) {
@@ -367,6 +367,7 @@ fun validarAfiliado(
         val titular = if (a.titularId.isEmpty()) null else padron.afiliados.firstOrNull { it.id == a.titularId }
         if (titular == null) hs.add(h(AVISO, campo, "Falta indicar de qué socia es familiar."))
         else if (titular.condicion != "socia") hs.add(h(AVISO, campo, "${nombreCompleto(titular)} no está anotada como socia."))
+        else if (a.activo && !titular.activo) hs.add(h(AVISO, campo, "${nombreCompleto(titular)}, su socia, está de baja."))
         if (vacio(a.parentesco)) hs.add(h(AVISO, campo, "Falta el parentesco con la socia."))
     } else if (a.condicion != "socia" && a.condicion.isNotEmpty()) {
         hs.add(h(ERROR, campo, "La condición debe ser socia o familiar."))

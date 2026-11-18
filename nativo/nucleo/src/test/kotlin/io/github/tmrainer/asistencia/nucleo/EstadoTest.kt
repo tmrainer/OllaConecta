@@ -5,6 +5,9 @@ package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.almacen.Almacen
 import io.github.tmrainer.asistencia.nucleo.almacen.Clave
+import io.github.tmrainer.asistencia.nucleo.calculos.familiaresDe
+import io.github.tmrainer.asistencia.nucleo.padron.inscribirEnLaOlla
+import io.github.tmrainer.asistencia.nucleo.padron.retirarPorLaHoja
 import io.github.tmrainer.asistencia.nucleo.estado.Estado
 import io.github.tmrainer.asistencia.nucleo.estado.Guardado
 import io.github.tmrainer.asistencia.nucleo.modelo.Asistencia
@@ -36,6 +39,28 @@ class EstadoTest {
 
     private fun TestScope.estado(c: File = carpeta()) =
         Estado(Almacen(c), this, hoy = { hoy }, ahora = { "${hoy}T12:00:00.000Z" }).cargar()
+
+    @Test
+    fun `La familia conserva su vínculo al dar de baja, reabrir y recuperar una copia`() = runTest {
+        val c = carpeta()
+        val e = estado(c)
+        val socia = nuevoAfiliado(hoy).copy(condicion = "socia", nombres = "Rosa")
+        val hijo = nuevoAfiliado(hoy).copy(condicion = "familiar", titularId = socia.id, parentesco = "hijo/a")
+        e.cambiarPadron { inscribirEnLaOlla(inscribirEnLaOlla(it, socia), hijo) }
+        e.cambiarPadron { retirarPorLaHoja(it, hijo.id, hoy) }
+        ok(e.guardarYa())
+
+        val reabierto = estado(c)
+        val familia = familiaresDe(reabierto.padron.value, socia.id).single()
+        igual(familia.id, hijo.id)
+        ok(!familia.activo)
+        igual(familia.parentesco, "hijo/a")
+        val copia = assertIs<LecturaRespaldo.Lista>(leerRespaldo(escribirRespaldo(reabierto.armarCopia())))
+        val otro = estado()
+        ok(otro.restaurar(copia))
+        igual(familiaresDe(otro.padron.value, socia.id), listOf(familia))
+        igual(otro.padron.value.afiliados.single { it.id == familia.titularId }.nombres, "Rosa")
+    }
 
     @Test
     fun `Sin nada guardado arranca vacío y guardado`() = runTest {

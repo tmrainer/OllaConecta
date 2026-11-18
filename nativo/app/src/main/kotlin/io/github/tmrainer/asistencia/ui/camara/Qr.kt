@@ -159,6 +159,7 @@ fun LeerQr(alRecibir: (Paquete) -> Unit, alCerrar: () -> Unit) {
     var falla by remember { mutableStateOf<String?>(null) }
     var destellos by remember { mutableIntStateOf(0) }
     val lector = remember { LectorQr() }
+    val espera = remember { EsperaDelLector(context, lector.modulo) }
     val busqueda = remember { object { @Volatile var cerrado = false; var partes = PartesRecibidas(); var entregar: (() -> Unit)? = null } }
     DisposableEffect(Unit) { onDispose { busqueda.cerrado = true; lector.close() } }
 
@@ -167,8 +168,7 @@ fun LeerQr(alRecibir: (Paquete) -> Unit, alCerrar: () -> Unit) {
     fun analizar(imagen: android.graphics.Bitmap) {
         if (busqueda.cerrado) return
         val textos = try { lector.leer(imagen) } catch (e: LectorNoDisponible) {
-            principal.execute { falla = "El lector aún no está listo. Prueba en unos minutos, con internet." }
-            busqueda.cerrado = true
+            principal.execute { espera.falta() }    // se pide el lector; cuando está, la cámara sigue sola
             return
         } catch (e: Exception) { return }
         principal.execute { abriendo = false }
@@ -208,9 +208,11 @@ fun LeerQr(alRecibir: (Paquete) -> Unit, alCerrar: () -> Unit) {
         Text("Apunta a la pantalla del otro teléfono. Antes de guardar verás qué cambia.", style = tipos.texto, color = Color.White.copy(alpha = .85f))
         Box(Modifier.fillMaxWidth().weight(1f).clip(RoundedCornerShape(Medidas.rM)).background(Color(0xFF111111)), contentAlignment = Alignment.Center) {
             val mensajeFalla = falla
+            val sinLector = espera.estado
             when {
                 negado -> Text("La app necesita permiso para usar la cámara.", style = tipos.texto, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.padding(Medidas.e4))
                 mensajeFalla != null -> Text(mensajeFalla, style = tipos.texto, color = Color.White, textAlign = TextAlign.Center, modifier = Modifier.padding(Medidas.e4))
+                sinLector != null -> LectorPendiente(sinLector, espera::pedir)
                 permiso -> {
                     VisorCamara(
                         recorte = Recorte.CUADRADO, linterna = linterna,
@@ -223,7 +225,7 @@ fun LeerQr(alRecibir: (Paquete) -> Unit, alCerrar: () -> Unit) {
                 }
             }
         }
-        if (falla == null && !negado) Text(estadoTexto, style = tipos.textoFuerte, color = Color.White, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+        if (falla == null && !negado && espera.estado == null) Text(estadoTexto, style = tipos.textoFuerte, color = Color.White, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
         Acciones {
             if (hayLinterna) Boton(if (linterna) "Apagar la linterna" else "Prender la linterna", { linterna = !linterna }, activo = linterna)
             Boton("Cancelar", ::cerrar)

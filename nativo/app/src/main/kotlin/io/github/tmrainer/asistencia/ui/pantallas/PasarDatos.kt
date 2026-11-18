@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import io.github.tmrainer.asistencia.nucleo.calculos.asistenciasDelDia
 import io.github.tmrainer.asistencia.nucleo.calculos.etiquetaGrupoEtario
+import io.github.tmrainer.asistencia.nucleo.modelo.Afiliado
 import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
 import io.github.tmrainer.asistencia.nucleo.modelo.cuantos
 import io.github.tmrainer.asistencia.nucleo.modelo.fechaLarga
@@ -39,7 +40,7 @@ import io.github.tmrainer.asistencia.nucleo.qr.PaquetePadron
 import io.github.tmrainer.asistencia.nucleo.qr.PreciosDia
 import io.github.tmrainer.asistencia.nucleo.qr.aplicarAsistencia
 import io.github.tmrainer.asistencia.nucleo.qr.aplicarEntregas
-import io.github.tmrainer.asistencia.nucleo.qr.aplicarPadron
+import io.github.tmrainer.asistencia.nucleo.qr.revisarEleccionPadron
 import io.github.tmrainer.asistencia.nucleo.qr.codificarParaQr
 import io.github.tmrainer.asistencia.nucleo.qr.compararAsistencia
 import io.github.tmrainer.asistencia.nucleo.qr.compararEntregas
@@ -47,6 +48,7 @@ import io.github.tmrainer.asistencia.nucleo.qr.compararPadron
 import io.github.tmrainer.asistencia.nucleo.qr.paqueteDeAsistencia
 import io.github.tmrainer.asistencia.nucleo.qr.paqueteDeEntregas
 import io.github.tmrainer.asistencia.nucleo.qr.paqueteDelPadron
+import io.github.tmrainer.asistencia.nucleo.calculos.CONDICIONES
 import io.github.tmrainer.asistencia.nucleo.calculos.ConteoSinInscribir
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.camara.LeerQr
@@ -67,7 +69,7 @@ import io.github.tmrainer.asistencia.ui.tema.Medidas
 import io.github.tmrainer.asistencia.ui.tema.colores
 import io.github.tmrainer.asistencia.ui.tema.tipos
 
-private const val AVISO_PRIVADO = "Lleva nombres y DNI: muéstralo solo al otro teléfono de la olla."
+private const val AVISO_PRIVADO = "Incluye nombres, documentos y, si los anotaste, parentescos y direcciones. Muéstralo solo al otro teléfono de la olla."
 private const val DONDE_RECIBIR = "En el otro teléfono: Tus datos → «Recibir por QR»."
 
 /** Muestra el QR del padrón, de la asistencia de [fechas] o de las entregas; si no hay nada, lo dice. */
@@ -152,6 +154,7 @@ private fun PantallaEncima(contenido: @Composable () -> Unit) {
 private val PALABRAS = mapOf(
     "tipoDocumento" to mapOf("dni" to "DNI", "ce" to "Carné de extranjería"),
     "tipoAfiliado" to mapOf("habitual" to "Habitual", "caso_social" to "Caso social"),
+    "condicion" to CONDICIONES.toMap(),
     "periodicidad" to mapOf("semanal" to "Semanal", "quincenal" to "Quincenal", "mensual" to "Mensual"),
     "estado" to mapOf("pendiente" to "Pendiente", "entregada" to "Entregada", "observada" to "Observada", "conforme" to "Conforme"),
     "menu" to mapOf("normal" to "Menú normal", "ayuda_social" to "Ayuda social")
@@ -193,7 +196,7 @@ private fun CompararRecibido(ctx: Contexto, paquete: Paquete) {
 
 /** El marco de la comparación: título, resumen, secciones y «Guardar los cambios»; sin cambios, solo «Listo». */
 @Composable
-private fun Marco(ctx: Contexto, titulo: String, resumen: List<Pair<String, String>>, hayCambios: Boolean, sinCambios: String, guardar: () -> String?, secciones: @Composable () -> Unit) {
+private fun Marco(ctx: Contexto, titulo: String, resumen: List<Pair<String, String>>, hayCambios: Boolean, sinCambios: String, aviso: String = "", guardar: () -> String?, secciones: @Composable () -> Unit) {
     val c = colores
     PantallaEncima {
         Text(titulo, style = tipos.titulo, color = c.titulo)
@@ -208,12 +211,13 @@ private fun Marco(ctx: Contexto, titulo: String, resumen: List<Pair<String, Stri
         Pista("Revisa antes de guardar. Lo distinto se queda como aquí, salvo que elijas lo recibido.")
         secciones()
         Spacer(Modifier.height(Medidas.e5))
+        if (aviso.isNotEmpty()) Pista(aviso)
         Acciones {
             Boton("Guardar los cambios", {
                 val mensaje = guardar()
                 ctx.cerrarCapa()
                 if (mensaje == null) ctx.avisos.mostrar("No elegiste nada para guardar: todo quedó como estaba.")
-            }, tipo = TipoBoton.PRINCIPAL)
+            }, tipo = TipoBoton.PRINCIPAL, habilitado = aviso.isEmpty())
             Boton("Cancelar", ctx::cerrarCapa)
         }
     }
@@ -229,6 +233,16 @@ private fun CompararPadron(ctx: Contexto, paquete: PaquetePadron) {
     val nuevas = remember { mutableStateMapOf<Int, Boolean>().apply { k.nuevas.indices.forEach { put(it, true) } } }
     val dudosas = remember { mutableStateMapOf<Int, Boolean>() }
     val distintas = remember { mutableStateMapOf<Int, Boolean>().apply { k.distintas.forEachIndexed { i, d -> put(i, d.soloCompleta && !d.nombreDistinto) } } }
+    val agregar = k.nuevas.filterIndexed { i, _ -> nuevas[i] == true } + k.dudosas.filterIndexed { i, _ -> dudosas[i] == true }.map { it.recibida }
+    val usar = k.distintas.filterIndexed { i, _ -> distintas[i] == true }
+    val revision = remember(padron, agregar, usar) { revisarEleccionPadron(padron, EleccionPadron(agregar, usar)) }
+    val porId = remember(revision) { revision.padron.afiliados.associateBy { it.id } }
+    fun enElLibro(p: Afiliado) = when (p.condicion) {
+        "socia" -> " · Socia"
+        "familiar" -> porId[p.titularId]?.takeIf { it.condicion == "socia" }?.let { " · Familiar de ${nombreCompleto(it)}" }
+            ?: " · Familiar pendiente de vincular"
+        else -> ""
+    }
     Marco(
         ctx, "Padrón recibido",
         listOfNotNull(
@@ -237,13 +251,12 @@ private fun CompararPadron(ctx: Contexto, paquete: PaquetePadron) {
             if (k.soloAqui > 0) "Solo aquí (no se tocan)" to "${k.soloAqui}" else null
         ),
         hayCambios = k.nuevas.size + k.dudosas.size + k.distintas.size > 0,
+        aviso = revision.aviso,
         sinCambios = "Ya tenías a todas las personas del padrón recibido (${k.iguales} iguales).",
         guardar = {
-            val agregar = k.nuevas.filterIndexed { i, _ -> nuevas[i] == true } + k.dudosas.filterIndexed { i, _ -> dudosas[i] == true }.map { it.recibida }
-            val usar = k.distintas.filterIndexed { i, _ -> distintas[i] == true }
             if (agregar.isEmpty() && usar.isEmpty()) null else {
                 val antes = estado.padron.value
-                estado.cambiarPadron { aplicarPadron(padron, EleccionPadron(agregar, usar)) }
+                estado.cambiarPadron { revision.padron }
                 estado.guardarYa()
                 val m = listOfNotNull(
                     if (agregar.isNotEmpty()) "Se ${if (agregar.size == 1) "agregó" else "agregaron"} ${cuantos(agregar.size, "persona")}" else null,
@@ -254,15 +267,15 @@ private fun CompararPadron(ctx: Contexto, paquete: PaquetePadron) {
             }
         }
     ) {
-        if (k.nuevas.isNotEmpty()) Seccion("Personas nuevas (${k.nuevas.size})", "No están en este teléfono. Se agregan las marcadas.") {
+        if (k.nuevas.isNotEmpty()) Seccion("Personas nuevas (${k.nuevas.size})", "Marca a quienes quieras agregar. Si dejas fuera a su socia, el familiar queda pendiente de vincular.") {
             k.nuevas.forEachIndexed { i, p ->
-                Casilla(nuevas[i] == true, { nuevas[i] = it }, nombreCompleto(p), "${p.numeroDocumento.ifEmpty { "sin documento" }}${if (p.tipoAfiliado == "caso_social") " · Caso social" else ""}")
+                Casilla(nuevas[i] == true, { nuevas[i] = it }, nombreCompleto(p), "${p.numeroDocumento.ifEmpty { "sin documento" }}${if (p.tipoAfiliado == "caso_social") " · Caso social" else ""}${enElLibro(p)}")
             }
         }
         if (k.dudosas.isNotEmpty()) Seccion("Mismo nombre, otro DNI (${k.dudosas.size})", "Puede ser la misma persona con el DNI mal escrito. Revisa su DNI.", aviso = true) {
             k.dudosas.forEachIndexed { i, d ->
                 Text("Aquí: DNI ${d.mia.numeroDocumento}. Recibido: DNI ${d.recibida.numeroDocumento}.", style = tipos.chico, color = c.tinta)
-                Casilla(dudosas[i] == true, { dudosas[i] = it }, "Agregar a ${nombreCompleto(d.recibida)} como persona nueva")
+                Casilla(dudosas[i] == true, { dudosas[i] = it }, "Agregar a ${nombreCompleto(d.recibida)} como persona nueva", enElLibro(d.recibida).removePrefix(" · ").ifEmpty { null })
             }
         }
         if (k.distintas.isNotEmpty()) Seccion("Con datos distintos (${k.distintas.size})") {

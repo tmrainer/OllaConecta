@@ -1113,6 +1113,11 @@ export const casos = [
       igual(r.campos.nombres, 'ANNA MARIA');
       igual(r.campos.pais, 'UTO', 'el país también es solo letras');
       igual(r.campos.numeroDocumento, 'D23145890', 'el número no se toca');
+      // La «I» del principio leída como «1» o como «l».
+      for (const primera of ['1', 'l']) {
+        igual(buscarMrzTd1([primera + ocr[0].slice(1), ocr[1], ocr[2]], '2026-10-11')?.campos.apellidos.join(' '), 'ERIKSSON', `«${primera}» por I`);
+      }
+      igual(buscarMrzTd1(['1' + ocr[0].slice(1), '7408122F1204158UT0<<<<<<<<<<<6', ocr[2]], '2026-10-11'), null, 'y el control sigue decidiendo');
     }
   },
   {
@@ -1882,6 +1887,23 @@ export const casos = [
       igual(nuevo.afiliados[1].apellidoPaterno, 'BETA', 'lo no elegido queda como aquí');
       igual(nuevo.afiliados[5].origenDato, 'qr');
       igual(aqui.afiliados.length, 5, 'no toca el original');
+    }
+  },
+  {
+    grupo: 'Pasar datos por QR',
+    nombre: 'Un padrón de la app con su libro de socias (clave «f») se lee igual, sin la familia',
+    fn: async () => {
+      const fila = ['FICTICIA', '', 'ANA', '00000031', 'dni', '', 'adulto', 'F', 'habitual', 1, '2026-01-01', '', ''];
+      const hijo = ['FICTICIA', '', 'HIJO DE ANA', '00000032', 'dni', '', 'nino', 'M', 'habitual', 1, '2026-01-01', '', ''];
+      const paquete = { t: 'P', v: 1, p: [fila, hijo],
+        f: [[0, 'socia', '', '', 'Jr. Inventado 123'], [1, 'familiar', '00000031', 'hijo/a', '']] };
+      const vuelta = await juntarPartesQr((await codificarParaQr('padron', paquete)).map(leerParteQr));
+      igual(vuelta.tipo, 'padron');
+      const c = compararPadron({ afiliados: [], atenciones: [] }, vuelta);
+      igual(c.nuevas.length, 2);
+      igual(c.nuevas[1].nombres, 'HIJO DE ANA');
+      const nuevo = aplicarPadron({ afiliados: [], atenciones: [] }, { agregar: c.nuevas, usarRecibida: [] });
+      ok(nuevo.afiliados.every((a) => !('condicion' in a) && !('titularId' in a)), 'la web no guarda lo que no lleva');
     }
   },
   {

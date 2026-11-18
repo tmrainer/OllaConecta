@@ -95,6 +95,42 @@ fun compararConHoja(padron: Padron, hoja: Importacion): ComparacionHoja {
     )
 }
 
+/**
+ * La socia de cada familiar que entra, según el orden de la hoja: ahí cada socia
+ * va seguida de los suyos. Es una propuesta: se aplica solo si quien carga la
+ * hoja la acepta. El parentesco no viene en la hoja y queda por anotar.
+ *
+ * Solo propone una socia que entra con esta hoja o que ya figura como socia
+ * en el padrón (por DNI). La hoja no cambia la condición de quien ya figura.
+ *
+ * @param entran las filas que entrarían, de [ComparacionHoja.entran]
+ * @return id del familiar que entra → su socia
+ */
+fun sociasSegunLaHoja(padron: Padron, hoja: Importacion, entran: List<FilaImportada>): Map<String, Afiliado> {
+    val porDoc = padron.afiliados.filter { clave(it).isNotEmpty() }.groupBy { clave(it) }
+    val queEntran = entran.map { it.afiliado.id }.toSet()
+    val propuestas = LinkedHashMap<String, Afiliado>()
+    var socia: Afiliado? = null
+    for (f in hoja.filas) {
+        val a = f.afiliado
+        if (a.condicion == "familiar" && f.estado != "vacia") {
+            socia?.let { if (a.id in queEntran) propuestas[a.id] = it }
+        } else {
+            val mias = porDoc[clave(a)].orEmpty()
+            socia = when {
+                a.condicion != "socia" || f.estado == "vacia" || f.estado == "duplicada" -> null
+                a.id in queEntran -> a
+                else -> (mias.firstOrNull { it.activo } ?: mias.firstOrNull())?.takeIf { it.condicion == "socia" }
+            }
+        }
+    }
+    return propuestas
+}
+
+/** Las filas que entran, cada familiar ya con la socia de [sociasSegunLaHoja]. */
+fun unirASusSocias(entran: List<FilaImportada>, socias: Map<String, Afiliado>): List<FilaImportada> =
+    entran.map { f -> socias[f.afiliado.id]?.let { f.copy(afiliado = f.afiliado.copy(titularId = it.id)) } ?: f }
+
 /** Lo que eligió la persona: quiénes entran, quiénes salen y a quién se le pone el nombre de la hoja. */
 data class EleccionHoja(
     val entran: List<FilaImportada>,

@@ -79,8 +79,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.tmrainer.asistencia.nucleo.calculos.CONDICIONES
 import io.github.tmrainer.asistencia.nucleo.calculos.PARENTESCOS
 import io.github.tmrainer.asistencia.nucleo.calculos.TIPOS_AFILIADO
+import io.github.tmrainer.asistencia.nucleo.calculos.conSocia
 import io.github.tmrainer.asistencia.nucleo.calculos.familiaresDe
-import io.github.tmrainer.asistencia.nucleo.calculos.TRAMOS_ETARIOS
 import io.github.tmrainer.asistencia.nucleo.calculos.afiliadosActivos
 import io.github.tmrainer.asistencia.nucleo.calculos.edadEnFecha
 import io.github.tmrainer.asistencia.nucleo.calculos.etiquetaGrupoEtario
@@ -178,23 +178,25 @@ private const val PISTA_PERSONA = "Se recorta sola de la foto del DNI; si salió
 @Composable
 private fun ElegirSocia(padron: io.github.tmrainer.asistencia.nucleo.modelo.Padron, titularId: String, excluir: String, alElegir: (String) -> Unit) {
     val c = colores
-    val socias = remember(padron.afiliados) { padron.afiliados.filter { it.activo && it.condicion == "socia" && it.id != excluir }.sortedWith { a, b -> ORDEN_NOMBRES.compare(nombreCompleto(a), nombreCompleto(b)) } }
+    val socias = remember(padron.afiliados, excluir) { padron.afiliados.filter { it.activo && it.condicion == "socia" && it.id != excluir }.sortedWith { a, b -> ORDEN_NOMBRES.compare(nombreCompleto(a), nombreCompleto(b)) } }
     val elegida = socias.firstOrNull { it.id == titularId } ?: padron.afiliados.firstOrNull { it.id == titularId }
-    var busca by remember { mutableStateOf("") }
+    var cambiando by remember(titularId, excluir) { mutableStateOf(false) }
+    var busca by remember(titularId, excluir) { mutableStateOf("") }
     Leyenda("¿De qué socia es familiar?", obligatorio = true)
     if (elegida != null) {
         Row(Modifier.padding(top = Medidas.e2), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
             Text(nombreCompleto(elegida), style = tipos.textoFuerte, color = c.titulo, modifier = Modifier.weight(1f))
-            Boton("Cambiar", { alElegir("") }, diminuto = true)
+            Boton(if (cambiando) "Cancelar" else "Cambiar", { cambiando = !cambiando; busca = "" }, diminuto = true)
         }
-        return
+        if (!cambiando) return
+        if (excluir.isNotEmpty()) Boton("Quitar vínculo", { alElegir("") }, diminuto = true)
     }
     if (socias.isEmpty()) { Pista("Todavía no hay socias inscritas. Inscribe primero a la socia.", Modifier.padding(top = 4.dp)); return }
     Spacer(Modifier.height(Medidas.e2))
     Campo("Buscar a la socia", busca, { busca = it }, placeholder = "Nombre o DNI")
     val aguja = normalizarNombre(busca)
     val vistas = socias.filter { aguja.isEmpty() || normalizarNombre(nombreCompleto(it)).contains(aguja) || it.numeroDocumento.contains(busca.trim()) }.take(6)
-    Acciones(Modifier.padding(top = Medidas.e2)) { for (sc in vistas) Boton(nombreCompleto(sc), { alElegir(sc.id) }, diminuto = true) }
+    Acciones(Modifier.padding(top = Medidas.e2)) { for (sc in vistas) Boton(nombreCompleto(sc), { cambiando = false; alElegir(sc.id) }, diminuto = true) }
     if (socias.size > vistas.size) Pista("Escribe para encontrarla: hay ${socias.size} socias.", Modifier.padding(top = 4.dp))
 }
 
@@ -483,8 +485,7 @@ private fun EditorPersona(ctx: Contexto, padron: io.github.tmrainer.asistencia.n
     // La foto recién tomada, para verla enseguida (el archivo se sobrescribe con el mismo nombre).
     var fotoNueva by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     var retratoNuevo by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
-    val tieneFecha = esIso(a.fechaNacimiento)
-    val familia = remember(padron.afiliados, a.id) { familiaresDe(padron, a.id).filter { it.activo } }
+    val familia = remember(padron.afiliados, a.id) { familiaresDe(padron, a.id) }
     Column(Modifier.padding(Medidas.e4, Medidas.e1, Medidas.e4, Medidas.e4)) {
         Acciones(Modifier.padding(vertical = 10.dp)) {
             if (a.activo && a.registroMunicipal == "pendiente") {
@@ -493,7 +494,10 @@ private fun EditorPersona(ctx: Contexto, padron: io.github.tmrainer.asistencia.n
             Boton(if (a.activo) "Dar de baja" else "Reactivar", {
                 if (a.activo) pidiendoBaja = true else cambiar { it.copy(activo = true, bajaEn = "", motivoBaja = "") }
             }, diminuto = true)
-            Boton("Borrar", { confirmandoBorrar = true }, diminuto = true, tipo = TipoBoton.PELIGRO)
+            Boton("Borrar", { confirmandoBorrar = true }, diminuto = true, tipo = TipoBoton.PELIGRO, habilitado = familia.isEmpty())
+        }
+        if (familia.isNotEmpty()) {
+            Pista("Para borrar a esta persona o cambiar su condición, abre la ficha de cada familiar y cambia o quita su vínculo.", Modifier.padding(bottom = Medidas.e2))
         }
         if (a.condicion == "socia") {
             Leyenda("Ficha de socia (como en el libro)")
@@ -517,21 +521,25 @@ private fun EditorPersona(ctx: Contexto, padron: io.github.tmrainer.asistencia.n
         }
         Spacer(Modifier.height(Medidas.e4))
         Leyenda("En el libro de socias")
-        Opciones(CONDICIONES + ("" to "No se sabe"), { it == a.condicion }, { v -> cambiar { it.copy(condicion = v, titularId = if (v == "familiar") it.titularId else "", parentesco = if (v == "familiar") it.parentesco else "") } })
+        Opciones(CONDICIONES + ("" to "No se sabe"), { it == a.condicion }, { v -> cambiar { it.copy(condicion = v, titularId = if (v == "familiar") it.titularId else "", parentesco = if (v == "familiar") it.parentesco else "") } }, habilitado = a.condicion != "socia" || familia.isEmpty())
         Pista("En el formato de la Municipalidad, la socia va como «Socio» y su familia como «Usuario».", Modifier.padding(top = 4.dp))
         if (a.condicion == "familiar") {
             Spacer(Modifier.height(Medidas.e3))
-            ElegirSocia(padron, a.titularId, a.id) { id -> cambiar { it.copy(titularId = id) } }
+            ElegirSocia(padron, a.titularId, a.id) { id -> cambiar { conSocia(it, id) } }
             Spacer(Modifier.height(Medidas.e3))
             Leyenda("Parentesco con la socia", obligatorio = true)
             Opciones(PARENTESCOS.map { it to it }, { it == a.parentesco }, { v -> cambiar { it.copy(parentesco = v) } })
             Spacer(Modifier.height(Medidas.e3))
             Campo("Ocupación", a.ocupacion, { v -> cambiar { it.copy(ocupacion = v) } }, pista = "Ej.: estudiante. Opcional.")
         }
-        if (a.condicion == "socia" && familia.isNotEmpty()) {
+        if (familia.isNotEmpty()) {
             Spacer(Modifier.height(Medidas.e3))
             Leyenda("Su familia en el padrón")
-            Text(familia.joinToString(", ") { "${nombreCompleto(it)} (${it.parentesco.ifEmpty { "sin parentesco" }})" }, style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 4.dp))
+            Text(familia.joinToString(", ") { familiar ->
+                val parentesco = familiar.parentesco.ifEmpty { "sin parentesco" }
+                val detalle = if (familiar.activo) parentesco else "$parentesco, de baja"
+                "${nombreCompleto(familiar)} ($detalle)"
+            }, style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 4.dp))
         }
         Spacer(Modifier.height(Medidas.e3))
         Campo("Dirección", a.direccion, { v -> cambiar { it.copy(direccion = v) } }, capitalizar = true,
@@ -554,11 +562,8 @@ private fun EditorPersona(ctx: Contexto, padron: io.github.tmrainer.asistencia.n
         Opciones(TIPOS_AFILIADO.map { it.clave to it.etiqueta }, { it == a.tipoAfiliado }, { v -> cambiar { it.copy(tipoAfiliado = v) } })
         Pista("Define el menú que le toca por defecto.", Modifier.padding(top = 4.dp))
         Spacer(Modifier.height(Medidas.e3))
-        CampoFecha("Fecha de nacimiento", a.fechaNacimiento, { v -> cambiar { it.copy(fechaNacimiento = v) } }, pista = "Opcional.", hasta = hoyIso())
-        Spacer(Modifier.height(Medidas.e3))
-        Leyenda("Grupo de edad")
-        Opciones(TRAMOS_ETARIOS.map { it.clave to "${it.etiqueta} (${it.detalle})" }, { it == a.grupoEtarioManual }, { v -> cambiar { it.copy(grupoEtarioManual = v) } }, habilitado = !tieneFecha)
-        Pista(if (tieneFecha) "Se calcula desde la fecha de nacimiento." else "Obligatorio si no hay fecha de nacimiento.", Modifier.padding(top = 4.dp))
+        // El grupo de edad sale de la fecha (decisión del 05-11-2026): ya no se elige a mano.
+        CampoFecha("Fecha de nacimiento", a.fechaNacimiento, { v -> cambiar { it.copy(fechaNacimiento = v) } }, pista = "El grupo de edad se calcula desde la fecha.", hasta = hoyIso())
         Spacer(Modifier.height(Medidas.e3))
         Leyenda("Sexo")
         Opciones(listOf("" to "No indicado", "F" to "F", "M" to "M"), { it == a.sexo }, { v -> cambiar { it.copy(sexo = v) } })
@@ -651,7 +656,6 @@ fun PantallaInscribir(ctx: Contexto) {
     var tipoDoc by remember { mutableStateOf("dni") }
     var doc by remember { mutableStateOf("") }
     var nacimiento by remember { mutableStateOf("") }
-    var grupo by remember { mutableStateOf<String?>(null) }
     var tipo by remember { mutableStateOf("") }
     // El libro de socias: socia o familiar de una socia, con su parentesco; la dirección y la foto del DNI.
     var condicion by remember { mutableStateOf("") }
@@ -667,6 +671,11 @@ fun PantallaInscribir(ctx: Contexto) {
     var confirmarNombre by remember { mutableStateOf<Afiliado?>(null) }
     // Leído un DNI que ya está en el padrón: se avisa y no se llena nada.
     var yaInscrita by remember { mutableStateOf<Afiliado?>(null) }
+    // El documento es de alguien de baja: se ofrece reactivarla, no inscribirla otra vez.
+    var deBaja by remember { mutableStateOf<Afiliado?>(null) }
+    // Si la foto y el retrato salieron de un escaneo: otro escaneo los reemplaza o los quita.
+    var fotoDeEscaneo by remember { mutableStateOf(false) }
+    var retratoDeEscaneo by remember { mutableStateOf(false) }
     var saliendo by remember { mutableStateOf(false) }
     // De dónde viene: llegó a la olla (queda pendiente de la
     // Municipalidad) o ya figura en la hoja municipal (se copia con su fecha).
@@ -681,7 +690,7 @@ fun PantallaInscribir(ctx: Contexto) {
     val desplazamiento = rememberScrollState()
     val alcance = rememberCoroutineScope()
     val tieneFecha = esIso(nacimiento)
-    val hayDatos = listOf(paterno, materno, nombres, doc, nacimiento, tipo, condicion, direccion).any { it.isNotBlank() } || grupo != null || escaneo != null || foto != null || retrato != null
+    val hayDatos = listOf(paterno, materno, nombres, doc, nacimiento, tipo, condicion, direccion).any { it.isNotBlank() } || escaneo != null || foto != null || retrato != null
 
     fun salir() { if (hayDatos) saliendo = true else ctx.volver() }
     BackHandler(enabled = hayDatos) { saliendo = true }
@@ -691,7 +700,7 @@ fun PantallaInscribir(ctx: Contexto) {
     fun armar(): Afiliado = nuevoAfiliado().copy(
         apellidoPaterno = paterno.trim(), apellidoMaterno = materno.trim(), nombres = nombres.trim(),
         tipoDocumento = tipoDoc, numeroDocumento = doc.trim(), fechaNacimiento = nacimiento,
-        grupoEtarioManual = if (tieneFecha) null else grupo, tipoAfiliado = tipo,
+        tipoAfiliado = tipo,
         condicion = condicion, titularId = if (condicion == "familiar") titularId else "", parentesco = if (condicion == "familiar") parentesco else "",
         direccion = direccion.trim()
     ).let { a -> escaneo?.let { sexo -> a.copy(origenDato = "escaneo_dni", sexo = sexo, verificadoPor = verifica.trim()) } ?: a }
@@ -701,12 +710,17 @@ fun PantallaInscribir(ctx: Contexto) {
      * No inscribe: una letra dudosa queda vacía con sus opciones, y se dice qué revisar.
      */
     fun inscritaCon(dni: String) = estado.padron.value.afiliados.firstOrNull { it.activo && it.numeroDocumento == dni }
+    fun deBajaCon(dni: String) = if (dni.isEmpty() || inscritaCon(dni) != null) null else estado.padron.value.afiliados.firstOrNull { !it.activo && it.numeroDocumento == dni }
 
     fun llenarConDni(l: LecturaDni) {
         val m = l.mrz.campos
         notaDni = emptyList(); dudas = emptyList(); avisoDni = ""
         if (m.pais != "PER") { avisoDni = "No parece un DNI peruano. Escribe los datos a mano."; return }
         inscritaCon(m.numeroDocumento)?.let { yaInscrita = it; return }
+        deBajaCon(m.numeroDocumento)?.let { deBaja = it; return }
+        // Las fotos de un escaneo anterior son de otro DNI: no se quedan con los datos de este.
+        if (fotoDeEscaneo) { foto = null; fotoDeEscaneo = false }
+        if (retratoDeEscaneo) { retrato = null; retratoDeEscaneo = false }
         tipoDoc = "dni"; doc = m.numeroDocumento; nacimiento = m.fechaNacimiento
         val revisar = ArrayList<String>()
         val ds = ArrayList<Triple<String, List<String>, (String) -> Unit>>()
@@ -726,7 +740,7 @@ fun PantallaInscribir(ctx: Contexto) {
         if (materno.isEmpty()) revisar.add("Apellido materno: escríbelo (no se leyó).")
         escaneo = m.sexo
         // Las fotos salen del escaneo: el lado de la foto es la foto del DNI y de ahí se recorta el retrato.
-        l.foto?.let { f -> foto = f; retrato = Fotos.retratoDelDni(f); revisar.add("Foto del DNI y retrato: tomados del escaneo; si salieron mal, toma otra abajo.") }
+        l.foto?.let { f -> foto = f; retrato = Fotos.retratoDelDni(f); fotoDeEscaneo = true; retratoDeEscaneo = true; revisar.add("Foto del DNI y retrato: tomados del escaneo; si salieron mal, toma otra abajo.") }
         // Quien usa el teléfono es quien revisa: su nombre del perfil, editable.
         if (verifica.isBlank()) verifica = ctx.preferencias.perfil.value.nombre
         notaDni = revisar; dudas = ds
@@ -746,10 +760,10 @@ fun PantallaInscribir(ctx: Contexto) {
             ctx.volver()
             return
         }
-        paterno = ""; materno = ""; nombres = ""; doc = ""; nacimiento = ""; grupo = null; tipo = ""
+        paterno = ""; materno = ""; nombres = ""; doc = ""; nacimiento = ""; tipo = ""
         // Copiando a varias de la misma familia, la socia y la dirección se quedan.
         if (condicion == "socia") { condicion = ""; direccion = "" }
-        parentesco = ""; foto = null; retrato = null
+        parentesco = ""; foto = null; retrato = null; fotoDeEscaneo = false; retratoDeEscaneo = false
         escaneo = null; notaDni = emptyList(); dudas = emptyList(); avisoDni = ""
         alcance.launch { desplazamiento.animateScrollTo(0) }
     }
@@ -757,11 +771,12 @@ fun PantallaInscribir(ctx: Contexto) {
     fun inscribir() {
         val a = armar()
         val padron = estado.padron.value
+        deBajaCon(a.numeroDocumento)?.let { deBaja = it; return }
         val faltan = ArrayList<String>()
         if (a.apellidoPaterno.isEmpty()) faltan.add("apellido paterno")
         if (a.nombres.isEmpty()) faltan.add("nombres")
         if (a.numeroDocumento.isEmpty()) faltan.add("número de documento")
-        if (grupoEtario(a, hoyIso()) == null) faltan.add("grupo de edad")
+        if (!tieneFecha) faltan.add("fecha de nacimiento")
         if (a.tipoAfiliado.isEmpty()) faltan.add("tipo")
         if (a.condicion.isEmpty()) faltan.add("si es socia o familiar")
         if (a.condicion == "familiar" && a.titularId.isEmpty()) faltan.add("de qué socia es familiar")
@@ -801,7 +816,7 @@ fun PantallaInscribir(ctx: Contexto) {
             } else {
                 Pista("Queda pendiente hasta que la registren en la Municipalidad.", Modifier.padding(top = Medidas.e2, bottom = Medidas.e3))
                 Pista("En prueba. Revisa todo antes de inscribir.", Modifier.padding(bottom = Medidas.e2))
-                Boton("Leer el DNI con la cámara", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeer = ::llenarConDni, yaEsta = { inscritaCon(it) != null }) } }, Modifier.objetivoGuia("inscribir.dni"), icono = "camara")
+                Boton("Leer el DNI con la cámara", { ctx.abrirCapa { CamaraDni(alCerrar = ctx::cerrarCapa, alLeer = ::llenarConDni, yaEsta = { inscritaCon(it) != null || deBajaCon(it) != null }) } }, Modifier.objetivoGuia("inscribir.dni"), icono = "camara")
                 if (avisoDni.isNotEmpty()) Text(avisoDni, style = tipos.chicoFuerte, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2))
                 if (escaneo != null) {
                     Text("Listo. Revisa los datos con el DNI en la mano.", style = tipos.textoFuerte, color = c.ok, modifier = Modifier.padding(top = Medidas.e3))
@@ -831,13 +846,13 @@ fun PantallaInscribir(ctx: Contexto) {
             Spacer(Modifier.height(Medidas.e3))
             // Al escribir el número, si ya está en el padrón se dice aquí mismo: no hace falta llenar el resto.
             val yaEsta = doc.trim().takeIf { it.isNotEmpty() }?.let(::inscritaCon)
+            val estaDeBaja = doc.trim().takeIf { it.isNotEmpty() }?.let(::deBajaCon)
             Campo("Número", doc, { doc = it }, obligatorio = true, soloDigitos = tipoDoc == "dni", maxLargo = 12,
-                aviso = yaEsta?.let { "Ya está inscrita: ${nombreCompleto(it)}. No hace falta inscribirla otra vez." })
+                aviso = yaEsta?.let { "Ya está inscrita: ${nombreCompleto(it)}. No hace falta inscribirla otra vez." }
+                    ?: estaDeBaja?.let { "Está de baja en el padrón: ${nombreCompleto(it)}. Toca «Inscribir» para reactivarla." })
             Spacer(Modifier.height(Medidas.e4))
-            CampoFecha("Fecha de nacimiento (opcional)", nacimiento, { nacimiento = it }, pista = "Con la fecha, el grupo de edad se calcula solo.", hasta = hoyIso())
-            Spacer(Modifier.height(Medidas.e4))
-            Leyenda("Grupo de edad", obligatorio = true)
-            Opciones(TRAMOS_ETARIOS.map { it.clave to "${it.etiqueta} (${it.detalle})" }, { it == grupo }, { grupo = it }, habilitado = !tieneFecha)
+            // La fecha es obligatoria y el grupo de edad sale de ella (decisión del 05-11-2026): no se pide aparte.
+            CampoFecha("Fecha de nacimiento", nacimiento, { nacimiento = it }, pista = "La trae el DNI. Con ella, el grupo de edad se calcula solo.", obligatorio = true, hasta = hoyIso())
             if (tieneFecha) Pista("Con esa fecha, hoy le corresponde: ${etiquetaGrupoEtario(grupoEtario(Afiliado(fechaNacimiento = nacimiento), hoyIso()))}.", Modifier.padding(top = 4.dp))
             Spacer(Modifier.height(Medidas.e4))
             Leyenda("Tipo", obligatorio = true)
@@ -851,7 +866,10 @@ fun PantallaInscribir(ctx: Contexto) {
             Pista("La socia es la titular del libro; su familia va debajo de ella.", Modifier.padding(top = 4.dp))
             if (condicion == "familiar") {
                 Spacer(Modifier.height(Medidas.e3))
-                ElegirSocia(padronActual, titularId, "") { titularId = it }
+                ElegirSocia(padronActual, titularId, "") { id ->
+                    if (titularId.isNotEmpty() && id != titularId) parentesco = ""
+                    titularId = id
+                }
                 Spacer(Modifier.height(Medidas.e3))
                 Leyenda("Parentesco con la socia", obligatorio = true)
                 Opciones(PARENTESCOS.map { it to it }, { it == parentesco }, { parentesco = it })
@@ -860,9 +878,9 @@ fun PantallaInscribir(ctx: Contexto) {
             Campo("Dirección", direccion, { direccion = it }, capitalizar = true,
                 pista = if (condicion == "familiar") "Si queda vacía, va la de su socia." else "Mz., lote, sector, asociación. Va en el formato de la Municipalidad.")
             Spacer(Modifier.height(Medidas.e4))
-            CampoFoto(ctx, "Foto del DNI", PISTA_DNI, "", foto, obligatorio = true, error = null) { foto = it }
+            CampoFoto(ctx, "Foto del DNI", PISTA_DNI, "", foto, obligatorio = true, error = null) { foto = it; fotoDeEscaneo = false }
             Spacer(Modifier.height(Medidas.e4))
-            CampoFoto(ctx, "Foto de la persona", PISTA_PERSONA, "", retrato, obligatorio = false, error = null, retrato = true) { retrato = it }
+            CampoFoto(ctx, "Foto de la persona", PISTA_PERSONA, "", retrato, obligatorio = false, error = null, retrato = true) { retrato = it; retratoDeEscaneo = false }
         }
         // La barra de abajo: sobre la barra de gestos y, con el teclado abierto, sobre el teclado.
         Column(Modifier.fillMaxWidth().background(c.superficie)) {
@@ -895,6 +913,33 @@ fun PantallaInscribir(ctx: Contexto) {
             },
             confirmButton = { Boton("Inscribir a otra persona", { yaInscrita = null }, tipo = TipoBoton.PRINCIPAL) },
             dismissButton = { Boton("Volver al padrón", { yaInscrita = null; ctx.ir(Ruta.PADRON) }) }
+        )
+    }
+
+    deBaja?.let { a ->
+        AlertDialog(
+            onDismissRequest = { deBaja = null },
+            containerColor = c.superficie,
+            title = { Text("Está de baja en el padrón", style = tipos.seccion, color = c.titulo) },
+            text = {
+                Text("${nombreCompleto(a)} (DNI ${a.numeroDocumento}) ya estuvo inscrita y está de baja. Reactívala para no inscribirla dos veces: vuelve con los datos que tenía.",
+                    style = tipos.texto, color = c.tinta)
+            },
+            confirmButton = {
+                Boton("Reactivar", {
+                    deBaja = null
+                    // Copiada de la hoja, vuelve como registrada en esa fecha (igual que al cargar una hoja).
+                    estado.cambiarPadron { p ->
+                        p.copy(afiliados = p.afiliados.map {
+                            if (it.id != a.id) it
+                            else it.copy(activo = true, bajaEn = "", motivoBaja = "").let { x -> if (deLaHoja) x.copy(registroMunicipal = "registrada", registroMunicipalEn = fechaHoja) else x }
+                        })
+                    }
+                    ctx.avisos.mostrar("${nombreCompleto(a)} volvió al padrón. Revisa sus datos.")
+                    ctx.volver()
+                }, tipo = TipoBoton.PRINCIPAL)
+            },
+            dismissButton = { Boton("Cancelar", { deBaja = null }) }
         )
     }
 

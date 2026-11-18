@@ -2422,7 +2422,7 @@
       {
         "severidad": "error",
         "campo": "afiliado.p-0004",
-        "mensaje": "Falta el grupo de edad. Elígelo, o anota la fecha de nacimiento y sale solo.",
+        "mensaje": "Falta la fecha de nacimiento: con ella sale el grupo de edad.",
         "falta": true
       },
       {
@@ -2470,7 +2470,7 @@
       {
         "severidad": "error",
         "campo": "afiliado.p-0014",
-        "mensaje": "Falta el grupo de edad. Elígelo, o anota la fecha de nacimiento y sale solo.",
+        "mensaje": "Falta la fecha de nacimiento: con ella sale el grupo de edad.",
         "falta": true
       }
     ],

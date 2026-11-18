@@ -230,8 +230,10 @@ export function buscarMrzTd1(lineasOcr, fechaRef) {
   if (!Array.isArray(lineasOcr)) return null;
   const limpias = lineasOcr.map(limpiarLineaMrz).filter((l) => l.length >= 3);
   for (let i = 0; i + 2 < limpias.length; i += 1) {
-    if (!limpias[i].startsWith('I')) continue;
-    const tres = limpias.slice(i, i + 3).map((l, n) => {
+    // La «I» del principio a veces sale «1» o «l»: se toma como «I», y los dígitos de control deciden.
+    if (!'I1L'.includes(limpias[i][0])) continue;
+    const tres = limpias.slice(i, i + 3).map((leida, n) => {
+      const l = n === 0 ? 'I' + leida.slice(1) : leida;
       // Primero las cifras (para que la línea 2 tenga su largo real), después el relleno.
       const conCifras = [...l].map((c, j) => (CIFRAS_TD1[n].includes(j) && A_CIFRA[c]) || c).join('');
       const ajustada = ajustarLineaTd1(conCifras, n);

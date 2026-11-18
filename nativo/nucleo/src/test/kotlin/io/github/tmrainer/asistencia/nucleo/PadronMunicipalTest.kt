@@ -3,6 +3,7 @@
 // el pie del B-1 de Pachacámac.
 package io.github.tmrainer.asistencia.nucleo
 
+import io.github.tmrainer.asistencia.nucleo.calculos.conSocia
 import io.github.tmrainer.asistencia.nucleo.calculos.familiaresDe
 import io.github.tmrainer.asistencia.nucleo.calculos.tipoBeneficiarioMunicipal
 import io.github.tmrainer.asistencia.nucleo.calculos.totales
@@ -61,6 +62,16 @@ private fun padronDeHogares(): Padron {
 }
 
 class PadronMunicipalTest {
+
+    @Test
+    fun `Al cambiar o quitar la socia se vuelve a indicar el parentesco`() {
+        val padron = padronDeHogares()
+        val hija = padron.afiliados.single { it.id == "f1" }
+        igual(conSocia(hija.copy(titularId = ""), "s1"), hija, "se puede anotar el parentesco antes de la primera socia")
+        igual(conSocia(hija, "s1"), hija)
+        igual(conSocia(hija, "c1"), hija.copy(titularId = "c1", parentesco = ""))
+        igual(conSocia(hija, ""), hija.copy(titularId = "", parentesco = ""))
+    }
 
     @Test
     fun `Socio, usuario o caso social, según la condición y el tipo`() {
@@ -170,6 +181,8 @@ class PadronMunicipalTest {
         ok(hs.any { "de qué socia" in it.mensaje && it.severidad == Severidad.ADVERTENCIA }, "falta la socia")
         ok(hs.any { "parentesco" in it.mensaje }, "falta el parentesco")
         ok(validarAfiliado(p.afiliados.first { it.id == "f1" }, p, hoy = "2026-11-05").none { "socia" in it.mensaje || "parentesco" in it.mensaje }, "la hija está completa")
+        val sinSocia = p.copy(afiliados = p.afiliados.map { if (it.id == "s1") it.copy(activo = false, bajaEn = "2026-11-01") else it })
+        ok(validarAfiliado(sinSocia.afiliados.first { it.id == "f1" }, sinSocia, hoy = "2026-11-05").any { "está de baja" in it.mensaje && it.severidad == Severidad.ADVERTENCIA }, "su socia está de baja")
         ok(faltaFotoDni(suelto), "inscrita a mano sin foto")
         ok(!faltaFotoDni(p.afiliados.first { it.id == "v1" }), "importada: no se le reclama la foto")
         ok(!faltaFotoDni(p.afiliados.first { it.id == "s1" }), "con foto")

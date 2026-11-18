@@ -312,10 +312,9 @@ export function validarAfiliado(afiliado, padron, indice = indicePadron(padron))
     }
   }
 
-  // Grupo etario OBLIGATORIO: por fecha de nacimiento, o elegido a mano.
+  // Grupo etario OBLIGATORIO, y sale de la fecha de nacimiento (la app nativa ya no lo pide a mano).
   if (!grupoEtario(a, hoyIso())) {
-    hs.push(h(ERROR, campo,
-      'Falta el grupo de edad. Elígelo, o anota la fecha de nacimiento y sale solo.'));
+    hs.push(h(ERROR, campo, 'Falta la fecha de nacimiento: con ella sale el grupo de edad.'));
   }
   if (a.grupoEtarioManual && !TRAMOS_ETARIOS.some((t) => t.clave === a.grupoEtarioManual)) {
     hs.push(h(ERROR, campo, 'El grupo de edad elegido no es uno de los cuatro válidos.'));

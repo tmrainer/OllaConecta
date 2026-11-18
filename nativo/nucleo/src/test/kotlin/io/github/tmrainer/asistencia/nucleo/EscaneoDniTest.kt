@@ -119,6 +119,11 @@ class EscaneoDniTest {
         igual(r.campos.nombres, "ANNA MARIA")
         igual(r.campos.pais, "UTO", "el país también es solo letras")
         igual(r.campos.numeroDocumento, "D23145890", "el número no se toca")
+        // La «I» del principio leída como «1» o como «l».
+        for (primera in listOf("1", "l")) {
+            igual(buscarMrzTd1(listOf(primera + ocr[0].substring(1), ocr[1], ocr[2]), "2026-10-11")?.campos?.apellidos, listOf("ERIKSSON"), "«$primera» por I")
+        }
+        igual(buscarMrzTd1(listOf("1" + ocr[0].substring(1), "7408122F1204158UT0<<<<<<<<<<<6", ocr[2]), "2026-10-11"), null, "y el control sigue decidiendo")
     }
 
     @Test

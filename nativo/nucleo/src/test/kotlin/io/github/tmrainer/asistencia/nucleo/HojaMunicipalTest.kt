@@ -16,7 +16,9 @@ import io.github.tmrainer.asistencia.nucleo.padron.inscribirEnLaOlla
 import io.github.tmrainer.asistencia.nucleo.padron.pendientesDeRegistro
 import io.github.tmrainer.asistencia.nucleo.padron.motivoNoFigura
 import io.github.tmrainer.asistencia.nucleo.padron.retirarPorLaHoja
+import io.github.tmrainer.asistencia.nucleo.padron.sociasSegunLaHoja
 import io.github.tmrainer.asistencia.nucleo.padron.ultimaHoja
+import io.github.tmrainer.asistencia.nucleo.padron.unirASusSocias
 import org.junit.jupiter.api.Test
 
 class HojaMunicipalTest {
@@ -148,5 +150,59 @@ class HojaMunicipalTest {
         val b = p4.afiliados.first { it.nombres == "Bea" }
         igual(b.registroMunicipal, "registrada"); igual(b.registroMunicipalEn, "2026-12-01")
         igual(pendientesDeRegistro(p4).size, 0)
+    }
+
+    @Test
+    fun `La hoja solo propone titulares que quedan como socias en el padrón`() {
+        val texto = """Apellido paterno;Nombres;DNI;Socio;Usuario
+            |Ficticia;Ana;00000021;X;
+            |Ficticia;Bea;00000022;;X""".trimMargin()
+        val hoja = prepararImportacion(texto, Padron(), "2026-10-20")
+        for (condicion in listOf("", "familiar")) {
+            val ana = nuevoAfiliado().copy(numeroDocumento = "00000021", condicion = condicion)
+            val padron = Padron(afiliados = listOf(ana))
+            val comparacion = compararConHoja(padron, hoja)
+            igual(comparacion.entran.single().afiliado.nombres, "Bea")
+            ok(sociasSegunLaHoja(padron, hoja, comparacion.entran).isEmpty(),
+                "La hoja no cambia la condición de Ana ni puede proponerla como titular")
+        }
+    }
+
+    @Test
+    fun `La hoja propone la socia de cada familiar por el orden de las filas`() {
+        val titulos = "Apellido paterno;Nombres;DNI;Grupo de edad;Socio;Usuario;Caso social"
+        fun leer(vararg filas: String) = prepararImportacion((listOf(titulos) + filas).joinToString("\n"), Padron(), "2026-10-20")
+        val h = leer(
+            "Ficticia;Hijo Suelto;00000020;nino;;X;",          // familiar antes de cualquier socia
+            "Ficticia;Ana;00000021;adulto;X;;",
+            "Ficticia;Hijo de Ana;00000022;nino;;X;",
+            "Ficticia;Otro de Ana;00000023;nino;;X;",
+            "Ficticia;Caso;00000024;adulto;;;X",               // corta la familia
+            "Ficticia;Tras el Caso;00000025;nino;;X;",
+            "Ficticia;Bea;00000026;adulto;X;;",
+            "Ficticia;Hijo de Bea;00000027;nino;;X;")
+        val k = compararConHoja(Padron(), h)
+        val socias = sociasSegunLaHoja(Padron(), h, k.entran)
+        fun id(nombres: String) = k.entran.first { it.afiliado.nombres == nombres }.afiliado.id
+        igual(socias.size, 3)
+        igual(socias[id("Hijo de Ana")]?.id, id("Ana")); igual(socias[id("Otro de Ana")]?.id, id("Ana"))
+        igual(socias[id("Hijo de Bea")]?.id, id("Bea"))
+        ok(id("Hijo Suelto") !in socias && id("Tras el Caso") !in socias, "sin socia encima no se propone nada")
+
+        // Sin aceptar la propuesta nadie queda unido; aceptada, solo los propuestos, y sin parentesco inventado.
+        ok(k.entran.all { it.afiliado.titularId.isEmpty() }, "la lectura sola no une a nadie")
+        val p = aplicarHoja(Padron(), "2026-10-01", EleccionHoja(unirASusSocias(k.entran, socias), emptyList(), emptyList()), k.enLaHoja)
+        igual(p.afiliados.count { it.titularId.isNotEmpty() }, 3)
+        ok(p.afiliados.all { it.parentesco.isEmpty() }, "el parentesco no viene en la hoja")
+
+        // Si Ana no entra (se desmarcó), los suyos quedan sin socia.
+        val sinAna = k.entran.filter { it.afiliado.nombres != "Ana" }
+        igual(sociasSegunLaHoja(Padron(), h, sinAna).size, 1)
+
+        // Ana ya está en el padrón: los suyos que entran se unen a la de aquí.
+        val conAna = aplicarHoja(Padron(), "2026-10-01", EleccionHoja(k.entran.filter { it.afiliado.nombres == "Ana" }, emptyList(), emptyList()), 1)
+        val k2 = compararConHoja(conAna, h)
+        val socias2 = sociasSegunLaHoja(conAna, h, k2.entran)
+        igual(socias2[k2.entran.first { it.afiliado.nombres == "Hijo de Ana" }.afiliado.id]?.id, conAna.afiliados[0].id)
     }
 }

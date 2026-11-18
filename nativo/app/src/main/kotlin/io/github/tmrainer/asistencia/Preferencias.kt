@@ -79,6 +79,11 @@ class Preferencias(context: Context) {
 
     fun marcarBienvenidaVista() { _bienvenidaVista.value = true; prefs.edit().putBoolean("bienvenidaVista", true).apply() }
 
+    /** Los lectores de la cámara (texto y QR) ya están en el teléfono: no se vuelven a pedir al abrir la app. */
+    var lectoresListos: Boolean
+        get() = prefs.getBoolean("lectores.listos", false)
+        set(si) = prefs.edit().putBoolean("lectores.listos", si).apply()
+
     /** «Borrar todo»: como recién instalada. Al volver, la app pide de nuevo quién eres (PrimerUso). */
     fun borrarTodo() {
         prefs.edit().clear().apply()
