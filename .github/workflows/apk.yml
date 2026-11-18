@@ -4,29 +4,38 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      etiqueta:
+        description: Etiqueta de la versión publicada
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
   apk:
-    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    env:
+      ETIQUETA: ${{ inputs.etiqueta || github.ref_name }}
     steps:
       - name: Descargar el APK firmado de la versión
         env:
           GH_TOKEN: ${{ github.token }}
-          ETIQUETA: ${{ github.ref_name }}
+        shell: bash
         run: |
+          [[ "$ETIQUETA" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
           gh release download "$ETIQUETA" --repo "$GITHUB_REPOSITORY" --pattern "OllaConecta-${ETIQUETA#v}.apk" --dir descarga
 
       - name: Verificar la firma, la aplicación y la versión del APK
-        env:
-          ETIQUETA: ${{ github.ref_name }}
+        shell: bash
         run: |
           apk="descarga/OllaConecta-${ETIQUETA#v}.apk"
-          herramientas=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1 | xargs dirname)
-          "$herramientas/apksigner" verify --print-certs "$apk" > firma.txt
+          herramientas="$ANDROID_HOME/build-tools/35.0.0"
+          if [[ ! -x "$herramientas/apksigner" ]]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;35.0.0"
+          fi
+          "$herramientas/apksigner" verify --print-certs "$apk" | tee firma.txt
           grep -Fx 'Signer #1 certificate SHA-256 digest: b2116a7e55f425a7f84797f23c93f1a51124c953f053a4e78d1c9c3491f169c1' firma.txt
           "$herramientas/aapt" dump badging "$apk" > aplicacion.txt
           grep '^package:' aplicacion.txt | grep -F "name='io.github.tmrainer.asistencia'" | grep -F "versionName='${ETIQUETA#v}'"
@@ -34,7 +43,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: OllaConecta-${{ github.ref_name }}
+          name: OllaConecta-${{ env.ETIQUETA }}
           path: descarga/*.apk
           if-no-files-found: error
           compression-level: 0
