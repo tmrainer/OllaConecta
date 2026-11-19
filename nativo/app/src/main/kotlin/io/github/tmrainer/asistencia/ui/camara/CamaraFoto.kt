@@ -17,6 +17,7 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,8 +41,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
@@ -52,6 +60,8 @@ import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.TipoBoton
 import io.github.tmrainer.asistencia.ui.tema.Medidas
 import io.github.tmrainer.asistencia.ui.tema.tipos
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 /** La imagen capturada, derecha (CameraX la entrega girada según el teléfono). */
 private fun ImageProxy.aBitmap(): Bitmap {
@@ -60,6 +70,23 @@ private fun ImageProxy.aBitmap(): Bitmap {
     if (giro == 0) return b
     val m = Matrix().apply { postRotate(giro.toFloat()) }
     return Bitmap.createBitmap(b, 0, 0, b.width, b.height, m, true).also { if (it !== b) b.recycle() }
+}
+
+/**
+ * Lo que el [marco] encierra en la foto [b]. El visor la muestra en FILL_CENTER
+ * (escalada para cubrirlo, centrada, lo que sobra queda afuera), con el mismo
+ * campo que la captura (las dos 4:3). Sin medidas, la foto entera.
+ */
+private fun recortarAlMarco(b: Bitmap, visor: Rect?, marco: Rect?): Bitmap {
+    if (visor == null || marco == null || visor.width <= 0f || visor.height <= 0f) return b
+    val escala = max(visor.width / b.width, visor.height / b.height)
+    val x0 = visor.left + (visor.width - b.width * escala) / 2
+    val y0 = visor.top + (visor.height - b.height * escala) / 2
+    val x = ((marco.left - x0) / escala).roundToInt().coerceIn(0, b.width - 1)
+    val y = ((marco.top - y0) / escala).roundToInt().coerceIn(0, b.height - 1)
+    val w = (marco.width / escala).roundToInt().coerceIn(1, b.width - x)
+    val h = (marco.height / escala).roundToInt().coerceIn(1, b.height - y)
+    return Bitmap.createBitmap(b, x, y, w, h).also { if (it !== b) b.recycle() }
 }
 
 /**
@@ -80,6 +107,9 @@ fun CamaraFoto(alCerrar: () -> Unit, alTomar: (Bitmap) -> Unit, titulo: String =
     var foto by remember { mutableStateOf<Bitmap?>(null) }
     var tomando by remember { mutableStateOf(false) }
     var falla by remember { mutableStateOf<String?>(null) }
+    // Dónde quedan el visor y el marco en la pantalla: el retrato se recorta al marco.
+    var enVisor by remember { mutableStateOf<Rect?>(null) }
+    var enMarco by remember { mutableStateOf<Rect?>(null) }
     BackHandler { if (foto != null) foto = null else alCerrar() }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
@@ -117,7 +147,15 @@ fun CamaraFoto(alCerrar: () -> Unit, alTomar: (Bitmap) -> Unit, titulo: String =
                 }, principal)
                 onDispose { cerrado = true; proveedor?.unbindAll() }
             }
-            AndroidView({ vista }, Modifier.fillMaxSize())
+            AndroidView({ vista }, Modifier.fillMaxSize().onGloballyPositioned { enVisor = it.boundsInRoot() })
+            val visor = enVisor
+            val marco = enMarco
+            if (retrato && visor != null && marco != null) Canvas(Modifier.fillMaxSize()) {
+                // Lo de afuera del marco no queda en la foto: se oscurece, y el borde se marca.
+                val hueco = marco.translate(-visor.left, -visor.top)
+                drawPath(Path().apply { fillType = PathFillType.EvenOdd; addRect(Rect(Offset.Zero, size)); addRect(hueco) }, Color.Black.copy(alpha = 0.6f))
+                drawRect(Color.White, hueco.topLeft, hueco.size, style = Stroke(2.dp.toPx()))
+            }
         }
         Column(Modifier.fillMaxSize().systemBarsPadding().padding(Medidas.e4), verticalArrangement = Arrangement.SpaceBetween) {
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(Color.Black.copy(alpha = 0.55f)).padding(Medidas.e4, Medidas.e3)) {
@@ -135,8 +173,8 @@ fun CamaraFoto(alCerrar: () -> Unit, alTomar: (Bitmap) -> Unit, titulo: String =
             // El marco donde va el DNI (proporción de la tarjeta), para que salga derecho.
             // El marco: la tarjeta del DNI apaisada, o un retrato 3 × 4.
             Box(Modifier.fillMaxWidth(if (retrato) 0.6f else 1f).aspectRatio(if (retrato) 0.75f else 1.58f).align(Alignment.CenterHorizontally)
-                .clip(RoundedCornerShape(Medidas.rM)).padding(2.dp), contentAlignment = Alignment.Center) {
-                Box(Modifier.fillMaxSize().clip(RoundedCornerShape(Medidas.rM)).background(Color.White.copy(alpha = 0.08f)))
+                .onGloballyPositioned { enMarco = it.boundsInRoot() }.clip(RoundedCornerShape(Medidas.rM)).padding(2.dp), contentAlignment = Alignment.Center) {
+                if (!retrato) Box(Modifier.fillMaxSize().clip(RoundedCornerShape(Medidas.rM)).background(Color.White.copy(alpha = 0.08f)))
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                 Boton("Cerrar", alCerrar, Modifier.weight(1f))
@@ -146,7 +184,7 @@ fun CamaraFoto(alCerrar: () -> Unit, alTomar: (Bitmap) -> Unit, titulo: String =
                     tomando = true
                     ic.takePicture(principal, object : ImageCapture.OnImageCapturedCallback() {
                         override fun onCaptureSuccess(imagen: ImageProxy) {
-                            try { foto = imagen.aBitmap() } catch (e: Exception) { falla = "No se pudo tomar la foto. Inténtalo de nuevo." } finally { imagen.close(); tomando = false }
+                            try { foto = imagen.aBitmap().let { if (retrato) recortarAlMarco(it, enVisor, enMarco) else it } } catch (e: Exception) { falla = "No se pudo tomar la foto. Inténtalo de nuevo." } finally { imagen.close(); tomando = false }
                         }
                         override fun onError(e: ImageCaptureException) { falla = "No se pudo tomar la foto. Inténtalo de nuevo."; tomando = false }
                     })

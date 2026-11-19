@@ -47,13 +47,25 @@ object Fotos {
     /** La foto como JPEG chico (a lo más [lado] px de lado) para meterla en un PDF; null si no está. */
     fun bytesParaPdf(context: Context, nombre: String, lado: Int = 480): ByteArray? {
         val b = cargar(context, nombre, lado) ?: return null
-        val factor = lado.toFloat() / max(b.width, b.height)
-        val chica = if (factor < 1f) Bitmap.createScaledBitmap(b, (b.width * factor).toInt(), (b.height * factor).toInt(), true) else b
+        val recorte = tresPorCuatro(b)
+        val factor = lado.toFloat() / max(recorte.width, recorte.height)
+        val chica = if (factor < 1f) Bitmap.createScaledBitmap(recorte, (recorte.width * factor).toInt(), (recorte.height * factor).toInt(), true) else recorte
         val salida = java.io.ByteArrayOutputStream()
         chica.compress(Bitmap.CompressFormat.JPEG, 80, salida)
-        if (chica !== b) chica.recycle()
+        if (chica !== recorte) chica.recycle()
+        if (recorte !== b) recorte.recycle()
         b.recycle()
         return salida.toByteArray()
+    }
+
+    /**
+     * El centro de la foto en 3 × 4, la caja de la foto en el PDF: así sale lo
+     * mismo que en la miniatura de la pantalla (60 × 80, ContentScale.Crop).
+     */
+    fun tresPorCuatro(b: Bitmap): Bitmap {
+        val w = minOf(b.width, b.height * 3 / 4)
+        val h = minOf(b.height, b.width * 4 / 3)
+        return if (w == b.width && h == b.height) b else Bitmap.createBitmap(b, (b.width - w) / 2, (b.height - h) / 2, w, h)
     }
 
     /**
