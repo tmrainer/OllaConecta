@@ -1,4 +1,4 @@
-// Grupos «Totales» y «Periodo» de web/js/casos-prueba.js.
+// Grupos «Totales» y «Periodo» de web/js/pruebas/casos-prueba.js.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.calculos.aporteCentroAtencion

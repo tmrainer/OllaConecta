@@ -1,4 +1,4 @@
-// Corre web/js/importar.js tal cual (Node 22) sobre entradas difíciles (separadores,
+// Corre web/js/nucleo/importar.js tal cual (Node 22) sobre entradas difíciles (separadores,
 // comillas, BOM, saltos de línea, tildes, fechas de varias formas, duplicados, filas
 // vacías, títulos en otro orden) con un «hoy» fijo, y escribe entradas + resultados en
 // nucleo/src/test/resources/importar-casos.json. ImportarWebTest.kt compara todo menos
@@ -16,8 +16,8 @@ import {
   detectarSeparador, parsearTabla, desarmarCelda, detectarColumnas, pareceCabecera,
   parsearFechaFlexible, parsearGrupoEtario, parsearTipoAfiliado, parsearTipoDocumento,
   prepararImportacion, filasImportables
-} from '../../web/js/importar.js';
-import { nuevoAfiliado, padronVacio } from '../../web/js/modelo.js';
+} from '../../web/js/nucleo/importar.js';
+import { nuevoAfiliado, padronVacio } from '../../web/js/nucleo/modelo.js';
 
 const HOY = '2026-10-20';
 

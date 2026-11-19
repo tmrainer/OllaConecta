@@ -1,4 +1,4 @@
-{"generadoCon": "web/js/escaneo-dni.js", "casos": [
+{"generadoCon": "web/js/nucleo/escaneo-dni.js", "casos": [
 {"funcion":"digitoControlIcao","entrada":{"texto":""},"salida":0},
 {"funcion":"digitoControlIcao","entrada":{"texto":"<"},"salida":0},
 {"funcion":"digitoControlIcao","entrada":{"texto":"L898902C3"},"salida":6},

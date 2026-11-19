@@ -12,9 +12,9 @@ import { fileURLToPath } from 'node:url';
 import {
   nuevaRendicion, nuevoEgreso, nuevoAfiliado, nuevaAtencion, padronVacio, calendarioVacio,
   configVacia, cifrarRespaldo
-} from '../../web/js/modelo.js';
-import { menuPorDefecto } from '../../web/js/calculos.js';
-import { instantaneaCentro } from '../../web/js/sugerencias.js';
+} from '../../web/js/nucleo/modelo.js';
+import { menuPorDefecto } from '../../web/js/nucleo/calculos.js';
+import { instantaneaCentro } from '../../web/js/nucleo/sugerencias.js';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const destino = join(aqui, '..', 'nucleo', 'src', 'test', 'resources');

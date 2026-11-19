@@ -13,9 +13,9 @@ if (typeof TextEncoder === 'undefined') {
   };
 }
 
-const PROYECTO_FIREBASE = "";   // de web/js/firebase-config.js
+const PROYECTO_FIREBASE = "";   // de web/js/nube/firebase-config.js
 
-// ---------------------------------------------------------------- modelo.js
+// ---------------------------------------------------------------- nucleo/modelo.js
 const modelo = (() => {
 // modelo.js — forma de los datos, dinero, fechas y persistencia.
 // Sin DOM, sin red.
@@ -727,7 +727,7 @@ async function descifrarRespaldo(sobre, contrasena) {
 
 return { CLAVES, VERSION_ESQUEMA, VERSION_PADRON, VERSION_CALENDARIO, uuid, debounce, cuantos, aCentimos, formatearSoles, aNumero, hoyIso, aFecha, aIso, esIso, fechaLarga, aDdMmAa, diasEntre, MESES, nuevoEgreso, nuevaRendicion, nuevoAfiliado, nuevaAtencion, padronVacio, calendarioVacio, nuevaEntrega, configVacia, migrarPadron, nombreCompleto, ORDEN_NOMBRES, normalizarNombre, avisosAlmacenamiento, empacarPadron, desempacarPadron, usoAlmacenamiento, leer, guardar, ollaVinculada, vincularOlla, desvincularOlla, pedirJuntar, borrarTodo, revisarRespaldo, restaurarRespaldo, cifrarRespaldo, esRespaldoCifrado, descifrarRespaldo };
 })();
-// ---------------------------------------------------------------- calculos.js
+// ---------------------------------------------------------------- nucleo/calculos.js
 const calculos = (() => {
 // calculos.js — funciones puras. Sin DOM, sin estado, sin red.
 // Todo monto en céntimos enteros.
@@ -1239,7 +1239,7 @@ function duracionPeriodo(periodo) {
 
 return { totalRendicionGastos, gastosConSubsidio, aporteCentroAtencion, totales, ORIGENES_FONDO, gastoPorOrigen, totalDeLaFila, conTotalCalculado, descuadreFila, activoEn, afiliadosActivos, edadEnFecha, TRAMOS_ETARIOS, grupoPorEdad, grupoEtario, etiquetaGrupoEtario, TIPOS_AFILIADO, menuPorDefecto, resumenEtario, atencionesDelPeriodo, asistenciasDelDia, asistio, asistenciasConTodos, menuDe, sinInscribirDelDia, desgloseDelDia, racionesDelDia, recaudacionDelDiaCent, racionesPeriodo, diasAtendidos, promedioRaciones, resumenEconomicoRaciones, costoPorRacionCent, conteoAsistenciaDelDia, asistenciaPorAfiliado, afiliadosSinAsistencia, filasPadron, proponerPeriodo, duracionPeriodo };
 })();
-// ---------------------------------------------------------------- xlsx.js
+// ---------------------------------------------------------------- documentos/xlsx.js
 const xlsx = (() => {
 // Leer y escribir .xlsx sin librerías: un .xlsx es un ZIP con XML y el navegador ya
 // trae DecompressionStream y DOMParser, así que no se manda nada a ningún lado.
@@ -1536,7 +1536,7 @@ function armarXlsx(hojas) {
 
 return { leerXlsx, pareceXlsx, armarXlsx };
 })();
-// ---------------------------------------------------------------- excel-reportes.js
+// ---------------------------------------------------------------- documentos/excel-reportes.js
 const excelReportes = (() => {
 // excel-reportes.js — el padrón, la asistencia y el B-1 como Excel (.xlsx), con las
 // mismas cifras que los PDF. Los DNI van como texto: no pierden el 0 de adelante.

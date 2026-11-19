@@ -10,7 +10,7 @@
 pruebas.html
 
 # Casos de prueba: formaban su propia comunidad y no describen la app.
-web/js/casos-prueba.js
+web/js/pruebas/casos-prueba.js
 
 # Herramientas de desarrollo (prueba de humo): no son parte de la app.
 herramientas/

@@ -221,7 +221,7 @@ const EXPORTAR = (boton) => `new Promise((ok) => {
     (async () => {
       const buf = await b.arrayBuffer();
       const cabeza = String.fromCharCode(...new Uint8Array(buf.slice(0, 5)));
-      const texto = b.type.includes('sheet') ? await (await import('./js/xlsx.js')).leerXlsx(buf) : '';
+      const texto = b.type.includes('sheet') ? await (await import('./js/documentos/xlsx.js')).leerXlsx(buf) : '';
       ok({ tipo: b.type, cabeza, texto });
     })();
     return original.call(URL, b);
@@ -230,7 +230,7 @@ const EXPORTAR = (boton) => `new Promise((ok) => {
   setTimeout(() => ok(null), 4000);
 })`;
 // Leído con leer() de la app: en localStorage la asistencia va compacta.
-const PADRON_GUARDADO = `(await import('./js/modelo.js')).leer('b1.padron.v1', null)`;
+const PADRON_GUARDADO = `(await import('./js/nucleo/modelo.js')).leer('b1.padron.v1', null)`;
 const IDS_HOY = `(async () => (${PADRON_GUARDADO}).atenciones.find((a) => a.fecha === '${hoyLocal()}').asistencias.map((x) => x.afiliadoId).sort())()`;
 const TOCAR = (apellido) => `[...document.querySelectorAll('#hoy .toque-nombre')]
   .find((b) => b.textContent.includes(${JSON.stringify(apellido)})).click()`;
@@ -262,9 +262,10 @@ function revisarListaDelServiceWorker() {
   const bloque = sw.match(/const ARCHIVOS = \[([\s\S]*?)\];/)[1];
   const lista = [...bloque.matchAll(/'([^']+)'/g)].map((m) => m[1])
     .filter((f) => f !== './').map((f) => f.replace(/^\.\//, ''));
-  const soloPruebas = new Set(['js/casos-prueba.js', 'js/pagina-pruebas.js']);
+  const soloPruebas = new Set(['js/pruebas/casos-prueba.js', 'js/pruebas/pagina-pruebas.js']);
   const esperados = new Set(['estilos.css', 'manifest.webmanifest']);
-  for (const f of fs.readdirSync(path.join(RAIZ, 'js'))) {
+  for (const archivo of fs.readdirSync(path.join(RAIZ, 'js'), { recursive: true })) {
+    const f = archivo.split(path.sep).join('/');
     if (f.endsWith('.js') && !soloPruebas.has(`js/${f}`)) esperados.add(`js/${f}`);
   }
   for (const pagina of PAGINAS.filter((x) => x !== 'pruebas')) {
@@ -377,8 +378,8 @@ async function correr(base, cdp) {
     await p.ir(`${base}/__sembrar?padron=1`);
     await p.ir(`${base}/padron.html`);
     const r1 = await p.eval(`(async () => {
-      const m = await import('./js/modelo.js');
-      const ui = await import('./js/ui.js');
+      const m = await import('./js/nucleo/modelo.js');
+      const ui = await import('./js/interfaz/ui.js');
       const sobre = await m.cifrarRespaldo(ui.armarRespaldo(), 'clave de prueba');
       const texto = JSON.stringify(sobre);
       let malaFalla = false;
@@ -424,7 +425,7 @@ async function correr(base, cdp) {
     await p.ir(`${base}/__sembrar?padron=1`);
     await p.ir(`${base}/asistencia.html`);
     await p.eval(`(async () => {
-      const ui = await import('./js/ui.js');
+      const ui = await import('./js/interfaz/ui.js');
       const r = ui.armarRespaldo();
       r.calendario = { periodicidad: 'quincenal', fechaLimiteBase: '2026-10-15', diasAviso: [3], entregas: [] };
       r.rendiciones = [{ nombreCentro: 'Comedor del respaldo', egresos: [] }];
@@ -853,8 +854,8 @@ async function correr(base, cdp) {
       abierta: document.querySelector('#ficha-alfa0001 .persona-fila').getAttribute('aria-expanded'),
       foco: document.activeElement.id, cursor: document.activeElement.selectionStart,
       // Lo que exportaría ahora: los días de Beta según el padrón ya recargado.
-      dias: await import('./js/estado.js').then(async ({ estado }) => {
-        const { asistenciaPorAfiliado } = await import('./js/calculos.js');
+      dias: await import('./js/nucleo/estado.js').then(async ({ estado }) => {
+        const { asistenciaPorAfiliado } = await import('./js/nucleo/calculos.js');
         const hoy = new Date(); const iso = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
         const x = asistenciaPorAfiliado(estado.padron, '2000-01-01', iso).find((y) => y.afiliadoId === 'beta0002');
         return String(x ? x.dias : 0);
@@ -940,7 +941,7 @@ async function correr(base, cdp) {
     const p = await pestana(cdp);
     await p.ir(`${base}/__sembrar`);
     await p.eval(`(async () => {
-      const m = await import('./js/modelo.js');
+      const m = await import('./js/nucleo/modelo.js');
       const id = (n) => 'f0000000-0000-4000-8000-' + String(n).padStart(12, '0');
       const afiliados = Array.from({ length: 300 }, (_, i) => ({
         id: id(i), apellidoPaterno: i === 0 ? 'Huamán' : 'Prueba' + i, apellidoMaterno: '', nombres: 'Persona',
@@ -956,7 +957,7 @@ async function correr(base, cdp) {
         legado: null, nota: '' }));
       m.guardar('b1.padron.v1', { version: 3, afiliados, atenciones });
     })()`);
-    const uso = await p.eval(`import('./js/modelo.js').then((m) => m.usoAlmacenamiento().fraccion)`);
+    const uso = await p.eval(`import('./js/nucleo/modelo.js').then((m) => m.usoAlmacenamiento().fraccion)`);
     comprobar('un año de 300 personas ocupa menos del 20 % del espacio', uso < 0.2, `${Math.round(uso * 100)} %`);
     await p.ir(`${base}/asistencia.html`);
     const abrir = await p.eval(`Math.round(performance.getEntriesByType('navigation')[0].domContentLoadedEventEnd)`);
@@ -1015,7 +1016,7 @@ async function correr(base, cdp) {
     comprobar('celular: la primera persona se ve al abrir', r.filaVisible, JSON.stringify(r));
     // Con una lista larga, lo que se toca al pie de la pantalla tiene que ser
     // el menú, no una fila dibujada encima (pasó con content-visibility).
-    await p.eval(`import('./js/modelo.js').then((m) => m.guardar('b1.padron.v1', { version: 3, atenciones: [],
+    await p.eval(`import('./js/nucleo/modelo.js').then((m) => m.guardar('b1.padron.v1', { version: 3, atenciones: [],
       afiliados: Array.from({ length: 40 }, (_, i) => ({ id: 'f0000000-0000-4000-8000-' + String(i).padStart(12, '0'),
         apellidoPaterno: 'Prueba' + i, apellidoMaterno: '', nombres: 'Persona', numeroDocumento: String(20000000 + i),
         tipoDocumento: 'dni', fechaNacimiento: '1990-01-01', grupoEtarioManual: null, sexo: '', tipoAfiliado: 'habitual',

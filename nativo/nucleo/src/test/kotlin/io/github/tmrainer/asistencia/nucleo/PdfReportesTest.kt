@@ -1,4 +1,4 @@
-// Grupo «PDF del padrón y la asistencia» de web/js/casos-prueba.js.
+// Grupo «PDF del padrón y la asistencia» de web/js/pruebas/casos-prueba.js.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.documentos.pdfDeAsistencia

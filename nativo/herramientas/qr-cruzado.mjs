@@ -15,11 +15,11 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import qrcode from '../../web/vendor/qrcode-generator.js';
-import { migrarPadron } from '../../web/js/modelo.js';
-import { codificarListaQr } from '../../web/js/lista-qr.js';
+import { migrarPadron } from '../../web/js/nucleo/modelo.js';
+import { codificarListaQr } from '../../web/js/nucleo/lista-qr.js';
 import {
   codificarParaQr, leerParteQr, juntarPartesQr, paqueteDelPadron, paqueteDeAsistencia, paqueteDeEntregas
-} from '../../web/js/compartir-qr.js';
+} from '../../web/js/nucleo/compartir-qr.js';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const recursos = join(aqui, '../nucleo/src/test/resources');

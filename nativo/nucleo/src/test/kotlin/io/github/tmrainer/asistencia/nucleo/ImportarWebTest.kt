@@ -1,4 +1,4 @@
-// Importar.kt contra web/js/importar.js: las mismas entradas difíciles, con el
+// Importar.kt contra web/js/nucleo/importar.js: las mismas entradas difíciles, con el
 // mismo «hoy», deben dar lo mismo que en la web, todo menos los id (uuid()).
 // El recurso lo arma node nativo/herramientas/importar-casos.mjs.
 package io.github.tmrainer.asistencia.nucleo

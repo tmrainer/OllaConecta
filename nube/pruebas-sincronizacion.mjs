@@ -1,4 +1,4 @@
-// Prueba web/js/sincronizacion.js contra el emulador de Firestore, con las
+// Prueba web/js/nube/sincronizacion.js contra el emulador de Firestore, con las
 // reglas de verdad. Se corre con `npm run pruebas`.
 //
 // Hace de un teléfono (el de «ana», con localStorage simulado) que trabaja
@@ -25,11 +25,11 @@ globalThis.localStorage = {
 globalThis.addEventListener = () => {};
 globalThis.document = { addEventListener: () => {}, visibilityState: 'visible' };
 
-const { CONFIG_FIREBASE } = await import('../web/js/firebase-config.js');
+const { CONFIG_FIREBASE } = await import('../web/js/nube/firebase-config.js');
 CONFIG_FIREBASE.projectId = 'demo-ollaconecta';   // con esto estado.js sí arranca la nube
-const { CLAVES, leer, guardar, vincularOlla, ollaVinculada, nuevaAtencion, nuevoAfiliado } = await import('../web/js/modelo.js');
-const { estado, cargar, guardarYa, vigilarPestanas } = await import('../web/js/estado.js');
-const { enlazarParaPruebas } = await import('../web/js/sincronizacion.js');
+const { CLAVES, leer, guardar, vincularOlla, ollaVinculada, nuevaAtencion, nuevoAfiliado } = await import('../web/js/nucleo/modelo.js');
+const { estado, cargar, guardarYa, vigilarPestanas } = await import('../web/js/nucleo/estado.js');
+const { enlazarParaPruebas } = await import('../web/js/nube/sincronizacion.js');
 
 const entorno = await initializeTestEnvironment({
   projectId: 'demo-ollaconecta',

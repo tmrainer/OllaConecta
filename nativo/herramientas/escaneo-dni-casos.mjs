@@ -1,4 +1,4 @@
-// Corre web/js/escaneo-dni.js (tal cual, sin tocarlo) sobre entradas SINTÉTICAS y
+// Corre web/js/nucleo/escaneo-dni.js (tal cual, sin tocarlo) sobre entradas SINTÉTICAS y
 // guarda entradas y salidas en nucleo/src/test/resources/escaneo-dni.esperado.json.
 // EscaneoDniWebTest.kt las vuelve a calcular con EscaneoDni.kt y compara una por una.
 //
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 import {
   parsearCadenaDni, digitoControlIcao, leerMrzTd1, buscarMrzTd1, unirFilasOcr, combinarMrzYAnverso,
   normalizarLetras, leerPdf417DniAzul, plantillaAnonima
-} from '../../web/js/escaneo-dni.js';
+} from '../../web/js/nucleo/escaneo-dni.js';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const destino = join(aqui, '..', 'nucleo', 'src', 'test', 'resources', 'escaneo-dni.esperado.json');
@@ -302,7 +302,7 @@ for (const c of ['', null, 'CUALQUIER COSA 12345678', pdf417({ numero: '00000001
 }
 
 // Un caso por línea: el diff dice qué caso cambió.
-writeFileSync(destino, '{"generadoCon": "web/js/escaneo-dni.js", "casos": [\n' +
+writeFileSync(destino, '{"generadoCon": "web/js/nucleo/escaneo-dni.js", "casos": [\n' +
   casos.map((x) => JSON.stringify(x)).join(',\n') + '\n]}\n');
 const porFuncion = casos.reduce((m, x) => ({ ...m, [x.funcion]: (m[x.funcion] || 0) + 1 }), {});
 const conMrz = casos.filter((x) => x.funcion === 'buscarMrzTd1' && x.salida).length;

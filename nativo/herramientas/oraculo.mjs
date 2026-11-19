@@ -13,17 +13,17 @@
 // que se generó y Kotlin la usa como «hoy».
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { hoyIso, revisarRespaldo, migrarPadron } from '../../web/js/modelo.js';
+import { hoyIso, revisarRespaldo, migrarPadron } from '../../web/js/nucleo/modelo.js';
 import {
   totales, gastoPorOrigen, costoPorRacionCent, resumenEconomicoRaciones, racionesPeriodo, diasAtendidos,
   promedioRaciones, asistenciaPorAfiliado, afiliadosSinAsistencia, filasPadron, resumenEtario,
   afiliadosActivos, desgloseDelDia, recaudacionDelDiaCent, descuadreFila
-} from '../../web/js/calculos.js';
+} from '../../web/js/nucleo/calculos.js';
 import {
   validarRendicion, validarAfiliados, validarAtenciones, validarCalendario, validarPreciosMenu, contar
-} from '../../web/js/validaciones.js';
-import { alertaProximaEntrega, agendaEntregas, programaDeAvisos } from '../../web/js/alertas.js';
-import { sugerenciasEncabezado, sugerirRucProveedor, descripcionesUsadas } from '../../web/js/sugerencias.js';
+} from '../../web/js/nucleo/validaciones.js';
+import { alertaProximaEntrega, agendaEntregas, programaDeAvisos } from '../../web/js/nucleo/alertas.js';
+import { sugerenciasEncabezado, sugerirRucProveedor, descripcionesUsadas } from '../../web/js/nucleo/sugerencias.js';
 
 const args = process.argv.slice(2);
 const ruta = args.find((a) => !a.startsWith('--') && !/^\d{4}-\d{2}-\d{2}$/.test(a));

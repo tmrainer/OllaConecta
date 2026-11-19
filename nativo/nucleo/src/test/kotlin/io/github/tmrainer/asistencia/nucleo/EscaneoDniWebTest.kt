@@ -1,4 +1,4 @@
-// EscaneoDni.kt contra web/js/escaneo-dni.js, caso por caso, con entradas
+// EscaneoDni.kt contra web/js/nucleo/escaneo-dni.js, caso por caso, con entradas
 // sintéticas (todo inventado). Para regenerar escaneo-dni.esperado.json:
 //
 //   node nativo/herramientas/escaneo-dni-casos.mjs

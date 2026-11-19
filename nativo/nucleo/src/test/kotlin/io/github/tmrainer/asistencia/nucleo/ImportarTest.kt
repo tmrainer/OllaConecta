@@ -1,4 +1,4 @@
-// Grupo «Importar» de web/js/casos-prueba.js, más las diferencias con la web
+// Grupo «Importar» de web/js/pruebas/casos-prueba.js, más las diferencias con la web
 // que son a propósito (ver la cabecera de Importar.kt).
 package io.github.tmrainer.asistencia.nucleo
 

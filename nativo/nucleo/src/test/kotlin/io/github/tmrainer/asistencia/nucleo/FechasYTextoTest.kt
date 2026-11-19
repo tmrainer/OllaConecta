@@ -1,4 +1,4 @@
-// Grupo «Fechas y texto» de web/js/casos-prueba.js.
+// Grupo «Fechas y texto» de web/js/pruebas/casos-prueba.js.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.modelo.Afiliado

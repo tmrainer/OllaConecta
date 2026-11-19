@@ -103,7 +103,7 @@
     --toque: rgba(255, 255, 255, .08);
   }
 }
-/* Elegido a mano en Ajustes (js/preferencias.js pone data-tema en <html>). */
+/* Elegido a mano en Ajustes (js/interfaz/preferencias.js pone data-tema en <html>). */
 :root[data-tema="oscuro"] {
   color-scheme: dark;
   --fondo: #101712;

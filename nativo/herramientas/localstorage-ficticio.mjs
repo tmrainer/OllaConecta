@@ -1,5 +1,5 @@
 // Lo que el APK 1.7 (la web dentro de Capacitor) tendría guardado en localStorage con
-// el respaldo FICTICIO cargado, con el texto exacto de guardar() de web/js/modelo.js,
+// el respaldo FICTICIO cargado, con el texto exacto de guardar() de web/js/nucleo/modelo.js,
 // más casos límite de desempacarPadron(). Lo usa MigracionWebTest.kt.
 //
 //   node nativo/herramientas/localstorage-ficticio.mjs
@@ -10,7 +10,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CLAVES, empacarPadron, desempacarPadron } from '../../web/js/modelo.js';
+import { CLAVES, empacarPadron, desempacarPadron } from '../../web/js/nucleo/modelo.js';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const recursos = join(aqui, '..', 'nucleo', 'src', 'test', 'resources');

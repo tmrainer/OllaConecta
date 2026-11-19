@@ -18,11 +18,11 @@ import { spawn, execFileSync } from 'node:child_process';
 import http from 'node:http';
 import os from 'node:os';
 import zlib from 'node:zlib';
-import { migrarPadron, nuevaRendicion, nuevoEgreso, nuevoAfiliado, padronVacio } from '../../web/js/modelo.js';
-import { hojasDelB1 } from '../../web/js/hoja-b1.js';
-import { pdfDelB1 } from '../../web/js/pdf-b1.js';
-import { pdfDelPadron, pdfDeAsistencia } from '../../web/js/pdf-reportes.js';
-import { excelDelPadron, excelDeAsistencia, excelDelB1 } from '../../web/js/excel-reportes.js';
+import { migrarPadron, nuevaRendicion, nuevoEgreso, nuevoAfiliado, padronVacio } from '../../web/js/nucleo/modelo.js';
+import { hojasDelB1 } from '../../web/js/documentos/hoja-b1.js';
+import { pdfDelB1 } from '../../web/js/documentos/pdf-b1.js';
+import { pdfDelPadron, pdfDeAsistencia } from '../../web/js/documentos/pdf-reportes.js';
+import { excelDelPadron, excelDeAsistencia, excelDelB1 } from '../../web/js/documentos/excel-reportes.js';
 
 const aqui = dirname(fileURLToPath(import.meta.url));
 const RAIZ = join(aqui, '..', '..');
@@ -212,7 +212,7 @@ if (!chromium) {
 }
 
 const ARNES = `<!doctype html><meta charset="utf-8"><script type="module">
-import { leerXlsx } from '/js/xlsx.js';
+import { leerXlsx } from '/js/documentos/xlsx.js';
 const salida = {};
 for (const n of ${JSON.stringify(paraLeer)}) {
   const b = await (await fetch('/documentos/' + n)).arrayBuffer();

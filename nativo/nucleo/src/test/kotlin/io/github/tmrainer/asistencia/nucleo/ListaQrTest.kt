@@ -1,4 +1,4 @@
-// Grupo «Lista por QR» de web/js/casos-prueba.js.
+// Grupo «Lista por QR» de web/js/pruebas/casos-prueba.js.
 package io.github.tmrainer.asistencia.nucleo
 
 import io.github.tmrainer.asistencia.nucleo.modelo.Afiliado

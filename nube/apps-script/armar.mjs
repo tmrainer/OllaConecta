@@ -1,5 +1,5 @@
 // Junta el código del Excel de la app en un solo archivo para Apps Script,
-// reportes.js, con el projectId de web/js/firebase-config.js. Se corre desde
+// reportes.js, con el projectId de web/js/nube/firebase-config.js. Se corre desde
 // nube/ con `node apps-script/armar.mjs` (npm run pruebas lo hace solo).
 //
 // Apps Script no entiende módulos (import/export): cada módulo queda envuelto
@@ -16,12 +16,12 @@ const SALIDA = path.join(aqui, 'reportes.js');
 
 // En el orden de sus dependencias.
 const MODULOS = [
-  ['modelo', 'modelo.js'],
-  ['calculos', 'calculos.js'],
-  ['xlsx', 'xlsx.js'],
-  ['excelReportes', 'excel-reportes.js']
+  ['modelo', 'nucleo/modelo.js'],
+  ['calculos', 'nucleo/calculos.js'],
+  ['xlsx', 'documentos/xlsx.js'],
+  ['excelReportes', 'documentos/excel-reportes.js']
 ];
-const alias = new Map(MODULOS.map(([variable, archivo]) => ['./' + archivo, variable]));
+const alias = new Map(MODULOS.map(([variable, archivo]) => [path.resolve(raiz, archivo), variable]));
 
 // Lo que el navegador trae y Apps Script no: codificar texto a bytes UTF-8
 // (xlsx.js lo usa para armar el archivo).
@@ -40,8 +40,9 @@ function envolver(variable, archivo) {
   let codigo = fs.readFileSync(path.join(raiz, archivo), 'utf8');
   const nombres = [];
   codigo = codigo.replace(/^import\s*\{([^}]*)\}\s*from\s*'([^']+)';/gm, (_, lista, de) => {
-    if (!alias.has(de)) throw new Error(`${archivo} importa ${de}, que armar.mjs no incluye`);
-    return `const {${lista}} = ${alias.get(de)};`;
+    const origen = path.resolve(raiz, path.dirname(archivo), de);
+    if (!alias.has(origen)) throw new Error(`${archivo} importa ${de}, que armar.mjs no incluye`);
+    return `const {${lista}} = ${alias.get(origen)};`;
   });
   codigo = codigo.replace(/^export (async function|function|const|let) ([A-Za-z_$][\w$]*)/gm, (_, tipo, nombre) => {
     nombres.push(nombre);
@@ -55,7 +56,7 @@ function envolver(variable, archivo) {
 
 /** El archivo entero, como texto. */
 export function armar() {
-  const config = fs.readFileSync(path.join(raiz, 'firebase-config.js'), 'utf8');
+  const config = fs.readFileSync(path.join(raiz, 'nube/firebase-config.js'), 'utf8');
   const projectId = (config.match(/projectId:\s*'([^']*)'/) || [, ''])[1];
   return [
     '// reportes.js — GENERADO por armar.mjs desde web/js/ (modelo, calculos, xlsx,',
@@ -64,7 +65,7 @@ export function armar() {
     '',
     POLIFILL,
     '',
-    `const PROYECTO_FIREBASE = ${JSON.stringify(projectId)};   // de web/js/firebase-config.js`,
+    `const PROYECTO_FIREBASE = ${JSON.stringify(projectId)};   // de web/js/nube/firebase-config.js`,
     '',
     ...MODULOS.map(([variable, archivo]) => envolver(variable, archivo))
   ].join('\n') + '\n';

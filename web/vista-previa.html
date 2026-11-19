@@ -16,11 +16,11 @@
 <link rel="preload" href="./fuentes/atkinson-hyperlegible-next-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="./fuentes/atkinson-hyperlegible-next-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="./estilos.css">
-<script src="./js/errores.js"></script>
-<script src="./js/preferencias.js"></script>
+<script src="./js/interfaz/errores.js"></script>
+<script src="./js/interfaz/preferencias.js"></script>
 <!-- En el <head> para que blocking="render" valga: la página no se pinta
      hasta que su módulo la arma (se ejecuta igual al terminar de leerla). -->
-<script type="module" blocking="render" src="./js/pagina-vista-previa.js"></script>
+<script type="module" blocking="render" src="./js/paginas/pagina-vista-previa.js"></script>
 </head>
 <body data-pagina="vista-previa">
 <a class="saltar-al-contenido" href="#principal">Saltar al contenido</a>
@@ -97,7 +97,7 @@
   <details class="bloque apoyo desplegable" id="ajustar">
     <summary><h2>Ajustar posiciones (equipo del proyecto)</h2></summary>
     <p class="pista">Mueve un dato hasta que caiga en su lugar sobre la foto. Los cambios no se guardan solos:
-      copia las coordenadas y pégalas en <code>js/plantilla-b1.js</code>.</p>
+      copia las coordenadas y pégalas en <code>js/documentos/plantilla-b1.js</code>.</p>
     <div class="campo">
       <label for="ajustar-cual">Dato</label>
       <select id="ajustar-cual"></select>

@@ -11,18 +11,99 @@ const MINUTOS_ENTRE_REVISIONES = 30;
 
 // Al agregar un archivo a la app, va aquí también (humo.mjs lo comprueba).
 const ARCHIVOS = [
-  './', './index.html', './asistencia.html', './padron.html', './formato-b1.html', './calendario.html',
-  './estilos.css', './manifest.webmanifest',
-  './icono.svg', './icono-maskable.svg', './icono-180.png', './icono-192.png',
-  './icono-512.png', './icono-maskable-512.png',
-  './js/alertas.js', './js/calculos.js', './js/camara-dni.js', './js/errores.js', './js/escaneo-dni.js', './js/estado.js',
-  './js/importar.js', './js/modelo.js', './js/pagina-asistencia.js', './js/pagina-inicio.js', './js/perfil.js', './js/lista-qr.js', './js/camara-qr.js', './js/camara-trasera.js', './js/compartir-qr.js', './js/ui-compartir.js', './vendor/qrcode-generator.js', './js/preferencias.js', './fuentes/atkinson-hyperlegible-next-400.woff2', './fuentes/atkinson-hyperlegible-next-600.woff2', './fuentes/atkinson-hyperlegible-next-700.woff2', './img/utec-color.webp', './img/utec-blanco.webp', './img/ollaconecta-icono.webp', './ajustes.html', './datos.html', './probar-dni.html', './vista-previa.html', './js/pagina-vista-previa.js', './js/plantilla-b1.js', './js/hoja-b1.js', './js/compartir-archivo.js', './js/pdf-b1.js', './js/pdf.js', './js/pdf-reportes.js', './js/excel-reportes.js', './js/pagina-ajustes.js', './js/pagina-datos.js', './js/pagina-probar-dni.js',
-  './js/pagina-b1.js', './js/pagina-calendario.js', './js/pagina-padron.js',
-  './js/sugerencias.js', './js/ui-asistencia.js',
-  './js/ui-importar.js', './js/ui.js', './js/ui-personas.js', './js/ui-reportes.js',
-  './js/validaciones.js', './js/xlsx.js',
-  './coordinacion.html', './js/firebase-config.js', './js/cuenta.js', './js/ollas.js', './js/ui-cuenta.js', './js/pagina-coordinacion.js',
-  './js/sincronizacion.js', './js/envio.js', './js/ui-envio.js', './vendor/firebase/firebase-app.js', './vendor/firebase/firebase-auth.js', './vendor/firebase/firebase-firestore.js'
+  // Páginas y recursos principales
+  './',
+  './index.html',
+  './asistencia.html',
+  './padron.html',
+  './formato-b1.html',
+  './calendario.html',
+  './estilos.css',
+  './manifest.webmanifest',
+  './ajustes.html',
+  './datos.html',
+  './probar-dni.html',
+  './vista-previa.html',
+  './coordinacion.html',
+
+  // Iconos, fuentes e imágenes
+  './icono.svg',
+  './icono-maskable.svg',
+  './icono-180.png',
+  './icono-192.png',
+  './icono-512.png',
+  './icono-maskable-512.png',
+  './fuentes/atkinson-hyperlegible-next-400.woff2',
+  './fuentes/atkinson-hyperlegible-next-600.woff2',
+  './fuentes/atkinson-hyperlegible-next-700.woff2',
+  './img/utec-color.webp',
+  './img/utec-blanco.webp',
+  './img/ollaconecta-icono.webp',
+
+  // Núcleo: datos y reglas de la aplicación
+  './js/nucleo/alertas.js',
+  './js/nucleo/calculos.js',
+  './js/nucleo/escaneo-dni.js',
+  './js/nucleo/estado.js',
+  './js/nucleo/importar.js',
+  './js/nucleo/modelo.js',
+  './js/nucleo/perfil.js',
+  './js/nucleo/lista-qr.js',
+  './js/nucleo/compartir-qr.js',
+  './js/nucleo/sugerencias.js',
+  './js/nucleo/validaciones.js',
+
+  // Documentos: PDF, Excel y formato B-1
+  './js/documentos/plantilla-b1.js',
+  './js/documentos/hoja-b1.js',
+  './js/documentos/pdf-b1.js',
+  './js/documentos/pdf.js',
+  './js/documentos/pdf-reportes.js',
+  './js/documentos/excel-reportes.js',
+  './js/documentos/xlsx.js',
+
+  // Cámara
+  './js/camara/camara-dni.js',
+  './js/camara/camara-qr.js',
+  './js/camara/camara-trasera.js',
+
+  // Interfaz compartida
+  './js/interfaz/errores.js',
+  './js/interfaz/ui-compartir.js',
+  './js/interfaz/preferencias.js',
+  './js/interfaz/compartir-archivo.js',
+  './js/interfaz/ui-asistencia.js',
+  './js/interfaz/ui-importar.js',
+  './js/interfaz/ui.js',
+  './js/interfaz/ui-personas.js',
+  './js/interfaz/ui-reportes.js',
+  './js/interfaz/ui-cuenta.js',
+  './js/interfaz/ui-envio.js',
+
+  // Controladores de las páginas
+  './js/paginas/pagina-asistencia.js',
+  './js/paginas/pagina-inicio.js',
+  './js/paginas/pagina-vista-previa.js',
+  './js/paginas/pagina-ajustes.js',
+  './js/paginas/pagina-datos.js',
+  './js/paginas/pagina-probar-dni.js',
+  './js/paginas/pagina-b1.js',
+  './js/paginas/pagina-calendario.js',
+  './js/paginas/pagina-padron.js',
+  './js/paginas/pagina-coordinacion.js',
+
+  // Integración con la nube
+  './js/nube/firebase-config.js',
+  './js/nube/cuenta.js',
+  './js/nube/ollas.js',
+  './js/nube/sincronizacion.js',
+  './js/nube/envio.js',
+
+  // Librerías externas
+  './vendor/qrcode-generator.js',
+  './vendor/firebase/firebase-app.js',
+  './vendor/firebase/firebase-auth.js',
+  './vendor/firebase/firebase-firestore.js'
 ];
 
 let ultimaRevision = 0;
