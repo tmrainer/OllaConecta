@@ -6,3 +6,5 @@ local.properties
 .idea/
 # Claves de firma: NUNCA en el repositorio (ver app/build.gradle.kts)
 firma.properties
+# Salida de «Generate Signed APK» de Android Studio.
+app/release/

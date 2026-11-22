@@ -20,3 +20,9 @@
 
 # graphify
 graphify-out/
+
+# Configuración del IDE y APK armados en una máquina: no van al repositorio.
+# Los APK se publican en los releases de GitHub, firmados con la clave del proyecto.
+.idea/
+*.apk
+*.dm
