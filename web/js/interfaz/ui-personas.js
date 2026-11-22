@@ -442,6 +442,7 @@ export function pintarListaPersonas(lista, ctx) {
     .filter((a) => a.activo && validarAfiliado(a, estado.padron, indice).some((x) => x.severidad === 'error')).length;
   const fichaFaltan = document.querySelector('#filtroAfiliado [data-valor="incompletas"]');
   if (fichaFaltan) fichaFaltan.textContent = incompletasPintadas ? `Les faltan datos (${incompletasPintadas})` : 'Les faltan datos';
+  pintarFiltroElegido();
 
   filasPintadas = new Map();
   for (const a of conFiltro) {
@@ -503,19 +504,10 @@ export function montarFiltrosPersonas(lista, ctx) {
     aplicarBusqueda(lista, ctx);
   }, 150));
 
-  const botonFiltros = buscar('#mostrar-filtros-afiliados');
-  const filtros = buscar('#filtroAfiliado');
-  botonFiltros.addEventListener('click', () => {
-    const abiertos = filtros.hidden;
-    filtros.hidden = !abiertos;
-    botonFiltros.setAttribute('aria-expanded', String(abiertos));
-    botonFiltros.classList.toggle('activo', abiertos);
-    botonFiltros.textContent = abiertos ? 'Ocultar filtros' : 'Filtros';
-  });
-
-  // Ocultar las opciones conserva el filtro elegido.
+  // La barra «Mostrar» se estira con las opciones; al elegir una se cierra y la muestra.
+  const barra = buscar('#barra-filtros');
   for (const b of document.querySelectorAll('#filtroAfiliado .ficha-filtro')) {
-    b.addEventListener('click', () => elegirFiltro(lista, ctx, b.dataset.valor));
+    b.addEventListener('click', () => { elegirFiltro(lista, ctx, b.dataset.valor); barra.open = false; });
   }
   marcarFiltro(ctx.filtro);
 }
@@ -524,6 +516,14 @@ function marcarFiltro(valor) {
   for (const b of document.querySelectorAll('#filtroAfiliado .ficha-filtro')) {
     b.setAttribute('aria-pressed', b.dataset.valor === valor ? 'true' : 'false');
   }
+  pintarFiltroElegido();
+}
+
+/** Lo elegido, en la barra cerrada (con su número si lo lleva). */
+function pintarFiltroElegido() {
+  const elegida = document.querySelector('#filtroAfiliado [aria-pressed="true"]');
+  const resumen = document.getElementById('filtro-elegido');
+  if (elegida && resumen) resumen.textContent = elegida.textContent;
 }
 
 /** Cambia el filtro de la lista y repinta (también para ir a una persona oculta). */

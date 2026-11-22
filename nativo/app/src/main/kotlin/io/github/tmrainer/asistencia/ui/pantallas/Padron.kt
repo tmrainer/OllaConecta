@@ -73,7 +73,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -108,6 +107,7 @@ import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.Avatar
+import io.github.tmrainer.asistencia.ui.componentes.BarraDesplegable
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.BotonFlotante
@@ -284,19 +284,13 @@ fun PantallaPadron(ctx: Contexto) {
                         if (filtro == "pendientes" && pendientes == 0) filtro = "activos"
                         val sinFoto = padron.afiliados.count(::faltaFotoDni)
                         if (filtro == "sin_foto" && sinFoto == 0) filtro = "activos"
-                        Column(Modifier.objetivoGuia("padron.filtros")) {
-                            Boton(
-                                if (filtrosAbiertos) "Ocultar filtros" else "Filtros",
-                                { filtrosAbiertos = !filtrosAbiertos },
-                                Modifier.semantics { stateDescription = if (filtrosAbiertos) "Desplegados" else "Contraídos" },
-                                activo = filtrosAbiertos
-                            )
-                            if (filtrosAbiertos) {
-                                Spacer(Modifier.height(Medidas.e2))
-                                Opciones(FILTROS.filter { (it.first != "pendientes" || pendientes > 0) && (it.first != "sin_foto" || sinFoto > 0) }.map { (v, t) ->
-                                    v to when { v == "incompletas" && incompletas > 0 -> "$t ($incompletas)"; v == "pendientes" -> "$t ($pendientes)"; v == "sin_foto" -> "$t ($sinFoto)"; else -> t }
-                                }, { it == filtro }, { filtro = it })
-                            }
+                        val opcionesFiltro = FILTROS.filter { (it.first != "pendientes" || pendientes > 0) && (it.first != "sin_foto" || sinFoto > 0) }.map { (v, t) ->
+                            v to when { v == "incompletas" && incompletas > 0 -> "$t ($incompletas)"; v == "pendientes" -> "$t ($pendientes)"; v == "sin_foto" -> "$t ($sinFoto)"; else -> t }
+                        }
+                        // Cerrada muestra lo elegido; al elegir se vuelve a cerrar.
+                        BarraDesplegable("Mostrar", opcionesFiltro.firstOrNull { it.first == filtro }?.second.orEmpty(), filtrosAbiertos,
+                            { filtrosAbiertos = !filtrosAbiertos }, Modifier.objetivoGuia("padron.filtros"), icono = "filtro") {
+                            Opciones(opcionesFiltro, { it == filtro }, { filtro = it; filtrosAbiertos = false })
                         }
                         val conteo = resumenEtario(padron, fechaRef)
                         Chips(Modifier.padding(top = Medidas.e3)) {

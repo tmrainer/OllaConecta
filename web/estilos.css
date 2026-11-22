@@ -166,7 +166,7 @@ a { color: var(--acento-texto); }
    cambiar su color: una capa encima, sirva para fondos claros u oscuros. */
 :is(.boton, .tarea, .toque-nombre, .toque-menu, .persona-fila, .dia > summary,
   .ficha-filtro, .opcion, .menu-opciones button, .cabecera-volver, .cabecera-menu, .cabecera-voz, .enlace-ajustes,
-  .plegable > summary, details.ficha > summary, .fab, .hoy-entrega, .enlace-ir,
+  .plegable > summary, details.ficha > summary, details.barra-desplegable > summary, .fab, .hoy-entrega, .enlace-ir,
   .paso-segmento, details.bloque.desplegable > summary, .aviso-abajo button):active {
   background-image: linear-gradient(var(--toque), var(--toque));
 }
@@ -431,6 +431,23 @@ legend.obligatoria::after { content: " *"; color: var(--error); font-weight: 700
   padding: 0 var(--e4); min-height: 40px; font: inherit; font-size: .92rem; cursor: pointer;
 }
 .ficha-filtro[aria-pressed="true"] { background: var(--seleccion); border-color: var(--acento-texto); font-weight: 700; }
+
+/* Barra que se estira: cerrada muestra lo elegido; abierta, las opciones. */
+details.barra-desplegable { background: var(--superficie); border: 1px solid var(--contorno); border-radius: var(--r-s); }
+details.barra-desplegable[open] { border: 2px solid var(--acento-texto); }
+details.barra-desplegable > summary {
+  cursor: pointer; list-style: none; display: flex; flex-direction: column; justify-content: center;
+  min-height: 56px; padding: var(--e2) calc(var(--e4) + 28px) var(--e2) var(--e4); position: relative; border-radius: var(--r-s);
+}
+details.barra-desplegable > summary::-webkit-details-marker { display: none; }
+details.barra-desplegable > summary::after {
+  content: ""; position: absolute; right: var(--e4); top: 50%; width: 9px; height: 9px; margin-top: -7px;
+  border: solid var(--tinta-suave); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform .15s;
+}
+details.barra-desplegable[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
+details.barra-desplegable .barra-titulo { font-size: .82rem; color: var(--tinta-suave); }
+details.barra-desplegable > summary strong { color: var(--titulo); }
+details.barra-desplegable > .fichas { border-top: 1px solid var(--contorno); padding: var(--e4); }
 
 /* Avisos y franjas: todos iguales, fondo suave del estado, esquinas redondeadas y
    un ícono. Sin rayas de color al costado. */

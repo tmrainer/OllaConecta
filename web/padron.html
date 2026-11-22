@@ -112,14 +112,16 @@
         <input id="fechaRef" type="date">
       </div>
     </div>
-    <button type="button" class="boton secundario" id="mostrar-filtros-afiliados" aria-expanded="false" aria-controls="filtroAfiliado" style="margin-top:10px">Filtros</button>
-    <div class="fichas" id="filtroAfiliado" role="group" aria-label="Mostrar" style="margin-top:10px" hidden>
+    <details class="barra-desplegable" id="barra-filtros" style="margin-top:10px">
+      <summary><span class="barra-titulo">Mostrar</span><strong id="filtro-elegido">Activas</strong></summary>
+    <div class="fichas" id="filtroAfiliado" role="group" aria-label="Mostrar">
       <button type="button" class="ficha-filtro" data-valor="activos">Activas</button>
       <button type="button" class="ficha-filtro" data-valor="incompletas">Les faltan datos</button>
       <button type="button" class="ficha-filtro" data-valor="ayuda_social">Ayuda social</button>
       <button type="button" class="ficha-filtro" data-valor="bajas">De baja</button>
       <button type="button" class="ficha-filtro" data-valor="todas">Todas</button>
     </div>
+    </details>
     <div id="resumen-etario" class="resumen-chips" style="margin-top:12px"></div>
     <p class="estado-guardado" id="conteo-afiliados" style="margin-top:8px"></p>
     <div id="lista-afiliados" style="margin-top:8px"></div>

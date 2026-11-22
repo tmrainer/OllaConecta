@@ -5,6 +5,8 @@ package io.github.tmrainer.asistencia.ui.componentes
 import android.app.Activity
 import android.content.ContextWrapper
 import androidx.compose.ui.semantics.heading
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -64,6 +66,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.buildAnnotatedString
@@ -496,6 +499,54 @@ fun Chip(etiqueta: String, valor: String, modifier: Modifier = Modifier) {
 @Composable
 fun Chips(modifier: Modifier = Modifier, contenido: @Composable () -> Unit) {
     FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Medidas.e2), verticalArrangement = Arrangement.spacedBy(Medidas.e2)) { contenido() }
+}
+
+/**
+ * Una barra que se estira: cerrada es una sola fila con [titulo] y lo elegido
+ * ([resumen]); al tocarla se abre hacia abajo y muestra el [contenido] (las
+ * opciones). Para que muchas fichas no llenen la pantalla.
+ */
+@Composable
+fun BarraDesplegable(
+    titulo: String,
+    resumen: String,
+    abierta: Boolean,
+    alTocar: () -> Unit,
+    modifier: Modifier = Modifier,
+    icono: String? = null,
+    contenido: @Composable ColumnScope.() -> Unit
+) {
+    val c = colores
+    val giro by animateFloatAsState(if (abierta) -90f else 90f, label = "flecha")
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(Medidas.rS))
+            .background(c.superficie)
+            .border(if (abierta) 2.dp else 1.dp, if (abierta) c.acentoTexto else c.contorno, RoundedCornerShape(Medidas.rS))
+            .animateContentSize()
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button, onClick = alTocar)
+                .semantics { stateDescription = if (abierta) "Abierta" else "Cerrada" }
+                .defaultMinSize(minHeight = 56.dp)
+                .padding(horizontal = Medidas.e4, vertical = Medidas.e2),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (icono != null) { Icono(icono, 20.dp, c.acentoTexto); Spacer(Modifier.width(Medidas.e3)) }
+            Column(Modifier.weight(1f)) {
+                Text(titulo, style = tipos.chico, color = c.tintaSuave)
+                Text(resumen, style = tipos.textoFuerte, color = c.titulo)
+            }
+            Icono("flecha", 20.dp, c.tintaSuave, Modifier.rotate(giro))
+        }
+        if (abierta) {
+            HorizontalDivider(color = c.contorno)
+            Column(Modifier.padding(Medidas.e4), content = contenido)
+        }
+    }
 }
 
 // FALTA (azul): a algo le falta un dato. Distinto del amarillo de «revisar»: el marrón
