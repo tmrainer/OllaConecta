@@ -91,14 +91,16 @@ class HojaB1Test {
     }
 
     @Test
-    fun `Un avance lo dice arriba, entra en la hoja y no se toma por la copia final`() {
-        val h = hojasDelB1(rendicionDelEjemplar())[0]
-        val l = LienzoTrazos().also { dibujarHoja(it, h, generado = "15-11-26 10:00", avance = "15-11-26") }
-        val aviso = l.trazos.filterIsInstance<Trazo.Texto>().first { it.texto.startsWith("AVANCE AL 15-11-26") }
-        ok(aviso.xMm + anchoMm(aviso.texto, aviso.pt, aviso.negrita) <= 210.0, "el aviso del avance entra en la A4")
-        ok(l.trazos.filterIsInstance<Trazo.Texto>().none { it.texto.startsWith("COPIA DE REFERENCIA") }, "un solo aviso arriba")
-        val texto = comoTexto(pdfDelB1(hojasDelB1(rendicionDelEjemplar()), generado = "15-11-26 10:00", avance = "15-11-26"))
-        ok(texto.contains("AVANCE AL 15-11-26"), "el PDF del avance lo dice")
+    fun `Mandado antes de cerrar el mes, lo dice arriba con su código y no pisa «Hoja 1 de 2»`() {
+        val r = rendicionDelEjemplar().let { it.copy(egresos = List(FILAS_EGRESOS + 1) { _ -> it.egresos[1] }) }
+        val l = LienzoTrazos().also { dibujarHoja(it, hojasDelB1(r)[0], generado = "15-11-26 10:00", numero = 1, total = 2, anticipado = "Noviembre-2026-Q1") }
+        val textos = l.trazos.filterIsInstance<Trazo.Texto>()
+        val aviso = textos.first { it.texto.startsWith("B-1 NOVIEMBRE-2026-Q1 — antes del cierre del mes") }
+        val hoja = textos.first { it.texto == "Hoja 1 de 2" }
+        ok(aviso.xMm + anchoMm(aviso.texto, aviso.pt, aviso.negrita) < hoja.xMm, "el aviso termina antes de «Hoja 1 de 2»")
+        ok(textos.none { it.texto.startsWith("COPIA DE REFERENCIA") }, "un solo aviso arriba")
+        val texto = comoTexto(pdfDelB1(hojasDelB1(rendicionDelEjemplar()), generado = "15-11-26 10:00", anticipado = "Noviembre-2026-Q1"))
+        ok(texto.contains("B-1 NOVIEMBRE-2026-Q1"), "el PDF lo dice")
     }
 
     @Test

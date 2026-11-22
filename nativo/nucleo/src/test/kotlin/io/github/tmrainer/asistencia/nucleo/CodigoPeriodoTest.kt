@@ -1,7 +1,10 @@
 // El código de cada B-1 (CodigoPeriodo.kt): Q1, Q2, M y S1–S5, y qué periodo rinde cada entrega.
 package io.github.tmrainer.asistencia.nucleo
 
+import io.github.tmrainer.asistencia.nucleo.calculos.codigoB1
 import io.github.tmrainer.asistencia.nucleo.calculos.codigoPeriodo
+import io.github.tmrainer.asistencia.nucleo.calculos.periodoDelMes
+import java.time.LocalDate
 import io.github.tmrainer.asistencia.nucleo.calculos.proponerPeriodo
 import io.github.tmrainer.asistencia.nucleo.modelo.Periodo
 import kotlin.test.Test
@@ -9,6 +12,23 @@ import kotlin.test.Test
 private fun p(inicio: String, fin: String) = Periodo(inicio = inicio, fin = fin)
 
 class CodigoPeriodoTest {
+
+    @Test
+    fun `El B-1 de un mes - antes del cierre, la quincena o la semana - al cerrar, el mes y el año`() {
+        val nov = periodoDelMes(2026, 11)
+        igual(nov, Periodo(tipo = "mensual", inicio = "2026-11-01", fin = "2026-11-30", etiqueta = "Noviembre 2026"))
+        fun el(dia: Int) = codigoB1(nov, LocalDate.of(2026, 11, dia), cerrado = false)
+        igual(el(1), "Noviembre-2026-S1"); igual(el(7), "Noviembre-2026-S1")
+        igual(el(8), "Noviembre-2026-S2"); igual(el(14), "Noviembre-2026-S2")
+        igual(el(15), "Noviembre-2026-Q1", "cerró la primera quincena"); igual(el(21), "Noviembre-2026-Q1")
+        igual(el(22), "Noviembre-2026-S4"); igual(el(28), "Noviembre-2026-S4")
+        igual(el(29), "Noviembre-2026-S5"); igual(el(30), "Noviembre-2026-S5")
+        igual(codigoB1(nov, LocalDate.of(2026, 11, 22), cerrado = true), "Noviembre-2026", "con «Cerrar el mes»")
+        igual(codigoB1(nov, LocalDate.of(2026, 12, 3), cerrado = false), "Noviembre-2026", "ya pasó el mes")
+        igual(codigoB1(periodoDelMes(2027, 2), LocalDate.of(2027, 2, 28), cerrado = false), "Febrero-2027-S4")
+        igual(codigoB1(p("2026-10-01", "2026-10-15"), LocalDate.of(2026, 10, 9), cerrado = false), "Octubre-2026-Q1", "un B-1 antiguo conserva su código")
+        igual(codigoB1(Periodo(), LocalDate.of(2026, 11, 9), cerrado = false), null, "sin mes elegido")
+    }
 
     @Test
     fun `Quincenas y mes completo`() {

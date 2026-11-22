@@ -55,7 +55,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.tmrainer.asistencia.nucleo.alertas.Nivel
 import io.github.tmrainer.asistencia.nucleo.alertas.alertaProximaEntrega
 import io.github.tmrainer.asistencia.nucleo.calculos.gastoPorOrigen
-import io.github.tmrainer.asistencia.nucleo.calculos.proponerPeriodo
 import io.github.tmrainer.asistencia.nucleo.calculos.totales
 import io.github.tmrainer.asistencia.nucleo.calculos.conTotalCalculado
 import io.github.tmrainer.asistencia.nucleo.calculos.totalDeLaFila
@@ -75,12 +74,16 @@ import io.github.tmrainer.asistencia.nucleo.sugerencias.sugerenciasOlla
 import io.github.tmrainer.asistencia.nucleo.validaciones.Hallazgo
 import io.github.tmrainer.asistencia.nucleo.validaciones.Severidad
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarRendicion
-import io.github.tmrainer.asistencia.nucleo.calculos.codigoPeriodo
+import io.github.tmrainer.asistencia.nucleo.calculos.codigoB1
+import io.github.tmrainer.asistencia.nucleo.calculos.periodoDelMes
+import io.github.tmrainer.asistencia.nucleo.modelo.Periodo
+import io.github.tmrainer.asistencia.nucleo.modelo.aFecha
+import io.github.tmrainer.asistencia.ui.componentes.BarraDesplegable
+import java.time.LocalDate
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.ayudaB1
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
-import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
 import io.github.tmrainer.asistencia.ui.componentes.BloqueSuave
@@ -117,8 +120,17 @@ import kotlinx.coroutines.launch
 private val PASOS = listOf("Centro de atención", "Periodo", "Ingresos (dinero recibido)", "Compras (egresos)", "Revisar")
 private val CAMPOS_FIRMA = setOf("nombrePresidentaFirma", "dniPresidentaFirma", "nombreTesorera", "dniTesorera")
 
-/** Lo que la app revisa del B-1: lo de [validarRendicion], menos lo de las firmas, que aquí no se piden. */
-internal fun hallazgosDelB1(r: Rendicion): List<Hallazgo> = validarRendicion(r).filter { it.campo !in CAMPOS_FIRMA }
+// La fecha de rendición tampoco se pide (decisión del 22-11-2026): la pone la app, el día en que se arma el B-1.
+private val NO_SE_PIDEN = CAMPOS_FIRMA + "fechaRendicion"
+
+/** Lo que la app revisa del B-1: lo de [validarRendicion], menos lo que aquí no se pide (firmas y fecha de rendición). */
+internal fun hallazgosDelB1(r: Rendicion): List<Hallazgo> = validarRendicion(r).filter { it.campo !in NO_SE_PIDEN }
+
+/** El mes que sigue al del B-1 [r]; sin mes elegido, el de hoy. */
+private fun mesSiguiente(r: Rendicion): Periodo {
+    val f = aFecha(r.periodo.inicio)?.plusMonths(1) ?: LocalDate.now()
+    return periodoDelMes(f.year, f.monthValue)
+}
 // «varios» no está aquí: lo pone «¿Cómo viene la boleta?» → «Varios juntos».
 private val UNIDADES = listOf("Kg", "g", "L", "ml", "unid", "saco", "bolsa", "caja")
 
@@ -302,8 +314,8 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
 
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
-            // El código del B-1 abierto («Octubre-2026-Q1»), si sus fechas son un periodo completo.
-            Cabecera(ctx, "Formato B-1", codigoPeriodo(rendicion.periodo) ?: "Rendición de cuentas", guiaSegun = { ayudaB1(ctx.preferencias, pasoActual) })
+            // El nombre del B-1 abierto: el mes y el año («Noviembre-2026»).
+            Cabecera(ctx, "Formato B-1", codigoB1(rendicion.periodo, LocalDate.now(), cerrado = true) ?: "Rendición de cuentas", guiaSegun = { ayudaB1(ctx.preferencias, pasoActual) })
             Column(
                 Modifier.weight(1f).fillMaxWidth().verticalScroll(desplazamiento).widthIn(max = Medidas.anchoColumna)
                     .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, if (pasoActual == 4) 110.dp else 40.dp)
@@ -404,17 +416,24 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
         AlertDialog(
             onDismissRequest = { confirmarMes = false },
             containerColor = c.superficie,
-            title = { Text("¿Empezar el B-1 del mes siguiente?", style = tipos.seccion, color = c.titulo) },
-            text = { Text("El B-1 de ${nombreDelMes(rendicion)} queda guardado en «Meses anteriores».", style = tipos.texto, color = c.tinta) },
+            title = { Text("¿Cerrar ${nombreDelMes(rendicion)}?", style = tipos.seccion, color = c.titulo) },
+            text = {
+                val nombre = codigoB1(rendicion.periodo, LocalDate.now(), cerrado = true) ?: nombreDelMes(rendicion)
+                Text("Se arma el B-1 «$nombre» con todo el mes, con fecha de rendición de hoy, y empieza el de ${mesSiguiente(rendicion).etiqueta}. " +
+                    "Al cerrarlo quedas en ${nombreDelMes(rendicion)}, listo para mandarlo.", style = tipos.texto, color = c.tinta)
+            },
             confirmButton = {
-                Boton("Empezar", {
+                Boton("Cerrar el mes", {
                     confirmarMes = false
-                    // Cada cuánto se entrega, del mes anterior; el encabezado, las firmas y el subsidio, de los datos de la olla (marcados).
-                    val (nueva, puestos) = conDatosDeLaOlla(nuevaRendicion().copy(periodo = nuevaRendicion().periodo.copy(tipo = rendicion.periodo.tipo)), estado.config.value)
+                    val cerrado = rendicion.id
+                    cambiar { it.copy(fechaRendicion = hoyIso()) }
+                    // El mes que sigue, ya elegido; el encabezado, las firmas y el subsidio, de los datos de la olla (marcados).
+                    val (nueva, puestos) = conDatosDeLaOlla(nuevaRendicion().copy(periodo = mesSiguiente(rendicion)), estado.config.value)
                     estado.cambiarRendiciones { listOf(nueva) + it }
                     propuestos.value = puestos
-                    verId = null
-                    irAPaso(1)
+                    // Se queda en el B-1 cerrado, en «Revisar», para mandarlo ya con el nombre del mes.
+                    verId = cerrado
+                    avisos.mostrar("Cerraste ${nombreDelMes(rendicion)}. Mándalo desde aquí.")
                 }, tipo = TipoBoton.PRINCIPAL)
             },
             dismissButton = { Boton("Cancelar", { confirmarMes = false }) }
@@ -505,46 +524,39 @@ private fun PasoCentro(
 @Composable
 private fun PasoPeriodo(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) -> Rendicion) -> Unit) {
     val c = colores
-    TituloSeccion("Periodo que se rinde")
-    Pista("¿Qué semana, quincena o mes estás rindiendo?", Modifier.padding(bottom = Medidas.e3))
-    Leyenda("Cada cuánto se entrega")
-    Box(Modifier.objetivoGuia("b1.cada")) { Opciones(listOf("semanal" to "Semanal", "quincenal" to "Quincenal", "mensual" to "Mensual"), { it == r.periodo.tipo }, { v -> cambiar { it.copy(periodo = it.periodo.copy(tipo = v)) } }) }
-    Spacer(Modifier.height(Medidas.e3))
-    // Se rinde después de recibir el subsidio y de la última compra.
-    val ultimaCompra = r.egresos.map { it.fechaCompra }.filter(::esIso).maxOrNull() ?: ""
-    CampoFecha("Fecha de rendición", r.fechaRendicion, { v -> cambiar { it.copy(fechaRendicion = v) } }, Modifier.objetivoGuia("b1.fechaRendicion"), pista = "El día que entregas este B-1 en la Municipalidad.", error = hs.errorDe("fechaRendicion"), obligatorio = true,
-        desde = listOf(r.fechaAsignacion, ultimaCompra).filter(::esIso).maxOrNull() ?: "")
-
-    // Ayudas, no datos: se usan solo si se tocan.
-    val p = proponerPeriodo(r.periodo.tipo.ifEmpty { "mensual" }, r.fechaRendicion.ifEmpty { hoyIso() })
-    val yaIgual = r.periodo.inicio == p.inicio && r.periodo.fin == p.fin
-    if (!(yaIgual && r.periodo.etiqueta.isNotEmpty())) {
-        BloqueSuave(Modifier.padding(top = Medidas.e3).objetivoGuia("b1.propuesta")) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Fechas del periodo", style = tipos.chicoNegrita, color = c.acentoTexto)
-                    Text("${aDdMmAa(p.inicio)} a ${aDdMmAa(p.fin)}", style = tipos.textoNegrita, color = c.tinta)
-                }
-                Boton("Usar estas fechas", { cambiar { it.copy(periodo = it.periodo.copy(inicio = p.inicio, fin = p.fin)) } }, diminuto = true, tipo = TipoBoton.PRINCIPAL)
-            }
-            Text("Escríbelo así (toca uno)", style = tipos.chicoNegrita, color = c.acentoTexto, modifier = Modifier.padding(top = Medidas.e3, bottom = Medidas.e2))
-            // También su código, para saber en la hoja cuál es cuál («Octubre-2026-Q1»).
-            Acciones { for (alt in p.alternativas + listOfNotNull(codigoPeriodo(p.aPeriodo()))) Boton(alt, { cambiar { it.copy(periodo = it.periodo.copy(etiqueta = alt)) } }, diminuto = true, tipo = TipoBoton.PRINCIPAL) }
-        }
+    TituloSeccion("Mes que se rinde")
+    // Solo el mes (decisión del 22-11-2026): sin calendarios. El B-1 va del 1 al último día.
+    Pista("El B-1 se entrega cada mes. Elige de qué mes es: va del primer al último día.", Modifier.padding(bottom = Medidas.e3))
+    val hoy = LocalDate.now()
+    val opciones = (-3..1).map { hoy.plusMonths(it.toLong()) }.map { periodoDelMes(it.year, it.monthValue) }
+    val delMes = opciones.firstOrNull { it.inicio == r.periodo.inicio && it.fin == r.periodo.fin }
+        ?: codigoB1(r.periodo, hoy, cerrado = true)?.takeIf { !it.contains("-Q") && !it.contains("-S") }?.let { r.periodo }
+    val resumen = when {
+        delMes != null -> delMes.etiqueta.ifEmpty { r.periodo.etiqueta }
+        r.periodo.inicio.isNotEmpty() -> "Fechas propias: ${nombreDelMes(r)}"
+        else -> "Elige el mes"
     }
-    Spacer(Modifier.height(Medidas.e3))
-    Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-        CampoFecha("Primer día del periodo", r.periodo.inicio, { v -> cambiar { it.copy(periodo = it.periodo.copy(inicio = v)) } }, Modifier.weight(1f), error = hs.errorDe("periodo.inicio"), aviso = hs.avisoDe("periodo.inicio"), obligatorio = true, hasta = r.periodo.fin)
-        CampoFecha("Último día del periodo", r.periodo.fin, { v -> cambiar { it.copy(periodo = it.periodo.copy(fin = v)) } }, Modifier.weight(1f), pista = "Las compras que rindes van de un día al otro.", obligatorio = true, desde = r.periodo.inicio)
+    var abierta by remember { mutableStateOf(false) }
+    BarraDesplegable("Mes", resumen, abierta, { abierta = !abierta }, Modifier.objetivoGuia("b1.mes"), icono = "calendario") {
+        Opciones(opciones.map { it to it.etiqueta }, { it.inicio == r.periodo.inicio && it.fin == r.periodo.fin }, { m ->
+            // Una fecha de rendición vieja ya no vale para otro mes: la pone la app al armarlo.
+            cambiar { it.copy(periodo = m, fechaRendicion = "") }
+            abierta = false
+        })
     }
-    // El código sale de las fechas: una quincena, un mes o una semana completos.
-    if (r.periodo.inicio.isNotEmpty() && r.periodo.fin.isNotEmpty()) {
-        val codigo = codigoPeriodo(r.periodo)
-        if (codigo != null) FranjaEstado("Código de este B-1: $codigo", TonoPastilla.OK, Modifier.padding(top = Medidas.e3).objetivoGuia("b1.codigo"), icono = "boleta")
-        else FranjaEstado("Estas fechas no son una quincena, un mes ni una semana completos: este B-1 no tiene código.", TonoPastilla.NEUTRA, Modifier.padding(top = Medidas.e3).objetivoGuia("b1.codigo"), icono = "aviso")
+    (hs.errorDe("periodo.inicio") ?: hs.errorDe("periodo.etiqueta"))?.let { Text(it, style = tipos.chico, color = c.error, modifier = Modifier.padding(top = Medidas.e2)) }
+    hs.avisoDe("periodo.inicio")?.let { Text(it, style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2)) }
+    if (delMes == null && r.periodo.inicio.isNotEmpty()) Pista("Este B-1 tiene fechas de antes. Elige un mes para cambiarlas.", Modifier.padding(top = Medidas.e2))
+    // Cómo sale según cuándo se manda: antes del cierre, la semana o la quincena; al cerrar, el mes.
+    val alCerrar = codigoB1(r.periodo, hoy, cerrado = true)
+    val hoySale = codigoB1(r.periodo, hoy, cerrado = false)
+    if (alCerrar != null) {
+        val texto = if (hoySale != null && hoySale != alCerrar)
+            "Al cerrar el mes sale como «$alCerrar». Si lo mandas antes, sale con la semana o la quincena en que va: hoy, «$hoySale»."
+        else "Sale como «$alCerrar»."
+        FranjaEstado(texto, TonoPastilla.OK, Modifier.padding(top = Medidas.e3).objetivoGuia("b1.codigo"), icono = "boleta")
     }
-    Spacer(Modifier.height(Medidas.e3))
-    Campo("Mes de rendición", r.periodo.etiqueta, { v -> cambiar { it.copy(periodo = it.periodo.copy(etiqueta = v)) } }, pista = "Lo que se escribe en la hoja, en «Mes de rendición».", error = hs.errorDe("periodo.etiqueta"), placeholder = "Ej.: Setiembre 2026", obligatorio = true)
+    Pista("La fecha de rendición la pone la app: el día en que armas el B-1.", Modifier.padding(top = Medidas.e3))
 }
 
 @Composable
@@ -763,10 +775,21 @@ private fun PasoRevisar(
     Spacer(Modifier.height(Medidas.e5))
     TituloSeccion("Exportar el B-1")
     Pista("En PDF o Excel, para guardar o mandar por WhatsApp.", Modifier.padding(bottom = Medidas.e3))
-    val etiqueta = r.periodo.etiqueta.trim().ifEmpty { "en curso" }
+    // Antes de cerrar el mes sale con la semana o la quincena en que va («Noviembre-2026-S4»);
+    // cerrado (o ya pasado el mes), con el mes y el año. La fecha de rendición es la del día en que se arma.
+    val hoy = LocalDate.now()
+    val cerrado = indice > 0 || (aFecha(r.periodo.fin)?.let { hoy.isAfter(it) } ?: false)
+    val codigo = codigoB1(r.periodo, hoy, cerrado) ?: r.periodo.etiqueta.trim().ifEmpty { "en curso" }
+    val anticipado = codigo.takeIf { !cerrado && it != codigoB1(r.periodo, hoy, cerrado = true) }
+    FranjaEstado(
+        if (anticipado != null) "Si lo mandas hoy, sale como «$anticipado»: lo anotado hasta hoy, antes del cierre del mes."
+        else "Sale como «$codigo».",
+        TonoPastilla.NEUTRA, Modifier.padding(bottom = Medidas.e3), icono = "boleta"
+    )
+    val conFecha = if (cerrado) r.copy(fechaRendicion = r.fechaRendicion.ifEmpty { hoyIso() }) else r.copy(fechaRendicion = hoyIso())
     BotonesExportar(
-        pdf = { Documento(pdfDelB1(hojasDelB1(r), selloAhora(), "Formato B-1 $etiqueta"), "B-1 $etiqueta", "Formato B-1 $etiqueta (copia de referencia)", AlElegir.B1(r.id, "pdf")) },
-        excel = { Documento(excelDelB1(r), "B-1 $etiqueta", "Formato B-1 $etiqueta", AlElegir.B1(r.id, "excel")) },
+        pdf = { Documento(pdfDelB1(hojasDelB1(conFecha), selloAhora(), "Formato B-1 $codigo", anticipado), "B-1 $codigo", "Formato B-1 $codigo (copia de referencia)", AlElegir.B1(r.id, "pdf")) },
+        excel = { Documento(excelDelB1(conFecha, anticipado), "B-1 $codigo", "Formato B-1 $codigo", AlElegir.B1(r.id, "excel")) },
         modifier = Modifier.objetivoGuia("b1.exportar"),
         puede = listoParaExportar,
         // En el último paso, mandar el B-1 es lo que se hace: la única acción rellena.
@@ -776,8 +799,8 @@ private fun PasoRevisar(
     Spacer(Modifier.height(Medidas.e5))
     TituloSeccion("Meses anteriores", apoyo = true, modifier = Modifier.objetivoGuia("b1.meses"))
     if (indice == 0) {
-        Pista("Al entregar este B-1, empieza el del mes siguiente. Este queda guardado abajo.", Modifier.padding(bottom = Medidas.e3))
-        Boton("Empezar el B-1 del mes siguiente", empezarMes, Modifier.objetivoGuia("b1.mesSiguiente"))
+        Pista("Al terminar el mes, ciérralo: se arma el B-1 con el nombre del mes y empieza el siguiente. Este queda guardado abajo.", Modifier.padding(bottom = Medidas.e3))
+        Boton("Cerrar ${nombreDelMes(r)} y empezar ${mesSiguiente(r).etiqueta}", { if (listoParaExportar()) empezarMes() }, Modifier.objetivoGuia("b1.mesSiguiente"))
     }
     val anteriores = rendiciones.drop(1)
     if (anteriores.isNotEmpty()) {
@@ -788,7 +811,7 @@ private fun PasoRevisar(
                 Row(Modifier.fillMaxWidth().background(if (i == indice) c.superficie2 else c.superficie).padding(Medidas.e4, Medidas.e3), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                     Column(Modifier.weight(1f)) {
                         Text(nombreDelMes(x), style = tipos.textoFuerte, color = c.titulo)
-                        codigoPeriodo(x.periodo)?.takeIf { it != nombreDelMes(x) }?.let { Text(it, style = tipos.chico, color = c.tintaSuave) }
+                        codigoB1(x.periodo, LocalDate.now(), cerrado = true)?.takeIf { it.replace("-", " ") != nombreDelMes(x) }?.let { Text(it, style = tipos.chico, color = c.tintaSuave) }
                     }
                     Text(if (tx.total == null) "sin subsidio" else "S/ ${formatearSoles(tx.total)}", style = tipos.chico, color = c.tintaSuave)
                     if (i == indice) Text("abierto", style = tipos.chicoNegrita, color = c.acentoTexto) else Boton(if (x.periodo.etiqueta.isNotBlank()) "Abrir ${x.periodo.etiqueta.trim()}" else "Abrir este B-1", { abrir(x.id) }, diminuto = true)

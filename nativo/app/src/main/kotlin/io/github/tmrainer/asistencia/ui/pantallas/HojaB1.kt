@@ -3,8 +3,6 @@
 // PLANTILLA_B1. No imprime. Si hay más compras que renglones, van en una hoja más.
 // Sin foto de fondo ni panel para mover las cajas: son para calibrar la hoja física.
 // Se puede acercar (dos dedos, doble toque o «Acercar») para leerla en el teléfono sin exportarla.
-// Del B-1 en curso, se puede mandar como avance: UNACEM o un aliado lo pueden pedir antes de
-// que cierre el periodo, y aquí se llega desde cualquier paso, sin tener el B-1 completo.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import android.graphics.Paint
@@ -34,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -54,20 +51,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.tmrainer.asistencia.AlElegir
 import io.github.tmrainer.asistencia.nucleo.documentos.LienzoTrazos
-import io.github.tmrainer.asistencia.nucleo.documentos.excelDelB1
-import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelB1
-import io.github.tmrainer.asistencia.nucleo.modelo.Rendicion
-import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
-import io.github.tmrainer.asistencia.nucleo.modelo.aIso
-import io.github.tmrainer.asistencia.nucleo.modelo.formatearSoles
-import io.github.tmrainer.asistencia.nucleo.modelo.hoyIso
-import io.github.tmrainer.asistencia.ui.componentes.BarraDesplegable
-import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
-import io.github.tmrainer.asistencia.ui.componentes.Documento
-import java.time.Instant
-import java.time.ZoneId
 import io.github.tmrainer.asistencia.nucleo.documentos.Trazo
 import io.github.tmrainer.asistencia.nucleo.documentos.dibujarHoja
 import io.github.tmrainer.asistencia.nucleo.documentos.hojasDelB1
@@ -139,7 +123,6 @@ fun PantallaHojaB1(ctx: Contexto, rendicionId: String?) {
             ParaLeer(texto)
             Pista(texto, Modifier.padding(bottom = Medidas.e2))
             Pista("El PDF y el Excel para entregar se arman en el B-1, paso «Revisar».", Modifier.padding(bottom = Medidas.e2))
-            if (r.id == rendiciones.firstOrNull()?.id) MandarAvance(ctx, r)
             Pista("Para leerla mejor, separa dos dedos sobre la hoja, tócala dos veces o usa «Acercar».", Modifier.padding(bottom = Medidas.e3))
             Row(Modifier.fillMaxWidth().padding(bottom = Medidas.e3).objetivoGuia("hoja.zoom"), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                 Boton("Alejar", { zoom = (zoom - PASO_ZOOM).coerceAtLeast(ZOOM_MIN) }, diminuto = true, icono = "menos", habilitado = zoom > ZOOM_MIN)
@@ -163,39 +146,6 @@ fun PantallaHojaB1(ctx: Contexto, rendicionId: String?) {
                 }
             }
         }
-    }
-}
-
-/**
- * Un avance del mismo B-1, con lo anotado hasta hoy y marcado como tal. No cierra el mes ni
- * empieza otro B-1. Solo pide de qué olla y de qué periodo es; lo que falta va en blanco.
- */
-@Composable
-private fun MandarAvance(ctx: Contexto, r: Rendicion) {
-    val c = colores
-    var abierta by remember { mutableStateOf(false) }
-    val hoy = aDdMmAa(hoyIso())
-    val etiqueta = r.periodo.etiqueta.trim().ifEmpty { "en curso" }
-    val ultimo = r.generaciones.lastOrNull { it.formato.endsWith("-avance") }
-    BarraDesplegable("¿Te lo piden antes de cerrar el periodo?", "Mandar un avance (hasta hoy)", abierta, { abierta = !abierta },
-        Modifier.padding(bottom = Medidas.e4).objetivoGuia("hoja.avance"), icono = "reloj") {
-        Pista("Sale esta hoja, con lo anotado hasta hoy, y arriba dice «AVANCE AL $hoy». No es la rendición final ni cierra el periodo: sigues llenando este mismo B-1.", Modifier.padding(bottom = Medidas.e3))
-        if (ultimo != null) {
-            val dia = try { aDdMmAa(aIso(Instant.parse(ultimo.en).atZone(ZoneId.systemDefault()).toLocalDate())) } catch (e: Exception) { "" }
-            Text("Último avance: ${dia.ifEmpty { "—" }}" + (ultimo.totalCent?.let { " · compras por S/ ${formatearSoles(it)}" } ?: ""),
-                style = tipos.chicoFuerte, color = c.tinta, modifier = Modifier.padding(bottom = Medidas.e3))
-        }
-        val titulo = "Formato B-1 $etiqueta (avance al $hoy)"
-        BotonesExportar(
-            pdf = { Documento(pdfDelB1(hojasDelB1(r), selloAhora(), titulo, avance = hoy), "B-1 $etiqueta avance $hoy", titulo, AlElegir.B1(r.id, "pdf-avance")) },
-            excel = { Documento(excelDelB1(r, avance = hoy), "B-1 $etiqueta avance $hoy", titulo, AlElegir.B1(r.id, "excel-avance")) },
-            puede = {
-                val listo = r.nombreCentro.isNotBlank() && r.periodo.inicio.isNotEmpty() && r.periodo.fin.isNotEmpty()
-                if (listo) ctx.estado.guardarPendiente()
-                else ctx.avisos.mostrar("Para el avance, pon al menos el nombre del centro (paso 1 del B-1) y las fechas del periodo (paso 2).")
-                listo
-            }
-        )
     }
 }
 

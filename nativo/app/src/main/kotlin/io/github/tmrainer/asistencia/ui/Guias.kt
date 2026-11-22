@@ -163,7 +163,7 @@ val GUIA_INSCRIBIR = Guia("Inscribir", listOf(
 
 private val PASOS_GENERAL_B1 = listOf(
     PasoGuia("Qué es el B-1", "La rendición de cuentas de tu olla. Cuando pongas las fechas, arriba sale su código: el mes y si es una quincena (Q1 o Q2), el mes entero (M) o una semana (S).", "boleta", "cabecera.subtitulo"),
-    PasoGuia("Cinco pasos", "Se llena por partes. En la barra, el paso de ahora se ve más marcado y los que tienen algo pendiente, en azul. Toca un tramo para ir a ese paso. «Ver la hoja» la muestra como en el papel, en cualquier paso; desde ahí también se manda un avance.", "lista", "b1.barra", "b1.barraTexto"),
+    PasoGuia("Cinco pasos", "Se llena por partes. En la barra, el paso de ahora se ve más marcado y los que tienen algo pendiente, en azul. Toca un tramo para ir a ese paso. «Ver la hoja» la muestra como en el papel, en cualquier paso.", "lista", "b1.barra", "b1.barraTexto"),
     PasoGuia("Lo que quedó antes", "Si entraste con «Anotar una compra», aquí se dice qué falta en los pasos de antes. «Completar ahora» te lleva.", "aviso", "b1.faltaAntes", soloSiEsta = true),
     PasoGuia("Lo que falta", "«Por revisar» cuenta lo que falta o está mal. Toca «Ver el detalle» y la app te lleva al campo.", "aviso", "b1.revisar", soloSiEsta = true),
     PasoGuia("Avanza y vuelve", "«Siguiente» te lleva al paso que sigue y «Atrás», al de antes. Todo se guarda solo, mientras escribes.", "ok", "b1.botones")
@@ -183,10 +183,8 @@ private val PASOS_B1 = listOf(
         PasoGuia("Los datos del centro", "Este y los que siguen: el nombre, el código de PCA, el distrito, la presidenta, su DNI y el celular. Vienen de los datos de tu olla (Ajustes); revísalos.", "lapiz", "b1.nombreCentro")
     ),
     listOf(
-        PasoGuia("Cada cuánto", "Marca si entregas el B-1 cada semana, cada quincena o cada mes.", "calendario", "b1.cada"),
-        PasoGuia("Fecha de rendición", "El día que entregas el B-1 en la Municipalidad. Con ella, la app propone las fechas.", "reloj", "b1.fechaRendicion"),
-        PasoGuia("Usa lo que propone", "Toca «Usar estas fechas» y luego cómo escribirlo en la hoja. Así no te equivocas de días.", "ok", "b1.propuesta", soloSiEsta = true),
-        PasoGuia("El código", "Con las fechas completas sale el código de este B-1, como Octubre-2026-Q1. Sirve para saber cuál es cuál.", "boleta", "b1.codigo", soloSiEsta = true)
+        PasoGuia("El mes", "Toca «Mes» y elige de qué mes es el B-1. Va del primer al último día; la fecha de rendición la pone la app.", "calendario", "b1.mes"),
+        PasoGuia("Cómo sale", "Al cerrar el mes, el B-1 sale con el mes y el año, como Noviembre-2026. Si lo mandas antes, sale con la semana (S1, S2, S4, S5) o la quincena (Q1) en que va.", "boleta", "b1.codigo", soloSiEsta = true)
     ),
     listOf(
         PasoGuia("El subsidio", "Escribe cuánto te dio la Municipalidad para este periodo, como dice tu papel.", "archivo", "b1.monto"),
@@ -200,8 +198,8 @@ private val PASOS_B1 = listOf(
     listOf(
         PasoGuia("Qué falta", "Si falta algo, sale aquí con el paso donde está. Toca «Completar» o «Corregir» y la app te lleva.", "aviso", "b1.estado"),
         PasoGuia("Mira la hoja", "Toca «Ver cómo queda en la hoja» para verlo como en el papel antes de mandarlo.", "boleta", "b1.hoja"),
-        PasoGuia("Mándalo", "«Exportar en PDF» lo arma para mandarlo por WhatsApp o imprimirlo.", "archivo", "b1.exportar"),
-        PasoGuia("El mes siguiente", "Cuando lo entregues, toca «Empezar el B-1 del mes siguiente». Este queda guardado en «Meses anteriores».", "calendario", "b1.meses", "b1.mesSiguiente")
+        PasoGuia("Mándalo", "«Exportar en PDF» lo arma para mandarlo por WhatsApp o imprimirlo. Si te lo piden antes de fin de mes, sale con la semana o la quincena en que va.", "archivo", "b1.exportar"),
+        PasoGuia("Cerrar el mes", "Al terminar el mes, toca «Cerrar…»: el B-1 queda con el nombre del mes, lo mandas en ese momento y empieza el siguiente.", "calendario", "b1.meses", "b1.mesSiguiente")
     )
 )
 
@@ -233,7 +231,6 @@ val GUIA_IMPORTAR = Guia("Hoja de la Municipalidad", listOf(
 
 val GUIA_HOJA = Guia("Vista previa del B-1", listOf(
     PasoGuia("Así queda en el papel", "Tus datos en la hoja del B-1, como saldrán impresos. Lo que falta queda en blanco: complétalo en el B-1.", "boleta", "hoja.primera"),
-    PasoGuia("Si te lo piden antes", "Si UNACEM o un aliado pide el B-1 antes de cerrar el periodo, abre «Mandar un avance»: sale lo anotado hasta hoy, marcado como avance. Sigues llenando el mismo B-1.", "reloj", "hoja.avance", soloSiEsta = true),
     PasoGuia("Acércala", "Separa dos dedos sobre la hoja, tócala dos veces o usa «Acercar» para leer la letra chica. Acercada, se corre de lado.", "buscar", "hoja.zoom"),
     PasoGuia("Para mandarlo", "El PDF y el Excel se arman en el B-1, en el paso «Revisar».", "archivo")
 ))

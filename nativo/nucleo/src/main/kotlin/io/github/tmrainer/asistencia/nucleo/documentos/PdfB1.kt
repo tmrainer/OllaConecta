@@ -202,15 +202,15 @@ fun dibujarFormato(l: Lienzo, distrito: String = "") {
  * datos en negro, cada uno dentro de su caja.
  * @param generado «14-10-26 18:40»
  * @param numero desde 1; con `total` > 1 se escribe «Hoja numero de total»
- * @param avance «15-11-26»: lo anotado hasta ese día, pedido antes de cerrar el periodo
+ * @param anticipado el código del B-1 mandado antes de cerrar el mes («Noviembre-2026-S4», ver codigoB1)
  */
-fun dibujarHoja(l: Lienzo, h: HojaB1, generado: String = selloAhora(), numero: Int = 1, total: Int = 1, avance: String? = null) {
+fun dibujarHoja(l: Lienzo, h: HojaB1, generado: String = selloAhora(), numero: Int = 1, total: Int = 1, anticipado: String? = null) {
     dibujarFormato(l, h.campos["distrito"].orEmpty())
-    // Aviso arriba: que nadie la confunda con el formato oficial firmado (ni un avance con la rendición final).
+    // Aviso arriba: que nadie la confunda con el formato oficial firmado (ni la de antes del cierre con la del mes).
     l.gris(0.25)
     l.texto(
-        if (avance == null) "COPIA DE REFERENCIA — generada con OllaConecta el $generado. No reemplaza al formato oficial firmado."
-        else "AVANCE AL $avance — lo anotado hasta ese día; no es la rendición final del periodo. Generado con OllaConecta el $generado.",
+        if (anticipado == null) "COPIA DE REFERENCIA — generada con OllaConecta el $generado. No reemplaza al formato oficial firmado."
+        else "B-1 ${anticipado.uppercase()} — antes del cierre del mes, con lo anotado hasta el $generado. Copia de referencia (OllaConecta).",
         14.0, 10.0, 7.0, negrita = true
     )
     if (total > 1) l.texto("Hoja $numero de $total", 180.0, 10.0, 7.0, negrita = true)
@@ -233,11 +233,11 @@ fun dibujarHoja(l: Lienzo, h: HojaB1, generado: String = selloAhora(), numero: I
 /**
  * El archivo PDF: una página por hoja de hojasDelB1().
  * @param generado «14-10-26 18:40»; por defecto, ahora
- * @param avance ver [dibujarHoja]
+ * @param anticipado ver [dibujarHoja]
  */
-fun pdfDelB1(hojas: List<HojaB1>, generado: String = selloAhora(), titulo: String = "Formato B-1", avance: String? = null): ByteArray =
+fun pdfDelB1(hojas: List<HojaB1>, generado: String = selloAhora(), titulo: String = "Formato B-1", anticipado: String? = null): ByteArray =
     armarPdf(hojas.mapIndexed { i, h ->
         val l = lienzo()
-        dibujarHoja(l, h, generado, i + 1, hojas.size, avance)
+        dibujarHoja(l, h, generado, i + 1, hojas.size, anticipado)
         PaginaPdf(l.ops.joinToString("\n"))
     }, titulo)
