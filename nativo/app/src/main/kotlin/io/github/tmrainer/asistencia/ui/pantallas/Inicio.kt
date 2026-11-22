@@ -134,8 +134,7 @@ fun PantallaInicio(ctx: Contexto) {
             }
             Spacer(Modifier.height(Medidas.e3))
             Row(Modifier.objetivoGuia("inicio.tareas2").fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                Tarea("calendario", "Ver entregas", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.ENTREGAS) }
-                Tarea("archivo", "Reportes del día y del mes", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.REPORTES) }
+                Tarea("calendario", "Entregas y reporte del mes", c.superficie2, c.acentoTexto, Modifier.weight(1f)) { ctx.ir(Ruta.ENTREGAS) }
             }
 
             val dias = ctx.estado.diasDesdeUltimaCopia()

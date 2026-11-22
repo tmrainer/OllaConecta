@@ -373,10 +373,16 @@ fun PantallaAsistencia(ctx: Contexto) {
                 }
             }
 
+            // El reporte del día vive aquí, con los días (el del mes está en Entregas, con el B-1).
+            item {
+                Spacer(Modifier.height(Medidas.e5))
+                TituloSeccion("Reporte del día", apoyo = true)
+                ReporteDelDia(ctx, Modifier.objetivoGuia("asistencia.reporte"))
+            }
+
             item {
                 Spacer(Modifier.height(Medidas.e5))
                 TituloSeccion("Resumen", apoyo = true)
-                Boton("Reporte del día y del mes", { ctx.ir(Ruta.REPORTES) }, Modifier.padding(bottom = Medidas.e3).objetivoGuia("asistencia.reporte"), icono = "archivo")
                 Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
                     CampoFecha("Desde", inicio, { if (it.isNotEmpty()) inicio = it }, Modifier.weight(1f))
                     CampoFecha("Hasta", fin, { if (it.isNotEmpty()) fin = it }, Modifier.weight(1f))

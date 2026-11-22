@@ -125,7 +125,7 @@ class Despues(val texto: String, val principal: Boolean, val guia: () -> Guia)
 val GUIA_INICIO = Guia("Inicio", listOf(
     PasoGuia("Hoy", "Las raciones de hoy, lo recaudado y cuánto falta para entregar el B-1.", "casa", "inicio.hoy"),
     PasoGuia("Pasar lista hoy", "Tócalo cuando sirvan la comida: ahí marcas a quien vino.", "lista", "inicio.lista"),
-    PasoGuia("Atajos", "Inscribir a alguien, anotar una compra, ver las entregas y sacar los reportes, con un toque.", "lista", "inicio.tareas", "inicio.tareas2"),
+    PasoGuia("Atajos", "Inscribir a alguien, anotar una compra, y ver las entregas con el reporte del mes, con un toque.", "lista", "inicio.tareas", "inicio.tareas2"),
     PasoGuia("El menú de abajo", "Asistencia, Padrón, B-1 y Entregas. Desde cualquier pantalla, toca uno para ir.", "lista", "nav.asistencia", "nav.padron", "nav.b1", "nav.entregas"),
     PasoGuia("Tus datos", "Están solo en este teléfono. Aquí la app te recuerda guardar una copia.", "escudo", "inicio.datos"),
     PasoGuia("Ajustes", "Para agrandar la letra, oír la pantalla en voz alta o corregir tus datos.", "ajustes", "ajustes"),
@@ -142,7 +142,8 @@ val GUIA_ASISTENCIA = Guia("Asistencia", listOf(
     PasoGuia("Enviar a UNACEM", "Al terminar, toca «Enviar a UNACEM»: la asistencia de hoy sale en Excel desde tu correo.", "archivo", "asistencia.unacem", siEsta = "asistencia.lista"),
     PasoGuia("Otros días", "Para un día que pasó, toca «+ Registrar otro día» o abre ese día en «Otros días».", "reloj", "asistencia.otros"),
     PasoGuia("Precio del menú", "Si cambia el precio, cámbialo en «Precio del menú». Vale desde hoy.", "lapiz", "asistencia.precio"),
-    PasoGuia("El resumen", "Abajo ves las raciones y lo recaudado. «Reporte del día y del mes» lo arma en PDF o Excel.", "archivo", "asistencia.reporte", "asistencia.cifras")
+    PasoGuia("Reporte del día", "Elige el día y toca «PDF» o «Excel»: sale qué se cocinó, las raciones y quiénes recibieron, con línea para firmar.", "archivo", "asistencia.reporte"),
+    PasoGuia("El resumen", "Abajo ves las raciones y lo recaudado de las fechas que elijas.", "archivo", "asistencia.cifras")
 ))
 
 val GUIA_PADRON = Guia("Padrón", listOf(
@@ -193,7 +194,7 @@ private val PASOS_B1 = listOf(
     listOf(
         PasoGuia("Una por boleta", "Toca «Compra» para anotar cada boleta. Cópiala tal cual: la fecha, qué compraste, la cantidad y el monto.", "mas", "b1.compra"),
         PasoGuia("Tus compras", "Cada compra queda en la lista. Tócala para abrirla y corregirla. En ámbar, lo que hay que revisar.", "lista", "b1.compras"),
-        PasoGuia("La suma", "Los totales se suman solos de tus compras: no hay que hacer cuentas. Lo que compraron con su propio dinero no va aquí: se anota en Reportes.", "ok", "b1.totales")
+        PasoGuia("La suma", "Los totales se suman solos de tus compras: no hay que hacer cuentas. Lo que compraron con su propio dinero no va aquí: se anota en Entregas, como gasto propio.", "ok", "b1.totales")
     ),
     listOf(
         PasoGuia("Qué falta", "Si falta algo, sale aquí con el paso donde está. Toca «Completar» o «Corregir» y la app te lleva.", "aviso", "b1.estado"),
@@ -215,8 +216,11 @@ fun ayudaB1(prefs: Preferencias, paso: Int): Guia =
     if (prefs.guiaVista("b1")) guiaPasoB1(paso) else guiaGeneralB1(paso)
 
 val GUIA_ENTREGAS = Guia("Entregas", listOf(
-    PasoGuia("Cada cuánto entregas", "Elige si entregas el B-1 cada semana, cada quincena o cada mes.", "calendario", "entregas.cada"),
-    PasoGuia("Una fecha que conoces", "Pon una fecha de entrega, la próxima o una pasada. La app calcula las demás.", "reloj", "entregas.fecha"),
+    PasoGuia("El mes", "En «Mes» eliges de qué mes ver lo que se entrega.", "calendario", "entregas.mes"),
+    PasoGuia("El B-1 del mes", "Aquí ves si el B-1 de ese mes está listo. Toca el botón para ir a completarlo o verlo.", "boleta", "entregas.b1"),
+    PasoGuia("Reporte del mes", "La asistencia de cada persona, las raciones y las compras del B-1, en PDF o Excel.", "archivo", "entregas.reporte"),
+    PasoGuia("Gasto propio", "Lo que compraron con su propio dinero no va en el B-1. Anótalo con «Anotar un gasto propio»: sale en el reporte del mes.", "mas", "entregas.propio"),
+    PasoGuia("Una fecha que conoces", "Pon una fecha de entrega, la próxima o una pasada. Vence ese día de cada mes; la app calcula las demás.", "reloj", "entregas.fecha"),
     PasoGuia("Avisarme", "Elige cuántos días antes quieres el aviso. Puedes marcar más de uno.", "aviso", "entregas.avisar"),
     PasoGuia("Que el teléfono avise", "Toca «Activar los avisos» y acepta: el teléfono te avisa aunque la app esté cerrada.", "aviso", "entregas.activar", soloSiEsta = true),
     PasoGuia("Marca cada entrega", "En «Próximas entregas», cambia «Pendiente» por «Entregada» cuando la entregues.", "ok", "entregas.lista", soloSiEsta = true)
@@ -233,13 +237,6 @@ val GUIA_HOJA = Guia("Vista previa del B-1", listOf(
     PasoGuia("Así queda en el papel", "Tus datos en la hoja del B-1, como saldrán impresos. Lo que falta queda en blanco: complétalo en el B-1.", "boleta", "hoja.primera"),
     PasoGuia("Acércala", "Separa dos dedos sobre la hoja, tócala dos veces o usa «Acercar» para leer la letra chica. Acercada, se corre de lado.", "buscar", "hoja.zoom"),
     PasoGuia("Para mandarlo", "El PDF y el Excel se arman en el B-1, en el paso «Revisar».", "archivo")
-))
-
-val GUIA_REPORTES = Guia("Reportes", listOf(
-    PasoGuia("Reporte del día", "Elige el día. Sale qué se cocinó, las raciones y quiénes recibieron, con una línea para firmar.", "archivo", "reportes.dia"),
-    PasoGuia("Reporte del mes", "Elige el mes. Sale la asistencia de cada persona, las raciones y las compras del B-1.", "calendario", "reportes.mes"),
-    PasoGuia("PDF o Excel", "«PDF» es para imprimir o mandar por WhatsApp; «Excel», para quien lo pida en Excel. En el menú que se abre también está «Guardar en el teléfono».", "archivo", "reportes.exportar"),
-    PasoGuia("Gasto propio", "Lo que compraron con su propio dinero no va en el B-1. Anótalo con «Anotar un gasto propio»: sale en el reporte del mes.", "mas", "reportes.propio")
 ))
 
 val GUIA_DATOS = Guia("Tus datos", listOf(

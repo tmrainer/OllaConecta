@@ -33,6 +33,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,7 +56,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.tmrainer.asistencia.AvisosTelefono
 import io.github.tmrainer.asistencia.OllaConectaApp
 import io.github.tmrainer.asistencia.nucleo.alertas.Nivel
-import io.github.tmrainer.asistencia.nucleo.alertas.PERIODICIDADES
 import io.github.tmrainer.asistencia.nucleo.alertas.agendaEntregas
 import io.github.tmrainer.asistencia.nucleo.alertas.alertaProximaEntrega
 import io.github.tmrainer.asistencia.nucleo.modelo.Entrega
@@ -67,7 +67,10 @@ import io.github.tmrainer.asistencia.nucleo.modelo.hoyIso
 import io.github.tmrainer.asistencia.nucleo.modelo.nuevaEntrega
 import io.github.tmrainer.asistencia.nucleo.validaciones.Severidad
 import io.github.tmrainer.asistencia.nucleo.validaciones.validarCalendario
-import io.github.tmrainer.asistencia.nucleo.calculos.codigoPeriodo
+import io.github.tmrainer.asistencia.nucleo.calculos.codigoB1
+import io.github.tmrainer.asistencia.nucleo.documentos.etiquetaMes
+import io.github.tmrainer.asistencia.ui.componentes.Leyenda
+import java.time.LocalDate
 import io.github.tmrainer.asistencia.nucleo.calculos.proponerPeriodo
 import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Cabecera
@@ -130,9 +133,21 @@ fun PantallaEntregas(ctx: Contexto) {
     val c = colores
     val hoy = hoyIso()
     var msgAviso by remember { mutableStateOf("") }
+    // El B-1 es mensual (decisión del 22-11-2026): las entregas también. Un calendario
+    // semanal o quincenal de antes pasa a mensual, con la misma fecha de referencia.
+    LaunchedEffect(calendario.periodicidad) { if (calendario.periodicidad != "mensual") estado.cambiarCalendario { it.copy(periodicidad = "mensual") } }
+    val padron by estado.padron.collectAsStateWithLifecycle()
+    // El mes de lo que se entrega: por defecto, el del B-1 en curso; si no tiene, el de hoy.
+    val mesB1 = rendiciones.firstOrNull()?.periodo?.inicio?.take(7)?.takeIf { Regex("^\\d{4}-\\d{2}$").matches(it) }
+    var mes by remember(mesB1) { mutableStateOf(mesB1 ?: hoy.take(7)) }
+    val meses = remember(padron, rendiciones, mes) {
+        (listOf(hoy.take(7), mes) + rendiciones.map { it.periodo.inicio.take(7) } + padron.atenciones.map { it.fecha.take(7) })
+            .filter { Regex("^\\d{4}-\\d{2}$").matches(it) }.distinct().sortedDescending().take(8)
+    }
+    var mesesAbiertos by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxWidth()) {
-        Cabecera(ctx, "Entregas", "Fechas de entrega del B-1", guia = GUIA_ENTREGAS)
+        Cabecera(ctx, "Entregas", "El B-1 y el reporte de cada mes", guia = GUIA_ENTREGAS)
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
@@ -179,25 +194,43 @@ fun PantallaEntregas(ctx: Contexto) {
 
             PanelHallazgos(validarCalendario(calendario))
 
-            TituloSeccion("Próximas entregas")
-            val r = rendiciones.firstOrNull()
-            if (r != null) {
-                val hs = hallazgosDelB1(r)
-                val faltan = hs.count { it.severidad == Severidad.ERROR && it.falta }
-                val mal = hs.count { it.severidad == Severidad.ERROR && !it.falta }
-                val listo = faltan == 0 && mal == 0
-                val nombre = r.periodo.etiqueta.trim().let { if (it.isNotEmpty()) " de $it" else "" }
-                val partes = buildList {
-                    if (faltan > 0) add(if (faltan == 1) "falta 1 dato" else "faltan $faltan datos")
-                    if (mal > 0) add("$mal por corregir")
-                }
-                FranjaEstado(
-                    if (listo) "El Formato B-1$nombre está listo para entregar." else "Al Formato B-1$nombre le ${partes.joinToString(" y ")}.",
-                    if (listo) TonoPastilla.OK else TonoPastilla.ADVERTENCIA,
-                    Modifier.padding(bottom = Medidas.e3),
-                    boton = (if (listo) "Ver el B-1" else "Completar el B-1") to { ctx.ir(Ruta.B1) }
-                )
+            // Lo que se entrega cada mes, junto (decisión del 22-11-2026): el B-1, el reporte del mes y el gasto propio.
+            TituloSeccion("Lo que se entrega")
+            BarraDesplegable("Mes", etiquetaMes(mes), mesesAbiertos, { mesesAbiertos = !mesesAbiertos }, Modifier.objetivoGuia("entregas.mes"), icono = "calendario") {
+                Opciones(meses.map { it to etiquetaMes(it) }, { it == mes }, { mes = it; mesesAbiertos = false })
             }
+            Spacer(Modifier.height(Medidas.e3))
+            Leyenda("Formato B-1")
+            val indiceB1 = rendiciones.indexOfFirst { it.periodo.inicio.take(7) == mes }
+            val r = rendiciones.getOrNull(indiceB1)
+            when {
+                r == null -> FranjaEstado("Todavía no hay un B-1 de ${etiquetaMes(mes)}.", TonoPastilla.NEUTRA, Modifier.objetivoGuia("entregas.b1"), icono = "boleta",
+                    boton = "Ir al B-1" to { ctx.ir(Ruta.B1) })
+                indiceB1 > 0 -> FranjaEstado("El B-1 ${codigoB1(r.periodo, LocalDate.now(), cerrado = true) ?: etiquetaMes(mes)} ya está cerrado.", TonoPastilla.OK, Modifier.objetivoGuia("entregas.b1"), icono = "ok")
+                else -> {
+                    val hs = hallazgosDelB1(r)
+                    val faltan = hs.count { it.severidad == Severidad.ERROR && it.falta }
+                    val mal = hs.count { it.severidad == Severidad.ERROR && !it.falta }
+                    val listo = faltan == 0 && mal == 0
+                    val partes = buildList {
+                        if (faltan > 0) add(if (faltan == 1) "falta 1 dato" else "faltan $faltan datos")
+                        if (mal > 0) add(if (mal == 1) "hay 1 dato por corregir" else "hay $mal datos por corregir")
+                    }
+                    FranjaEstado(
+                        if (listo) "El B-1 de ${etiquetaMes(mes)} está listo para entregar." else "B-1 de ${etiquetaMes(mes)}: ${partes.joinToString(" y ")}.",
+                        if (listo) TonoPastilla.OK else TonoPastilla.ADVERTENCIA, Modifier.objetivoGuia("entregas.b1"),
+                        boton = (if (listo) "Ver el B-1" else "Completar el B-1") to { ctx.ir(Ruta.B1) }
+                    )
+                }
+            }
+            Spacer(Modifier.height(Medidas.e4))
+            Leyenda("Reporte del mes")
+            ReporteDelMes(ctx, mes, Modifier.objetivoGuia("entregas.reporte"))
+            Spacer(Modifier.height(Medidas.e4))
+            GastoPropioDelMes(ctx, rendiciones, mes, hoy)
+
+            Spacer(Modifier.height(Medidas.e5))
+            TituloSeccion("Próximas entregas")
             if (!esIso(calendario.fechaLimiteBase)) {
                 EstadoVacio("calendario", "Todavía no hay fechas", "Pon abajo una fecha de entrega que conozcas. Aquí verás las próximas.")
             } else {
@@ -221,8 +254,8 @@ fun PantallaEntregas(ctx: Contexto) {
                                     texto, style = if (tono == TonoPastilla.NEUTRA) tipos.chico else tipos.chicoFuerte,
                                     color = when (tono) { TonoPastilla.ERROR -> c.error; TonoPastilla.ADVERTENCIA -> c.aviso; else -> c.tintaSuave }
                                 )
-                                // Qué B-1 se entrega ese día: el periodo que contiene la fecha, como propone el paso «Periodo».
-                                codigoPeriodo(proponerPeriodo(calendario.periodicidad, item.fechaLimite).aPeriodo())?.let {
+                                // Qué B-1 se entrega ese día: el mes que propone para esa fecha, con su nombre («Noviembre-2026»).
+                                codigoB1(proponerPeriodo(calendario.periodicidad, item.fechaLimite).aPeriodo(), LocalDate.now(), cerrado = true)?.let {
                                     Text("B-1 $it", style = tipos.chico, color = c.tintaSuave)
                                 }
                             }
@@ -251,17 +284,8 @@ fun PantallaEntregas(ctx: Contexto) {
             AvisosDelTelefono(esIso(calendario.fechaLimiteBase))
 
             Spacer(Modifier.height(Medidas.e5))
-            TituloSeccion("Cada cuánto entregas")
-            // La guía ilumina el rótulo con sus opciones: el rótulo solo quedaba medio iluminado.
-            Column(Modifier.objetivoGuia("entregas.cada")) {
-                val periodicidades = PERIODICIDADES.map { it.clave to "${it.etiqueta} (${it.detalle})" }
-                var cadaAbierto by remember { mutableStateOf(false) }
-                BarraDesplegable("Cada cuánto", periodicidades.firstOrNull { it.first == calendario.periodicidad }?.second.orEmpty(), cadaAbierto, { cadaAbierto = !cadaAbierto }, icono = "calendario") {
-                    Opciones(periodicidades, { it == calendario.periodicidad }, { v -> estado.cambiarCalendario { it.copy(periodicidad = v) }; cadaAbierto = false })
-                }
-            }
-            Spacer(Modifier.height(Medidas.e3))
-            CampoFecha("Una fecha de entrega que conoces", calendario.fechaLimiteBase, { v -> estado.cambiarCalendario { it.copy(fechaLimiteBase = v) } }, Modifier.objetivoGuia("entregas.fecha"), pista = "La próxima o una pasada, da igual.")
+            TituloSeccion("Cuándo vence")
+            CampoFecha("Una fecha de entrega que conoces", calendario.fechaLimiteBase, { v -> estado.cambiarCalendario { it.copy(fechaLimiteBase = v) } }, Modifier.objetivoGuia("entregas.fecha"), pista = "Vence ese mismo día cada mes. La próxima o una pasada, da igual.")
             Spacer(Modifier.height(Medidas.e3))
             Column(Modifier.objetivoGuia("entregas.avisar")) {
                 var avisarAbierto by remember { mutableStateOf(false) }
