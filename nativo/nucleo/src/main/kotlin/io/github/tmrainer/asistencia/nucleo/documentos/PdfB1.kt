@@ -202,12 +202,17 @@ fun dibujarFormato(l: Lienzo, distrito: String = "") {
  * datos en negro, cada uno dentro de su caja.
  * @param generado «14-10-26 18:40»
  * @param numero desde 1; con `total` > 1 se escribe «Hoja numero de total»
+ * @param avance «15-11-26»: lo anotado hasta ese día, pedido antes de cerrar el periodo
  */
-fun dibujarHoja(l: Lienzo, h: HojaB1, generado: String = selloAhora(), numero: Int = 1, total: Int = 1) {
+fun dibujarHoja(l: Lienzo, h: HojaB1, generado: String = selloAhora(), numero: Int = 1, total: Int = 1, avance: String? = null) {
     dibujarFormato(l, h.campos["distrito"].orEmpty())
-    // Aviso arriba: que nadie la confunda con el formato oficial firmado.
+    // Aviso arriba: que nadie la confunda con el formato oficial firmado (ni un avance con la rendición final).
     l.gris(0.25)
-    l.texto("COPIA DE REFERENCIA — generada con OllaConecta el $generado. No reemplaza al formato oficial firmado.", 14.0, 10.0, 7.0, negrita = true)
+    l.texto(
+        if (avance == null) "COPIA DE REFERENCIA — generada con OllaConecta el $generado. No reemplaza al formato oficial firmado."
+        else "AVANCE AL $avance — lo anotado hasta ese día; no es la rendición final del periodo. Generado con OllaConecta el $generado.",
+        14.0, 10.0, 7.0, negrita = true
+    )
     if (total > 1) l.texto("Hoja $numero de $total", 180.0, 10.0, 7.0, negrita = true)
 
     l.gris(0.0)
@@ -228,10 +233,11 @@ fun dibujarHoja(l: Lienzo, h: HojaB1, generado: String = selloAhora(), numero: I
 /**
  * El archivo PDF: una página por hoja de hojasDelB1().
  * @param generado «14-10-26 18:40»; por defecto, ahora
+ * @param avance ver [dibujarHoja]
  */
-fun pdfDelB1(hojas: List<HojaB1>, generado: String = selloAhora(), titulo: String = "Formato B-1"): ByteArray =
+fun pdfDelB1(hojas: List<HojaB1>, generado: String = selloAhora(), titulo: String = "Formato B-1", avance: String? = null): ByteArray =
     armarPdf(hojas.mapIndexed { i, h ->
         val l = lienzo()
-        dibujarHoja(l, h, generado, i + 1, hojas.size)
+        dibujarHoja(l, h, generado, i + 1, hojas.size, avance)
         PaginaPdf(l.ops.joinToString("\n"))
     }, titulo)

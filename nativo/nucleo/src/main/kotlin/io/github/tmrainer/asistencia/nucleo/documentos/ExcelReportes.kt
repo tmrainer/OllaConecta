@@ -170,7 +170,7 @@ private fun precio(e: Egreso): Any = if (e.precioUnitarioVarios) "varios" else s
  * El B-1 en una hoja, en el orden del formato: encabezado, ingresos, compras
  * con sus totales y firmas. Solo lo escrito: lo que falta queda vacío.
  */
-fun excelDelB1(r: Rendicion): ByteArray {
+fun excelDelB1(r: Rendicion, avance: String? = null): ByteArray {
     val t = totales(r)
     val egresos = r.egresos.filter { e -> e.fechaCompra.isNotEmpty() || e.descripcion.trimJs().isNotEmpty() || e.montoTotalCent != null }
     val centro = when (r.tipoCentro) { "comedor" -> "Comedor"; "olla_comun" -> "Olla común"; else -> "" }
@@ -182,6 +182,10 @@ fun excelDelB1(r: Rendicion): ByteArray {
         filas = listOf(
             listOf(negrita("FORMATO DE RENDICIÓN DE GASTOS DEL SUBSIDIO ECONÓMICO")),
             listOf("Programa de Complementación Alimentaria - PCA · $muni"),
+        ) + listOfNotNull(
+            // Un avance pedido antes de cerrar el periodo: que no se tome por la rendición final.
+            avance?.let { listOf(negrita("AVANCE AL $it — lo anotado hasta ese día; no es la rendición final del periodo.")) },
+        ) + listOf(
             emptyList(),
             listOf("Centro de atención", centro),
             listOf("Nombre del centro de atención", r.nombreCentro),

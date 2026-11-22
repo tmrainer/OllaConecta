@@ -91,6 +91,17 @@ class HojaB1Test {
     }
 
     @Test
+    fun `Un avance lo dice arriba, entra en la hoja y no se toma por la copia final`() {
+        val h = hojasDelB1(rendicionDelEjemplar())[0]
+        val l = LienzoTrazos().also { dibujarHoja(it, h, generado = "15-11-26 10:00", avance = "15-11-26") }
+        val aviso = l.trazos.filterIsInstance<Trazo.Texto>().first { it.texto.startsWith("AVANCE AL 15-11-26") }
+        ok(aviso.xMm + anchoMm(aviso.texto, aviso.pt, aviso.negrita) <= 210.0, "el aviso del avance entra en la A4")
+        ok(l.trazos.filterIsInstance<Trazo.Texto>().none { it.texto.startsWith("COPIA DE REFERENCIA") }, "un solo aviso arriba")
+        val texto = comoTexto(pdfDelB1(hojasDelB1(rendicionDelEjemplar()), generado = "15-11-26 10:00", avance = "15-11-26"))
+        ok(texto.contains("AVANCE AL 15-11-26"), "el PDF del avance lo dice")
+    }
+
+    @Test
     fun `La hoja dibujada como datos es la misma del PDF, dentro de la A4`() {
         val h = hojasDelB1(rendicionDelEjemplar())[0]
         val pantalla = LienzoTrazos()

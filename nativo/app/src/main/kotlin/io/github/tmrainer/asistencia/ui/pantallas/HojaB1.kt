@@ -2,13 +2,25 @@
 // (dibujarHoja() sobre LienzoTrazos, en :nucleo), con los datos en las posiciones de
 // PLANTILLA_B1. No imprime. Si hay más compras que renglones, van en una hoja más.
 // Sin foto de fondo ni panel para mover las cajas: son para calibrar la hoja física.
+// Se puede acercar (dos dedos, doble toque o «Acercar») para leerla en el teléfono sin exportarla.
+// Del B-1 en curso, se puede mandar como avance: UNACEM o un aliado lo pueden pedir antes de
+// que cierre el periodo, y aquí se llega desde cualquier paso, sin tener el B-1 completo.
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +33,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,9 +49,25 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.tmrainer.asistencia.AlElegir
 import io.github.tmrainer.asistencia.nucleo.documentos.LienzoTrazos
+import io.github.tmrainer.asistencia.nucleo.documentos.excelDelB1
+import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelB1
+import io.github.tmrainer.asistencia.nucleo.modelo.Rendicion
+import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
+import io.github.tmrainer.asistencia.nucleo.modelo.aIso
+import io.github.tmrainer.asistencia.nucleo.modelo.formatearSoles
+import io.github.tmrainer.asistencia.nucleo.modelo.hoyIso
+import io.github.tmrainer.asistencia.ui.componentes.BarraDesplegable
+import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
+import io.github.tmrainer.asistencia.ui.componentes.Documento
+import java.time.Instant
+import java.time.ZoneId
 import io.github.tmrainer.asistencia.nucleo.documentos.Trazo
 import io.github.tmrainer.asistencia.nucleo.documentos.dibujarHoja
 import io.github.tmrainer.asistencia.nucleo.documentos.hojasDelB1
@@ -45,6 +76,7 @@ import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.GUIA_HOJA
 import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Contexto
+import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.EstadoVacio
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.Pista
@@ -52,8 +84,30 @@ import io.github.tmrainer.asistencia.ui.componentes.TituloSeccion
 import io.github.tmrainer.asistencia.ui.tema.Medidas
 import io.github.tmrainer.asistencia.ui.tema.colores
 import io.github.tmrainer.asistencia.ui.tema.tipos
+import kotlin.math.roundToInt
 
 private const val MM_POR_PT = 25.4 / 72
+private const val ZOOM_MIN = 1f
+private const val ZOOM_MAX = 4f
+private const val PASO_ZOOM = 0.5f
+
+/**
+ * Con dos dedos, acercar o alejar: [alCambiar] recibe cuánto cambió. Se mira antes que el
+ * desplazamiento (pase Initial) para que los dos dedos no muevan la hoja; con uno, se desplaza igual.
+ */
+private fun Modifier.pellizco(alCambiar: (Float) -> Unit) = pointerInput(Unit) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        do {
+            val ev = awaitPointerEvent(PointerEventPass.Initial)
+            if (ev.changes.count { it.pressed } >= 2) {
+                val z = ev.calculateZoom()
+                if (z != 1f) alCambiar(z)
+                ev.changes.forEach { it.consume() }
+            }
+        } while (ev.changes.any { it.pressed })
+    }
+}
 
 @Composable
 fun PantallaHojaB1(ctx: Contexto, rendicionId: String?) {
@@ -68,10 +122,12 @@ fun PantallaHojaB1(ctx: Contexto, rendicionId: String?) {
             todas.mapIndexed { i, h -> LienzoTrazos().also { dibujarHoja(it, h, sello, i + 1, todas.size) }.trazos.toList() }
         }
     }
+    var zoom by remember { mutableFloatStateOf(1f) }
     Column(Modifier.fillMaxWidth()) {
         Cabecera(ctx, "Vista previa del B-1", r?.periodo?.etiqueta?.trim()?.ifEmpty { null } ?: "En curso", guia = GUIA_HOJA)
         Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
+            Modifier.fillMaxWidth().pellizco { z -> zoom = (zoom * z).coerceIn(ZOOM_MIN, ZOOM_MAX) }
+                .verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
                 .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
         ) {
             TituloSeccion("Cómo queda en la hoja")
@@ -82,17 +138,64 @@ fun PantallaHojaB1(ctx: Contexto, rendicionId: String?) {
             val texto = "Así quedan tus datos en la hoja del B-1. Lo que falta queda en blanco."
             ParaLeer(texto)
             Pista(texto, Modifier.padding(bottom = Medidas.e2))
-            Pista("El PDF y el Excel están en el B-1, paso «Revisar».", Modifier.padding(bottom = Medidas.e4))
-            hojas.forEachIndexed { i, trazos ->
-                if (hojas.size > 1) Text("Hoja ${i + 1} de ${hojas.size}", style = tipos.chicoFuerte, color = c.tintaSuave, modifier = Modifier.padding(bottom = Medidas.e2))
-                // Siempre en papel blanco, también en modo oscuro: es la hoja.
-                Canvas(
-                    Modifier.then(if (i == 0) Modifier.objetivoGuia("hoja.primera") else Modifier).fillMaxWidth().aspectRatio(210f / 297f).shadow(2.dp, RoundedCornerShape(4.dp))
-                        .clip(RoundedCornerShape(4.dp)).background(Color.White)
-                ) { pintar(trazos) }
-                Spacer(Modifier.height(Medidas.e4))
+            Pista("El PDF y el Excel para entregar se arman en el B-1, paso «Revisar».", Modifier.padding(bottom = Medidas.e2))
+            if (r.id == rendiciones.firstOrNull()?.id) MandarAvance(ctx, r)
+            Pista("Para leerla mejor, separa dos dedos sobre la hoja, tócala dos veces o usa «Acercar».", Modifier.padding(bottom = Medidas.e3))
+            Row(Modifier.fillMaxWidth().padding(bottom = Medidas.e3).objetivoGuia("hoja.zoom"), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+                Boton("Alejar", { zoom = (zoom - PASO_ZOOM).coerceAtLeast(ZOOM_MIN) }, diminuto = true, icono = "menos", habilitado = zoom > ZOOM_MIN)
+                Text("${(zoom * 100).roundToInt()} %", style = tipos.textoFuerte, color = c.tinta, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                Boton("Acercar", { zoom = (zoom + PASO_ZOOM).coerceAtMost(ZOOM_MAX) }, diminuto = true, icono = "mas", habilitado = zoom < ZOOM_MAX)
+            }
+            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                val ancho = maxWidth
+                // Acercada, la hoja es más ancha que la pantalla: se corre de lado.
+                Column(Modifier.horizontalScroll(rememberScrollState())) {
+                    hojas.forEachIndexed { i, trazos ->
+                        if (hojas.size > 1) Text("Hoja ${i + 1} de ${hojas.size}", style = tipos.chicoFuerte, color = c.tintaSuave, modifier = Modifier.padding(bottom = Medidas.e2))
+                        // Siempre en papel blanco, también en modo oscuro: es la hoja.
+                        Canvas(
+                            Modifier.then(if (i == 0) Modifier.objetivoGuia("hoja.primera") else Modifier).width(ancho * zoom).aspectRatio(210f / 297f).shadow(2.dp, RoundedCornerShape(4.dp))
+                                .clip(RoundedCornerShape(4.dp)).background(Color.White)
+                                .pointerInput(Unit) { detectTapGestures(onDoubleTap = { zoom = if (zoom > ZOOM_MIN) ZOOM_MIN else 2f }) }
+                        ) { pintar(trazos) }
+                        Spacer(Modifier.height(Medidas.e4))
+                    }
+                }
             }
         }
+    }
+}
+
+/**
+ * Un avance del mismo B-1, con lo anotado hasta hoy y marcado como tal. No cierra el mes ni
+ * empieza otro B-1. Solo pide de qué olla y de qué periodo es; lo que falta va en blanco.
+ */
+@Composable
+private fun MandarAvance(ctx: Contexto, r: Rendicion) {
+    val c = colores
+    var abierta by remember { mutableStateOf(false) }
+    val hoy = aDdMmAa(hoyIso())
+    val etiqueta = r.periodo.etiqueta.trim().ifEmpty { "en curso" }
+    val ultimo = r.generaciones.lastOrNull { it.formato.endsWith("-avance") }
+    BarraDesplegable("¿Te lo piden antes de cerrar el periodo?", "Mandar un avance (hasta hoy)", abierta, { abierta = !abierta },
+        Modifier.padding(bottom = Medidas.e4).objetivoGuia("hoja.avance"), icono = "reloj") {
+        Pista("Sale esta hoja, con lo anotado hasta hoy, y arriba dice «AVANCE AL $hoy». No es la rendición final ni cierra el periodo: sigues llenando este mismo B-1.", Modifier.padding(bottom = Medidas.e3))
+        if (ultimo != null) {
+            val dia = try { aDdMmAa(aIso(Instant.parse(ultimo.en).atZone(ZoneId.systemDefault()).toLocalDate())) } catch (e: Exception) { "" }
+            Text("Último avance: ${dia.ifEmpty { "—" }}" + (ultimo.totalCent?.let { " · compras por S/ ${formatearSoles(it)}" } ?: ""),
+                style = tipos.chicoFuerte, color = c.tinta, modifier = Modifier.padding(bottom = Medidas.e3))
+        }
+        val titulo = "Formato B-1 $etiqueta (avance al $hoy)"
+        BotonesExportar(
+            pdf = { Documento(pdfDelB1(hojasDelB1(r), selloAhora(), titulo, avance = hoy), "B-1 $etiqueta avance $hoy", titulo, AlElegir.B1(r.id, "pdf-avance")) },
+            excel = { Documento(excelDelB1(r, avance = hoy), "B-1 $etiqueta avance $hoy", titulo, AlElegir.B1(r.id, "excel-avance")) },
+            puede = {
+                val listo = r.nombreCentro.isNotBlank() && r.periodo.inicio.isNotEmpty() && r.periodo.fin.isNotEmpty()
+                if (listo) ctx.estado.guardarPendiente()
+                else ctx.avisos.mostrar("Para el avance, pon al menos el nombre del centro (paso 1 del B-1) y las fechas del periodo (paso 2).")
+                listo
+            }
+        )
     }
 }
 

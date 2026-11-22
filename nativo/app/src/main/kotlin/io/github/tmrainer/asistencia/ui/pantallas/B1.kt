@@ -223,13 +223,17 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
         alcance.launch { desplazamiento.scrollTo(0) }
     }
 
-    /** No se avanza con un dato obligatorio pendiente ni con un aviso sin mirar: se dice cuál y se lleva ahí. */
+    /**
+     * No se avanza con un dato obligatorio pendiente ni con un aviso sin mirar: se dice cuál y se lleva ahí.
+     * Lo obligatorio se mira desde el paso 1 («Anotar una compra» entra directo a Compras, sin pasar
+     * por los anteriores); los avisos, solo los de los pasos que se dejan atrás ahora.
+     */
     fun bloqueoHasta(n: Int): Boolean {
-        val enCamino = hallazgosDelB1(rendicion).filter { pasoDe(it.campo) >= pasoActual && pasoDe(it.campo) < n }
+        val enCamino = hallazgosDelB1(rendicion).filter { pasoDe(it.campo) < n }
         val pendientes = enCamino.filter { it.severidad == Severidad.ERROR }.sortedBy { pasoDe(it.campo) }
         avisosPorAceptar = emptyList()
         if (pendientes.isEmpty()) {
-            val porMirar = enCamino.filter { it.severidad == Severidad.ADVERTENCIA && clave(it) !in aceptados }.sortedBy { pasoDe(it.campo) }
+            val porMirar = enCamino.filter { it.severidad == Severidad.ADVERTENCIA && pasoDe(it.campo) >= pasoActual && clave(it) !in aceptados }.sortedBy { pasoDe(it.campo) }
             if (porMirar.isEmpty()) return false
             val paso = pasoDe(porMirar[0].campo)
             if (paso != pasoActual) irAPaso(paso)
@@ -275,6 +279,12 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
             (if (pendientes.size > 2) " y ${pendientes.size - 2} más" else "") + ".")
         irACampo(pendientes[0].campo)
         return false
+    }
+
+    /** «Completar ahora»: al primer paso anterior con algo pendiente, diciendo qué falta. */
+    fun completarAntes(paso: Int) {
+        irAPaso(paso)
+        bloqueoHasta(paso + 1)
     }
 
     fun agregarCompra() {
@@ -333,7 +343,22 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                     1 -> ". Al paso ${faltan[0]} le falta algo"
                     else -> ". A los pasos ${faltan.dropLast(1).joinToString(", ")} y ${faltan.last()} les falta algo"
                 }
-                Text("Paso $pasoActual de ${PASOS.size}$queFalta", style = tipos.pista, color = c.tintaSuave, modifier = Modifier.padding(bottom = Medidas.e3).objetivoGuia("b1.barraTexto"))
+                Row(Modifier.fillMaxWidth().padding(bottom = Medidas.e3), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+                    Text("Paso $pasoActual de ${PASOS.size}$queFalta", style = tipos.pista, color = c.tintaSuave, modifier = Modifier.weight(1f).objetivoGuia("b1.barraTexto"))
+                    // La hoja se puede mirar en cualquier paso, sin exportar. En «Revisar» tiene su botón grande.
+                    if (pasoActual < PASOS.size) Boton("Ver la hoja", { ctx.ir(Ruta.HOJA, rendicion.id) }, diminuto = true, icono = "boleta")
+                }
+                // «Anotar una compra» entra directo a Compras: lo que quedó pendiente antes se dice, y se puede ir.
+                val antes = faltan.filter { it < pasoActual }
+                if (pasoActual < PASOS.size && antes.isNotEmpty()) {
+                    val nombres = antes.map { "$it (${PASOS[it - 1].replace(Regex(" \\(.*\\)$"), "")})" }
+                    val cuales = if (nombres.size > 1) "los pasos ${nombres.dropLast(1).joinToString(", ")} y ${nombres.last()}" else "el paso ${nombres[0]}"
+                    FranjaEstado(
+                        "Para entregar el B-1 falta completar $cuales. Puedes seguir anotando y completarlo después.",
+                        TonoPastilla.ADVERTENCIA, Modifier.padding(bottom = Medidas.e3).objetivoGuia("b1.faltaAntes"), icono = "aviso",
+                        boton = "Completar ahora" to { completarAntes(antes[0]) }
+                    )
+                }
 
                 when (pasoActual) {
                     1 -> PasoCentro(rendicion, hallazgos, config, perfil, propuestos, ::cambiar)

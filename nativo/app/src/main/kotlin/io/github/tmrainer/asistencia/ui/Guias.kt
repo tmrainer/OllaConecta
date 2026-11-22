@@ -163,7 +163,8 @@ val GUIA_INSCRIBIR = Guia("Inscribir", listOf(
 
 private val PASOS_GENERAL_B1 = listOf(
     PasoGuia("Qué es el B-1", "La rendición de cuentas de tu olla. Cuando pongas las fechas, arriba sale su código: el mes y si es una quincena (Q1 o Q2), el mes entero (M) o una semana (S).", "boleta", "cabecera.subtitulo"),
-    PasoGuia("Cinco pasos", "Se llena por partes. En la barra, el paso de ahora se ve más marcado y los que tienen algo pendiente, en azul. Toca un tramo para ir a ese paso.", "lista", "b1.barra", "b1.barraTexto"),
+    PasoGuia("Cinco pasos", "Se llena por partes. En la barra, el paso de ahora se ve más marcado y los que tienen algo pendiente, en azul. Toca un tramo para ir a ese paso. «Ver la hoja» la muestra como en el papel, en cualquier paso; desde ahí también se manda un avance.", "lista", "b1.barra", "b1.barraTexto"),
+    PasoGuia("Lo que quedó antes", "Si entraste con «Anotar una compra», aquí se dice qué falta en los pasos de antes. «Completar ahora» te lleva.", "aviso", "b1.faltaAntes", soloSiEsta = true),
     PasoGuia("Lo que falta", "«Por revisar» cuenta lo que falta o está mal. Toca «Ver el detalle» y la app te lleva al campo.", "aviso", "b1.revisar", soloSiEsta = true),
     PasoGuia("Avanza y vuelve", "«Siguiente» te lleva al paso que sigue y «Atrás», al de antes. Todo se guarda solo, mientras escribes.", "ok", "b1.botones")
 )
@@ -232,6 +233,8 @@ val GUIA_IMPORTAR = Guia("Hoja de la Municipalidad", listOf(
 
 val GUIA_HOJA = Guia("Vista previa del B-1", listOf(
     PasoGuia("Así queda en el papel", "Tus datos en la hoja del B-1, como saldrán impresos. Lo que falta queda en blanco: complétalo en el B-1.", "boleta", "hoja.primera"),
+    PasoGuia("Si te lo piden antes", "Si UNACEM o un aliado pide el B-1 antes de cerrar el periodo, abre «Mandar un avance»: sale lo anotado hasta hoy, marcado como avance. Sigues llenando el mismo B-1.", "reloj", "hoja.avance", soloSiEsta = true),
+    PasoGuia("Acércala", "Separa dos dedos sobre la hoja, tócala dos veces o usa «Acercar» para leer la letra chica. Acercada, se corre de lado.", "buscar", "hoja.zoom"),
     PasoGuia("Para mandarlo", "El PDF y el Excel se arman en el B-1, en el paso «Revisar».", "archivo")
 ))
 
