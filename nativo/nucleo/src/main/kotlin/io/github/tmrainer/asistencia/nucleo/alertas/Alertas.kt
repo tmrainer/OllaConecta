@@ -129,10 +129,23 @@ data class AlertaEntrega(
 )
 
 /**
- * La alerta que se muestra arriba de la pantalla. Si falta configurar el
- * calendario, lo dice: no se inventa una fecha.
+ * Desde cuándo cuentan las entregas en un teléfono (decisión del 22-11-2026): el primer
+ * día del mes anterior a aquel en que se empezó a usar la app ([inicioIso]). Lo de antes
+ * no se muestra ni se cuenta como vencido: no se llenaba con la app. "" si no hay fecha.
  */
-fun alertaProximaEntrega(calendario: Calendario?, hoyRef: String? = null): AlertaEntrega? {
+fun desdeParaEntregas(inicioIso: String?): String =
+    aFecha(inicioIso)?.withDayOfMonth(1)?.minusMonths(1)?.let { aIso(it) } ?: ""
+
+/** La entrega anterior a hoy, salvo que sea de antes de [desde] (ver [desdeParaEntregas]). */
+private fun anteriorDesde(calendario: Calendario?, hoy: String, desde: String?): String =
+    entregaAnterior(calendario, hoy).takeIf { it.isNotEmpty() && (!esIso(desde) || it >= desde!!) } ?: ""
+
+/**
+ * La alerta que se muestra arriba de la pantalla. Si falta configurar el
+ * calendario, lo dice: no se inventa una fecha. Con [desde], una entrega
+ * anterior a esa fecha no cuenta como vencida.
+ */
+fun alertaProximaEntrega(calendario: Calendario?, hoyRef: String? = null, desde: String? = null): AlertaEntrega? {
     val hoy = hoyO(hoyRef)
     if (calendario == null || !esIso(calendario.fechaLimiteBase)) {
         return AlertaEntrega(
@@ -142,7 +155,7 @@ fun alertaProximaEntrega(calendario: Calendario?, hoyRef: String? = null): Alert
     }
 
     // Una entrega ya vencida y no marcada como entregada pesa más que la siguiente.
-    val anterior = entregaAnterior(calendario, hoy)
+    val anterior = anteriorDesde(calendario, hoy, desde)
     if (anterior.isNotEmpty() && estadoRegistrado(calendario, anterior) == "pendiente") {
         val atraso = diasEntre(anterior, hoy) ?: 0
         return AlertaEntrega(
@@ -169,11 +182,11 @@ fun alertaProximaEntrega(calendario: Calendario?, hoyRef: String? = null): Alert
 
 data class EntregaAgenda(val fechaLimite: String, val diasRestantes: Int, val nivel: Nivel, val estado: String)
 
-/** Fechas próximas con su estado y días restantes, para la página del calendario. */
-fun agendaEntregas(calendario: Calendario?, hoyRef: String? = null, cuantas: Int = 6): List<EntregaAgenda> {
+/** Fechas próximas con su estado y días restantes, para la página del calendario. Con [desde], sin las de antes. */
+fun agendaEntregas(calendario: Calendario?, hoyRef: String? = null, cuantas: Int = 6, desde: String? = null): List<EntregaAgenda> {
     val hoy = hoyO(hoyRef)
     val fechas = fechasDeEntrega(calendario, hoy, cuantas)
-    val anterior = entregaAnterior(calendario, hoy)
+    val anterior = anteriorDesde(calendario, hoy, desde)
     val lista = ArrayList<EntregaAgenda>()
     if (anterior.isNotEmpty()) {
         lista.add(EntregaAgenda(anterior, diasEntre(hoy, anterior) ?: 0, Nivel.VENCIDA, estadoRegistrado(calendario, anterior)))

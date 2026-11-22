@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -23,6 +24,7 @@ import io.github.tmrainer.asistencia.nucleo.documentos.excelDelMes
 import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelDia
 import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelMes
 import io.github.tmrainer.asistencia.nucleo.documentos.reporteDelDia
+import io.github.tmrainer.asistencia.nucleo.documentos.ReporteMes
 import io.github.tmrainer.asistencia.nucleo.documentos.reporteDelMes
 import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
 import io.github.tmrainer.asistencia.nucleo.modelo.GastoPropio
@@ -51,6 +53,8 @@ import io.github.tmrainer.asistencia.ui.componentes.TipoBoton
 import io.github.tmrainer.asistencia.ui.tema.Medidas
 import io.github.tmrainer.asistencia.ui.tema.colores
 import io.github.tmrainer.asistencia.ui.tema.tipos
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** «Reporte del día» (en Asistencia): menú, raciones y quiénes recibieron, con línea para firmar. */
 @Composable
@@ -86,10 +90,13 @@ internal fun ReporteDelMes(ctx: Contexto, mes: String, modifier: Modifier = Modi
     val c = colores
     val centro = estado.config.value.ultimoCentro?.nombreCentro?.trim().orEmpty()
     val responsable = ctx.preferencias.perfil.value.nombre
+    // Se cuenta aparte, fuera del hilo de la pantalla: con muchos días y personas tardaba.
+    val delMes by produceState<ReporteMes?>(null, padron, rendiciones, mes) { value = withContext(Dispatchers.Default) { reporteDelMes(padron, rendiciones, mes) } }
     Column(modifier) {
-        val delMes = remember(padron, rendiciones, mes) { reporteDelMes(padron, rendiciones, mes) }
-        val textoMes = "${delMes.etiqueta}: ${cuantos(delMes.dias.size, "día")} con atención, ${cuantos(delMes.servidas, "ración servida", "raciones servidas")}, " +
-            "${cuantos(delMes.personas.count { it.dias > 0 }, "persona")} que vinieron y ${cuantos(delMes.insumos.size, "compra")} del B-1."
+        val d = delMes
+        val textoMes = if (d == null) "Contando ${etiquetaMes(mes)}…"
+            else "${d.etiqueta}: ${cuantos(d.dias.size, "día")} con atención, ${cuantos(d.servidas, "ración servida", "raciones servidas")}, " +
+                "${cuantos(d.personas.count { it.dias > 0 }, "persona")} que vinieron y ${cuantos(d.insumos.size, "compra")} del B-1."
         ParaLeer(textoMes)
         Text(textoMes, style = tipos.texto, color = c.tinta, modifier = Modifier.padding(bottom = Medidas.e3))
         BotonesExportar(

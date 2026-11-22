@@ -78,7 +78,6 @@ import io.github.tmrainer.asistencia.nucleo.calculos.codigoB1
 import io.github.tmrainer.asistencia.nucleo.calculos.periodoDelMes
 import io.github.tmrainer.asistencia.nucleo.modelo.Periodo
 import io.github.tmrainer.asistencia.nucleo.modelo.aFecha
-import io.github.tmrainer.asistencia.ui.componentes.BarraDesplegable
 import java.time.LocalDate
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.ayudaB1
@@ -97,6 +96,7 @@ import io.github.tmrainer.asistencia.ui.componentes.Chips
 import io.github.tmrainer.asistencia.ui.componentes.EstadoGuardado
 import io.github.tmrainer.asistencia.ui.componentes.Ficha
 import io.github.tmrainer.asistencia.ui.componentes.FilaCampos
+import io.github.tmrainer.asistencia.ui.componentes.SelectorMeses
 import io.github.tmrainer.asistencia.ui.componentes.FranjaEstado
 import io.github.tmrainer.asistencia.ui.componentes.Icono
 import io.github.tmrainer.asistencia.ui.componentes.Leyenda
@@ -444,7 +444,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
 
 @Composable
 private fun BannerEntrega(ctx: Contexto, calendario: io.github.tmrainer.asistencia.nucleo.modelo.Calendario, hoy: String) {
-    val alerta = alertaProximaEntrega(calendario, hoy) ?: return
+    val alerta = alertaProximaEntrega(calendario, hoy, ctx.preferencias.desdeEntregas) ?: return
     val c = colores
     if (!alerta.configurado) {
         FranjaEstado(alerta.mensaje, TonoPastilla.NEUTRA, Modifier.padding(bottom = Medidas.e4), icono = "reloj", boton = "Configurar entregas" to { ctx.ir(Ruta.ENTREGAS) })
@@ -532,19 +532,13 @@ private fun PasoPeriodo(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) 
     val opciones = (-3..1).map { hoy.plusMonths(it.toLong()) }.map { periodoDelMes(it.year, it.monthValue) }
     val delMes = opciones.firstOrNull { it.inicio == r.periodo.inicio && it.fin == r.periodo.fin }
         ?: codigoB1(r.periodo, hoy, cerrado = true)?.takeIf { !it.contains("-Q") && !it.contains("-S") }?.let { r.periodo }
-    val resumen = when {
-        delMes != null -> delMes.etiqueta.ifEmpty { r.periodo.etiqueta }
-        r.periodo.inicio.isNotEmpty() -> "Fechas propias: ${nombreDelMes(r)}"
-        else -> "Elige el mes"
-    }
-    var abierta by remember { mutableStateOf(false) }
-    BarraDesplegable("Mes", resumen, abierta, { abierta = !abierta }, Modifier.objetivoGuia("b1.mes"), icono = "calendario") {
-        Opciones(opciones.map { it to it.etiqueta }, { it.inicio == r.periodo.inicio && it.fin == r.periodo.fin }, { m ->
-            // Una fecha de rendición vieja ya no vale para otro mes: la pone la app al armarlo.
-            cambiar { it.copy(periodo = m, fechaRendicion = "") }
-            abierta = false
-        })
-    }
+    Leyenda("Mes")
+    // En una fila que se desliza de lado, del más viejo al más nuevo (como en Entregas).
+    SelectorMeses(opciones.map { it.inicio.take(7) to it.etiqueta }, if (delMes != null) r.periodo.inicio.take(7) else "", { clave ->
+        val m = opciones.first { it.inicio.take(7) == clave }
+        // Una fecha de rendición vieja ya no vale para otro mes: la pone la app al armarlo.
+        cambiar { it.copy(periodo = m, fechaRendicion = "") }
+    }, Modifier.objetivoGuia("b1.mes"))
     (hs.errorDe("periodo.inicio") ?: hs.errorDe("periodo.etiqueta"))?.let { Text(it, style = tipos.chico, color = c.error, modifier = Modifier.padding(top = Medidas.e2)) }
     hs.avisoDe("periodo.inicio")?.let { Text(it, style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2)) }
     if (delMes == null && r.periodo.inicio.isNotEmpty()) Pista("Este B-1 tiene fechas de antes. Elige un mes para cambiarlas.", Modifier.padding(top = Medidas.e2))

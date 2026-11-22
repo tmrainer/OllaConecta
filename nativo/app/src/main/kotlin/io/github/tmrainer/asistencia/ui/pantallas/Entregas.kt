@@ -26,14 +26,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.rememberCoroutineScope
+import io.github.tmrainer.asistencia.nucleo.validaciones.Hallazgo
+import io.github.tmrainer.asistencia.ui.ListaParaGuia
+import io.github.tmrainer.asistencia.ui.componentes.SelectorMeses
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -137,175 +146,205 @@ fun PantallaEntregas(ctx: Contexto) {
     // semanal o quincenal de antes pasa a mensual, con la misma fecha de referencia.
     LaunchedEffect(calendario.periodicidad) { if (calendario.periodicidad != "mensual") estado.cambiarCalendario { it.copy(periodicidad = "mensual") } }
     val padron by estado.padron.collectAsStateWithLifecycle()
-    // El mes de lo que se entrega: por defecto, el del B-1 en curso; si no tiene, el de hoy.
-    val mesB1 = rendiciones.firstOrNull()?.periodo?.inicio?.take(7)?.takeIf { Regex("^\\d{4}-\\d{2}$").matches(it) }
+    // Los meses, desde el anterior al que se empezó a usar la app: lo de antes no se llenaba
+    // con ella y solo sumaba faltantes. Por defecto, el del B-1 en curso; si no tiene, el de hoy.
+    val desdeMes = ctx.preferencias.desdeEntregas.take(7)
+    fun vale(m: String) = Regex("^\\d{4}-\\d{2}$").matches(m) && m >= desdeMes
+    val mesB1 = rendiciones.firstOrNull()?.periodo?.inicio?.take(7)?.takeIf(::vale)
     var mes by remember(mesB1) { mutableStateOf(mesB1 ?: hoy.take(7)) }
     val meses = remember(padron, rendiciones, mes) {
         (listOf(hoy.take(7), mes) + rendiciones.map { it.periodo.inicio.take(7) } + padron.atenciones.map { it.fecha.take(7) })
-            .filter { Regex("^\\d{4}-\\d{2}$").matches(it) }.distinct().sortedDescending().take(8)
+            .filter(::vale).distinct().sortedDescending().take(8)
     }
-    var mesesAbiertos by remember { mutableStateOf(false) }
+    // Lo pesado se calcula aparte, fuera del hilo de la pantalla: la pantalla aparece enseguida.
+    val indiceB1 = rendiciones.indexOfFirst { it.periodo.inicio.take(7) == mes }
+    val r = rendiciones.getOrNull(indiceB1)
+    val hsB1 by produceState<List<Hallazgo>?>(null, r) { value = if (r == null) emptyList() else withContext(Dispatchers.Default) { hallazgosDelB1(r) } }
+    val lista = rememberLazyListState()
 
     Column(Modifier.fillMaxWidth()) {
         Cabecera(ctx, "Entregas", "El B-1 y el reporte de cada mes", guia = GUIA_ENTREGAS)
-        Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).widthIn(max = Medidas.anchoColumna)
-                .align(Alignment.CenterHorizontally).padding(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
+        ListaParaGuia(lista)
+        // Una lista que arma solo lo que se ve (con muchos datos, abrir la pantalla tardaba):
+        // el reporte, el gasto propio, las fechas y los avisos se arman al bajar.
+        LazyColumn(
+            Modifier.fillMaxWidth().widthIn(max = Medidas.anchoColumna).align(Alignment.CenterHorizontally), state = lista,
+            contentPadding = PaddingValues(Medidas.e4, Medidas.e4, Medidas.e4, 40.dp)
         ) {
-            val avisosAlmacen = estado.avisosAlmacenamiento()
-            if (avisosAlmacen.isNotEmpty()) AvisoSistema(avisosAlmacen.joinToString(" "), Modifier.padding(bottom = Medidas.e4))
-
-            val a = alertaProximaEntrega(calendario, hoy)
-            val diasAlerta = a?.diasRestantes
-            val fechaAlerta = a?.fechaLimite
-            if (a != null && a.configurado && diasAlerta != null && fechaAlerta != null) {
-                val dias: Int = diasAlerta
-                val largo = when (calendario.periodicidad) { "semanal" -> 7; "quincenal" -> 15; else -> 30 }
-                val lleno = if (dias < 0) 1f else (1f - dias.toFloat() / largo).coerceIn(0f, 1f)
-                val colorReloj = when (tonoEntrega(a.nivel)) { TonoPastilla.ERROR -> c.error; TonoPastilla.ADVERTENCIA -> c.aviso; else -> c.acentoTexto }
-                Column(
-                    Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(Medidas.rL)).clip(RoundedCornerShape(Medidas.rL)).background(c.superficie).padding(Medidas.e4, Medidas.e5),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Box(Modifier.size(168.dp), contentAlignment = Alignment.Center) {
-                        Canvas(Modifier.size(168.dp)) {
-                            val grosor = 14.dp.toPx()
-                            drawArc(c.superficie2, -90f, 360f, false, style = Stroke(grosor), size = Size(size.width - grosor, size.height - grosor), topLeft = androidx.compose.ui.geometry.Offset(grosor / 2, grosor / 2))
-                            drawArc(colorReloj, -90f, 360f * lleno, false, style = Stroke(grosor, cap = StrokeCap.Butt), size = Size(size.width - grosor, size.height - grosor), topLeft = androidx.compose.ui.geometry.Offset(grosor / 2, grosor / 2))
-                        }
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(if (dias == 0) "¡Hoy!" else "${kotlin.math.abs(dias)}", style = tipos.cifra.copy(fontSize = tipos.cifra.fontSize * 1.25f), color = colorReloj)
-                            if (dias != 0) Text(if (dias < 0) (if (dias == -1) "día de atraso" else "días de atraso") else if (dias == 1) "día" else "días", style = tipos.pista, color = c.tintaSuave)
-                        }
-                    }
-                    val frase = when {
-                        dias < 0 -> "La entrega del ${aDdMmAa(fechaAlerta)} venció hace ${cuantos(-dias, "día")}."
-                        dias == 0 -> "Hoy vence la entrega del B-1 (${aDdMmAa(fechaAlerta)})."
-                        else -> "Faltan ${cuantos(dias, "día")} para entregar el B-1: ${fechaLarga(fechaAlerta).lowercase()}."
-                    }
-                    ParaLeer(frase)
-                    Text(
-                        frase,
-                        style = tipos.textoFuerte, color = c.titulo, textAlign = TextAlign.Center, modifier = Modifier.padding(top = Medidas.e3)
-                    )
+            item(key = "reloj") {
+                Column {
+                    val avisosAlmacen = estado.avisosAlmacenamiento()
+                    if (avisosAlmacen.isNotEmpty()) AvisoSistema(avisosAlmacen.joinToString(" "), Modifier.padding(bottom = Medidas.e4))
+                    RelojEntrega(alertaProximaEntrega(calendario, hoy, ctx.preferencias.desdeEntregas), calendario.periodicidad)
+                    PanelHallazgos(validarCalendario(calendario))
                 }
-                Spacer(Modifier.height(Medidas.e4))
             }
-
-            PanelHallazgos(validarCalendario(calendario))
 
             // Lo que se entrega cada mes, junto (decisión del 22-11-2026): el B-1, el reporte del mes y el gasto propio.
-            TituloSeccion("Lo que se entrega")
-            BarraDesplegable("Mes", etiquetaMes(mes), mesesAbiertos, { mesesAbiertos = !mesesAbiertos }, Modifier.objetivoGuia("entregas.mes"), icono = "calendario") {
-                Opciones(meses.map { it to etiquetaMes(it) }, { it == mes }, { mes = it; mesesAbiertos = false })
-            }
-            Spacer(Modifier.height(Medidas.e3))
-            Leyenda("Formato B-1")
-            val indiceB1 = rendiciones.indexOfFirst { it.periodo.inicio.take(7) == mes }
-            val r = rendiciones.getOrNull(indiceB1)
-            when {
-                r == null -> FranjaEstado("Todavía no hay un B-1 de ${etiquetaMes(mes)}.", TonoPastilla.NEUTRA, Modifier.objetivoGuia("entregas.b1"), icono = "boleta",
-                    boton = "Ir al B-1" to { ctx.ir(Ruta.B1) })
-                indiceB1 > 0 -> FranjaEstado("El B-1 ${codigoB1(r.periodo, LocalDate.now(), cerrado = true) ?: etiquetaMes(mes)} ya está cerrado.", TonoPastilla.OK, Modifier.objetivoGuia("entregas.b1"), icono = "ok")
-                else -> {
-                    val hs = hallazgosDelB1(r)
-                    val faltan = hs.count { it.severidad == Severidad.ERROR && it.falta }
-                    val mal = hs.count { it.severidad == Severidad.ERROR && !it.falta }
-                    val listo = faltan == 0 && mal == 0
-                    val partes = buildList {
-                        if (faltan > 0) add(if (faltan == 1) "falta 1 dato" else "faltan $faltan datos")
-                        if (mal > 0) add(if (mal == 1) "hay 1 dato por corregir" else "hay $mal datos por corregir")
+            item(key = "mes") {
+                Column {
+                    TituloSeccion("Lo que se entrega")
+                    SelectorMeses(meses.sorted().map { it to etiquetaMes(it) }, mes, { mes = it }, Modifier.objetivoGuia("entregas.mes"))
+                    Spacer(Modifier.height(Medidas.e4))
+                    Leyenda("Formato B-1")
+                    val hs = hsB1
+                    when {
+                        r == null -> FranjaEstado("Todavía no hay un B-1 de ${etiquetaMes(mes)}.", TonoPastilla.NEUTRA, Modifier.objetivoGuia("entregas.b1"), icono = "boleta",
+                            boton = "Ir al B-1" to { ctx.ir(Ruta.B1) })
+                        indiceB1 > 0 -> FranjaEstado("El B-1 ${codigoB1(r.periodo, LocalDate.now(), cerrado = true) ?: etiquetaMes(mes)} ya está cerrado.", TonoPastilla.OK, Modifier.objetivoGuia("entregas.b1"), icono = "ok")
+                        hs == null -> Pista("Revisando el B-1…", Modifier.objetivoGuia("entregas.b1"))
+                        else -> {
+                            val faltan = hs.count { it.severidad == Severidad.ERROR && it.falta }
+                            val mal = hs.count { it.severidad == Severidad.ERROR && !it.falta }
+                            val listo = faltan == 0 && mal == 0
+                            val partes = buildList {
+                                if (faltan > 0) add(if (faltan == 1) "falta 1 dato" else "faltan $faltan datos")
+                                if (mal > 0) add(if (mal == 1) "hay 1 dato por corregir" else "hay $mal datos por corregir")
+                            }
+                            FranjaEstado(
+                                if (listo) "El B-1 de ${etiquetaMes(mes)} está listo para entregar." else "B-1 de ${etiquetaMes(mes)}: ${partes.joinToString(" y ")}.",
+                                if (listo) TonoPastilla.OK else TonoPastilla.ADVERTENCIA, Modifier.objetivoGuia("entregas.b1"),
+                                boton = (if (listo) "Ver el B-1" else "Completar el B-1") to { ctx.ir(Ruta.B1) }
+                            )
+                        }
                     }
-                    FranjaEstado(
-                        if (listo) "El B-1 de ${etiquetaMes(mes)} está listo para entregar." else "B-1 de ${etiquetaMes(mes)}: ${partes.joinToString(" y ")}.",
-                        if (listo) TonoPastilla.OK else TonoPastilla.ADVERTENCIA, Modifier.objetivoGuia("entregas.b1"),
-                        boton = (if (listo) "Ver el B-1" else "Completar el B-1") to { ctx.ir(Ruta.B1) }
-                    )
                 }
             }
-            Spacer(Modifier.height(Medidas.e4))
-            Leyenda("Reporte del mes")
-            ReporteDelMes(ctx, mes, Modifier.objetivoGuia("entregas.reporte"))
-            Spacer(Modifier.height(Medidas.e4))
-            GastoPropioDelMes(ctx, rendiciones, mes, hoy)
-
-            Spacer(Modifier.height(Medidas.e5))
-            TituloSeccion("Próximas entregas")
-            if (!esIso(calendario.fechaLimiteBase)) {
-                EstadoVacio("calendario", "Todavía no hay fechas", "Pon abajo una fecha de entrega que conozcas. Aquí verás las próximas.")
-            } else {
-                val agenda = agendaEntregas(calendario, hoy, 6)
-                Box(Modifier.objetivoGuia("entregas.lista")) { Superficie {
-                    agenda.forEachIndexed { i, item ->
-                        val reg = calendario.entregas.firstOrNull { it.fechaLimite == item.fechaLimite }
-                        val estadoItem = reg?.estado ?: "pendiente"
-                        val texto = when {
-                            item.diasRestantes < 0 -> "hace ${cuantos(kotlin.math.abs(item.diasRestantes), "día")}"
-                            item.diasRestantes == 0 -> "es hoy"
-                            item.diasRestantes == 1 -> "falta 1 día"
-                            else -> "faltan ${item.diasRestantes} días"
-                        }
-                        Row(Modifier.fillMaxWidth().padding(Medidas.e4, Medidas.e3), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                            Text(aDdMmAa(item.fechaLimite), style = tipos.textoNegrita, color = c.titulo, modifier = Modifier.widthIn(min = 76.dp))
-                            Column(Modifier.weight(1f)) {
-                                // Ya entregada, una fecha pasada no es una alerta.
-                                val tono = if (estadoItem == "entregada" || estadoItem == "conforme") TonoPastilla.NEUTRA else tonoEntrega(item.nivel)
-                                Text(
-                                    texto, style = if (tono == TonoPastilla.NEUTRA) tipos.chico else tipos.chicoFuerte,
-                                    color = when (tono) { TonoPastilla.ERROR -> c.error; TonoPastilla.ADVERTENCIA -> c.aviso; else -> c.tintaSuave }
-                                )
-                                // Qué B-1 se entrega ese día: el mes que propone para esa fecha, con su nombre («Noviembre-2026»).
-                                codigoB1(proponerPeriodo(calendario.periodicidad, item.fechaLimite).aPeriodo(), LocalDate.now(), cerrado = true)?.let {
-                                    Text("B-1 $it", style = tipos.chico, color = c.tintaSuave)
-                                }
-                            }
-                            var abierto by remember { mutableStateOf(false) }
-                            Box {
-                                val textoEstado = ETIQUETA_ESTADO.first { it.first == estadoItem }.second
-                                // Cada entrega dice de qué fecha es: no cinco «Pendiente» iguales.
-                                val (tonoEstado, iconoEstado) = TONO_ESTADO.getValue(estadoItem)
-                                Pastilla(textoEstado, tonoEstado, iconoEstado, modifier = Modifier.semantics { contentDescription = "Entrega del ${aDdMmAa(item.fechaLimite)}: $textoEstado" }) { abierto = true }
-                                DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }, containerColor = c.superficie) {
-                                    for ((v, t) in ETIQUETA_ESTADO) DropdownMenuItem(text = { Text(t, style = tipos.texto, color = c.tinta) }, onClick = {
-                                        abierto = false
-                                        estado.cambiarCalendario { cal ->
-                                            val existe = cal.entregas.any { it.fechaLimite == item.fechaLimite }
-                                            cal.copy(entregas = if (existe) cal.entregas.map { if (it.fechaLimite == item.fechaLimite) it.copy(estado = v) else it }
-                                            else cal.entregas + nuevaEntrega(item.fechaLimite).copy(estado = v))
-                                        }
-                                    })
-                                }
-                            }
-                        }
-                        if (i < agenda.size - 1) Separador()
-                    }
-                } }
-            }
-            AvisosDelTelefono(esIso(calendario.fechaLimiteBase))
-
-            Spacer(Modifier.height(Medidas.e5))
-            TituloSeccion("Cuándo vence")
-            CampoFecha("Una fecha de entrega que conoces", calendario.fechaLimiteBase, { v -> estado.cambiarCalendario { it.copy(fechaLimiteBase = v) } }, Modifier.objetivoGuia("entregas.fecha"), pista = "Vence ese mismo día cada mes. La próxima o una pasada, da igual.")
-            Spacer(Modifier.height(Medidas.e3))
-            Column(Modifier.objetivoGuia("entregas.avisar")) {
-                var avisarAbierto by remember { mutableStateOf(false) }
-                // Se marcan varios: la barra queda abierta hasta que se toca otra vez.
-                BarraDesplegable("Avisarme", diasAntes(calendario.diasDeAviso), avisarAbierto, { avisarAbierto = !avisarAbierto }, icono = "reloj") {
-                Opciones(OPCIONES_AVISO, { it in calendario.diasDeAviso }, { dias ->
-                    val otros = calendario.diasDeAviso.filter { it != dias }
-                    val marcado = dias in calendario.diasDeAviso
-                    if (marcado && otros.isEmpty()) { msgAviso = "Deja marcado al menos uno." }
-                    else {
-                        msgAviso = ""
-                        estado.cambiarCalendario { it.copy(diasDeAviso = (if (marcado) otros else otros + dias).sortedDescending()) }
-                    }
-                })
+            item(key = "reporte") {
+                Column(Modifier.padding(top = Medidas.e4)) {
+                    Leyenda("Reporte del mes")
+                    ReporteDelMes(ctx, mes, Modifier.objetivoGuia("entregas.reporte"))
                 }
             }
-            if (msgAviso.isNotEmpty()) Text(msgAviso, style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = 4.dp))
-            EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
+            item(key = "gasto") { Column(Modifier.padding(top = Medidas.e4)) { GastoPropioDelMes(ctx, rendiciones, mes, hoy) } }
+
+            item(key = "proximas") {
+                Column(Modifier.padding(top = Medidas.e5)) {
+                    TituloSeccion("Próximas entregas")
+                    if (!esIso(calendario.fechaLimiteBase)) {
+                        EstadoVacio("calendario", "Todavía no hay fechas", "Pon abajo una fecha de entrega que conozcas. Aquí verás las próximas.")
+                    } else {
+                        ListaDeEntregas(agendaEntregas(calendario, hoy, 6, ctx.preferencias.desdeEntregas), calendario) { fecha, v ->
+                            estado.cambiarCalendario { cal ->
+                                val existe = cal.entregas.any { it.fechaLimite == fecha }
+                                cal.copy(entregas = if (existe) cal.entregas.map { if (it.fechaLimite == fecha) it.copy(estado = v) else it }
+                                else cal.entregas + nuevaEntrega(fecha).copy(estado = v))
+                            }
+                        }
+                    }
+                    AvisosDelTelefono(esIso(calendario.fechaLimiteBase))
+                }
+            }
+
+            item(key = "vence") {
+                Column(Modifier.padding(top = Medidas.e5)) {
+                    TituloSeccion("Cuándo vence")
+                    CampoFecha("Una fecha de entrega que conoces", calendario.fechaLimiteBase, { v -> estado.cambiarCalendario { it.copy(fechaLimiteBase = v) } }, Modifier.objetivoGuia("entregas.fecha"), pista = "Vence ese mismo día cada mes. La próxima o una pasada, da igual.")
+                    Spacer(Modifier.height(Medidas.e3))
+                    Column(Modifier.objetivoGuia("entregas.avisar")) {
+                        var avisarAbierto by remember { mutableStateOf(false) }
+                        // Se marcan varios: la barra queda abierta hasta que se toca otra vez.
+                        BarraDesplegable("Avisarme", diasAntes(calendario.diasDeAviso), avisarAbierto, { avisarAbierto = !avisarAbierto }, icono = "reloj") {
+                            Opciones(OPCIONES_AVISO, { it in calendario.diasDeAviso }, { dias ->
+                                val otros = calendario.diasDeAviso.filter { it != dias }
+                                val marcado = dias in calendario.diasDeAviso
+                                if (marcado && otros.isEmpty()) { msgAviso = "Deja marcado al menos uno." }
+                                else {
+                                    msgAviso = ""
+                                    estado.cambiarCalendario { it.copy(diasDeAviso = (if (marcado) otros else otros + dias).sortedDescending()) }
+                                }
+                            })
+                        }
+                    }
+                    if (msgAviso.isNotEmpty()) Text(msgAviso, style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = 4.dp))
+                    EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")
+                }
+            }
         }
     }
+}
+
+/** El reloj de la próxima entrega (o de la vencida): cuántos días faltan o de atraso. */
+@Composable
+private fun RelojEntrega(a: io.github.tmrainer.asistencia.nucleo.alertas.AlertaEntrega?, periodicidad: String) {
+    val c = colores
+    val dias = a?.diasRestantes
+    val fechaAlerta = a?.fechaLimite
+    if (a == null || !a.configurado || dias == null || fechaAlerta == null) return
+    val largo = when (periodicidad) { "semanal" -> 7; "quincenal" -> 15; else -> 30 }
+    val lleno = if (dias < 0) 1f else (1f - dias.toFloat() / largo).coerceIn(0f, 1f)
+    val colorReloj = when (tonoEntrega(a.nivel)) { TonoPastilla.ERROR -> c.error; TonoPastilla.ADVERTENCIA -> c.aviso; else -> c.acentoTexto }
+    Column(
+        Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(Medidas.rL)).clip(RoundedCornerShape(Medidas.rL)).background(c.superficie).padding(Medidas.e4, Medidas.e5),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(Modifier.size(168.dp), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.size(168.dp)) {
+                val grosor = 14.dp.toPx()
+                drawArc(c.superficie2, -90f, 360f, false, style = Stroke(grosor), size = Size(size.width - grosor, size.height - grosor), topLeft = androidx.compose.ui.geometry.Offset(grosor / 2, grosor / 2))
+                drawArc(colorReloj, -90f, 360f * lleno, false, style = Stroke(grosor, cap = StrokeCap.Butt), size = Size(size.width - grosor, size.height - grosor), topLeft = androidx.compose.ui.geometry.Offset(grosor / 2, grosor / 2))
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(if (dias == 0) "¡Hoy!" else "${kotlin.math.abs(dias)}", style = tipos.cifra.copy(fontSize = tipos.cifra.fontSize * 1.25f), color = colorReloj)
+                if (dias != 0) Text(if (dias < 0) (if (dias == -1) "día de atraso" else "días de atraso") else if (dias == 1) "día" else "días", style = tipos.pista, color = c.tintaSuave)
+            }
+        }
+        val frase = when {
+            dias < 0 -> "La entrega del ${aDdMmAa(fechaAlerta)} venció hace ${cuantos(-dias, "día")}."
+            dias == 0 -> "Hoy vence la entrega del B-1 (${aDdMmAa(fechaAlerta)})."
+            else -> "Faltan ${cuantos(dias, "día")} para entregar el B-1: ${fechaLarga(fechaAlerta).lowercase()}."
+        }
+        ParaLeer(frase)
+        Text(frase, style = tipos.textoFuerte, color = c.titulo, textAlign = TextAlign.Center, modifier = Modifier.padding(top = Medidas.e3))
+    }
+    Spacer(Modifier.height(Medidas.e4))
+}
+
+/** Las próximas entregas con su estado; [cambiarEstado] recibe la fecha y el estado nuevo. */
+@Composable
+private fun ListaDeEntregas(agenda: List<io.github.tmrainer.asistencia.nucleo.alertas.EntregaAgenda>, calendario: io.github.tmrainer.asistencia.nucleo.modelo.Calendario, cambiarEstado: (String, String) -> Unit) {
+    val c = colores
+    Box(Modifier.objetivoGuia("entregas.lista")) { Superficie {
+        agenda.forEachIndexed { i, item ->
+            val reg = calendario.entregas.firstOrNull { it.fechaLimite == item.fechaLimite }
+            val estadoItem = reg?.estado ?: "pendiente"
+            val texto = when {
+                item.diasRestantes < 0 -> "hace ${cuantos(kotlin.math.abs(item.diasRestantes), "día")}"
+                item.diasRestantes == 0 -> "es hoy"
+                item.diasRestantes == 1 -> "falta 1 día"
+                else -> "faltan ${item.diasRestantes} días"
+            }
+            Row(Modifier.fillMaxWidth().padding(Medidas.e4, Medidas.e3), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
+                Text(aDdMmAa(item.fechaLimite), style = tipos.textoNegrita, color = c.titulo, modifier = Modifier.widthIn(min = 76.dp))
+                Column(Modifier.weight(1f)) {
+                    // Ya entregada, una fecha pasada no es una alerta.
+                    val tono = if (estadoItem == "entregada" || estadoItem == "conforme") TonoPastilla.NEUTRA else tonoEntrega(item.nivel)
+                    Text(
+                        texto, style = if (tono == TonoPastilla.NEUTRA) tipos.chico else tipos.chicoFuerte,
+                        color = when (tono) { TonoPastilla.ERROR -> c.error; TonoPastilla.ADVERTENCIA -> c.aviso; else -> c.tintaSuave }
+                    )
+                    // Qué B-1 se entrega ese día: el mes que propone para esa fecha, con su nombre («Noviembre-2026»).
+                    codigoB1(proponerPeriodo(calendario.periodicidad, item.fechaLimite).aPeriodo(), LocalDate.now(), cerrado = true)?.let {
+                        Text("B-1 $it", style = tipos.chico, color = c.tintaSuave)
+                    }
+                }
+                var abierto by remember { mutableStateOf(false) }
+                Box {
+                    val textoEstado = ETIQUETA_ESTADO.first { it.first == estadoItem }.second
+                    // Cada entrega dice de qué fecha es: no cinco «Pendiente» iguales.
+                    val (tonoEstado, iconoEstado) = TONO_ESTADO.getValue(estadoItem)
+                    Pastilla(textoEstado, tonoEstado, iconoEstado, modifier = Modifier.semantics { contentDescription = "Entrega del ${aDdMmAa(item.fechaLimite)}: $textoEstado" }) { abierto = true }
+                    DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }, containerColor = c.superficie) {
+                        for ((v, t) in ETIQUETA_ESTADO) DropdownMenuItem(text = { Text(t, style = tipos.texto, color = c.tinta) }, onClick = {
+                            abierto = false
+                            cambiarEstado(item.fechaLimite, v)
+                        })
+                    }
+                }
+            }
+            if (i < agenda.size - 1) Separador()
+        }
+    } }
 }
 
 /**
@@ -320,9 +359,11 @@ private fun AvisosDelTelefono(hayFechas: Boolean) {
     val c = colores
     var permiso by remember { mutableStateOf(AvisosTelefono.hayPermiso(context)) }
     var programados by remember { mutableStateOf(-1) }
+    val alcance = rememberCoroutineScope()
+    // Reprogramar son decenas de llamadas al sistema: aparte, para no frenar la pantalla.
     LifecycleResumeEffect(Unit) {
         permiso = AvisosTelefono.hayPermiso(context)
-        if (permiso) programados = app.reprogramarAvisos()
+        if (permiso) alcance.launch(Dispatchers.Default) { programados = app.reprogramarAvisos() }
         onPauseOrDispose { }
     }
     val abrirAjustes = {

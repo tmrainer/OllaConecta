@@ -73,7 +73,7 @@ fun PantallaInicio(ctx: Contexto) {
             val atHoy = padron.atenciones.firstOrNull { it.fecha == hoy }
             val d = desgloseDelDia(atHoy)
             val rec = if (atHoy != null) recaudacionDelDiaCent(atHoy) else 0L
-            val alerta = alertaProximaEntrega(calendario, hoy)
+            val alerta = alertaProximaEntrega(calendario, hoy, ctx.preferencias.desdeEntregas)
             ParaLeer("Hoy: ${cuantos(d.total, "ración", "raciones")}" + if (rec == null) ", falta el precio" else ", S/ ${formatearSoles(rec)} recaudado")
             Column(Modifier.objetivoGuia("inicio.hoy").fillMaxWidth().shadow(1.dp, RoundedCornerShape(Medidas.rL)).clip(RoundedCornerShape(Medidas.rL)).background(c.marca).padding(Medidas.e5, Medidas.e4)) {
                 Text("Hoy", style = tipos.pista, color = c.marcaSuave)

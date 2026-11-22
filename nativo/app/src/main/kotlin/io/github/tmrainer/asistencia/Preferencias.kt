@@ -3,7 +3,11 @@
 package io.github.tmrainer.asistencia
 
 import android.content.Context
+import io.github.tmrainer.asistencia.nucleo.alertas.desdeParaEntregas
 import io.github.tmrainer.asistencia.nucleo.modelo.JSON
+import io.github.tmrainer.asistencia.nucleo.modelo.aIso
+import java.time.Instant
+import java.time.ZoneId
 import io.github.tmrainer.asistencia.nucleo.modelo.Perfil
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonObject
@@ -29,6 +33,18 @@ fun perfilListo(p: Perfil): Boolean =
 
 class Preferencias(context: Context) {
     private val prefs = context.getSharedPreferences("pi3", Context.MODE_PRIVATE)
+
+    /**
+     * El día en que se empezó a usar la app en este teléfono («AAAA-MM-DD»): el de su
+     * instalación (sobrevive a las actualizaciones), guardado la primera vez que se pide.
+     */
+    val inicioApp: String = prefs.getString("inicio.app", null) ?: run {
+        val instalada = try { context.packageManager.getPackageInfo(context.packageName, 0).firstInstallTime } catch (e: Exception) { System.currentTimeMillis() }
+        aIso(Instant.ofEpochMilli(instalada).atZone(ZoneId.systemDefault()).toLocalDate()).also { prefs.edit().putString("inicio.app", it).apply() }
+    }
+
+    /** Desde cuándo cuentan las entregas: el mes anterior al de [inicioApp] (no se llena de faltantes de antes). */
+    val desdeEntregas: String get() = desdeParaEntregas(inicioApp)
 
     private val _tema = MutableStateFlow(Tema.values().firstOrNull { it.clave == prefs.getString("tema", "auto") } ?: Tema.AUTO)
     private val _letra = MutableStateFlow(Letra.values().firstOrNull { it.clave == prefs.getString("letra", "normal") } ?: Letra.NORMAL)

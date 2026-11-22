@@ -4,6 +4,7 @@ import io.github.tmrainer.asistencia.nucleo.alertas.Nivel
 import io.github.tmrainer.asistencia.nucleo.alertas.agendaEntregas
 import io.github.tmrainer.asistencia.nucleo.alertas.alertaProximaEntrega
 import io.github.tmrainer.asistencia.nucleo.alertas.avanzarPeriodo
+import io.github.tmrainer.asistencia.nucleo.alertas.desdeParaEntregas
 import io.github.tmrainer.asistencia.nucleo.alertas.fechasDeEntrega
 import io.github.tmrainer.asistencia.nucleo.alertas.nivelPorDias
 import io.github.tmrainer.asistencia.nucleo.alertas.programaDeAvisos
@@ -16,6 +17,21 @@ import io.github.tmrainer.asistencia.nucleo.validaciones.validarCalendario
 import kotlin.test.Test
 
 class EntregasTest {
+
+    @Test
+    fun `Lo de antes del mes anterior al inicio de la app no se muestra ni vence`() {
+        igual(desdeParaEntregas("2026-11-22"), "2026-10-01", "empezó en noviembre: desde octubre")
+        igual(desdeParaEntregas("2026-01-05"), "2025-12-01", "cruza el año")
+        igual(desdeParaEntregas(""), "")
+        val cal = Calendario(periodicidad = "mensual", fechaLimiteBase = "2026-09-15", diasDeAviso = listOf(7, 3, 1))
+        // Hoy 22-11: la entrega anterior es la del 15-11, pendiente.
+        igual(alertaProximaEntrega(cal, "2026-11-22", desde = "2026-10-01")!!.nivel, Nivel.VENCIDA, "la del 15-11 es de después de octubre: sí vence")
+        val tarde = alertaProximaEntrega(cal, "2026-11-22", desde = "2026-11-16")!!
+        igual(tarde.nivel == Nivel.VENCIDA, false, "si empezó a usarla después, la del 15-11 no vence")
+        igual(tarde.fechaLimite, "2026-12-15", "y avisa de la próxima")
+        igual(agendaEntregas(cal, "2026-11-22", 3, desde = "2026-11-16").map { it.fechaLimite }, listOf("2026-12-15", "2027-01-15", "2027-02-15"))
+        igual(agendaEntregas(cal, "2026-11-22", 3).first().fechaLimite, "2026-11-15", "sin desde, como siempre")
+    }
 
     @Test
     fun `avanzarPeriodo respeta semana, quincena y mes`() {
