@@ -447,7 +447,7 @@ details.barra-desplegable > summary::after {
 details.barra-desplegable[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
 details.barra-desplegable .barra-titulo { font-size: .82rem; color: var(--tinta-suave); }
 details.barra-desplegable > summary strong { color: var(--titulo); }
-details.barra-desplegable > .fichas { border-top: 1px solid var(--contorno); padding: var(--e4); }
+details.barra-desplegable > .fichas, details.barra-desplegable > .opciones { border-top: 1px solid var(--contorno); padding: var(--e4); }
 
 /* Avisos y franjas: todos iguales, fondo suave del estado, esquinas redondeadas y
    un ícono. Sin rayas de color al costado. */

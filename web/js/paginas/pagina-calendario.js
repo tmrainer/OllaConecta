@@ -197,10 +197,20 @@ for (const [dias, texto] of OPCIONES_AVISO) {
     }
     msgAviso.textContent = '';
     calendario.diasDeAviso = (c.checked ? [...otros, dias] : otros).sort((a, b) => b - a);
+    pintarAvisoElegido();
     cambio();
   });
   cajaAviso.append(crearElemento('label', { clase: 'opcion', for: c.id }, [c, texto]));
 }
+
+/** La barra «Avisarme», cerrada: «1 día antes», «1, 3 y 7 días antes». Se marcan varios, así que no se cierra sola. */
+function pintarAvisoElegido() {
+  const dias = [...calendario.diasDeAviso].sort((a, b) => a - b);
+  const lista = dias.length > 1 ? `${dias.slice(0, -1).join(', ')} y ${dias[dias.length - 1]}` : String(dias[0]);
+  buscar('#aviso-elegido').textContent = dias.length === 0 ? 'Sin aviso'
+    : dias.length === 1 && dias[0] === 1 ? '1 día antes' : `${lista} días antes`;
+}
+pintarAvisoElegido();
 
 // PERIODICIDADES se usa para que el texto de la UI y el cálculo no se separen.
 for (const [clave, , detalle] of PERIODICIDADES) {

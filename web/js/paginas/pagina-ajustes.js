@@ -31,6 +31,20 @@ function elegirUno(caja, nombre, opciones, actual, alElegir) {
   }
 }
 
+/** La barra que se estira: cerrada muestra lo elegido; al elegir se cierra. */
+function barraDeUno(barra, caja) {
+  const pintar = () => {
+    const marcada = caja.querySelector('input:checked');
+    barra.querySelector('summary strong').textContent = marcada ? marcada.parentElement.textContent : '';
+  };
+  caja.addEventListener('change', () => {
+    pintar();
+    if (barra.contains(document.activeElement)) barra.querySelector('summary').focus();
+    barra.open = false;
+  });
+  pintar();
+}
+
 // Quien llega con #copia (enlace viejo) va a datos.html.
 if (location.hash === '#copia') location.replace('./datos.html#copia');
 const enlaceDatos = buscar('#enlace-datos');
@@ -58,12 +72,14 @@ elegirUno(buscar('#opciones-tema'), 'tema',
   [['auto', 'Automático (como el teléfono)'], ['claro', 'Claro'], ['oscuro', 'Oscuro']],
   leerPreferencia('pi3.tema', 'auto'),
   (valor) => guardarPreferencia('pi3.tema', valor));
+barraDeUno(buscar('#barra-tema'), buscar('#opciones-tema'));
 
 const letraActual = leerPreferencia('pi3.letra', leerPreferencia('pi3.letraGrande', '0') === '1' ? 'grande' : 'normal');
 elegirUno(buscar('#opciones-letra'), 'letra',
   [['normal', 'Normal'], ['grande', 'Grande'], ['muy-grande', 'Muy grande']],
   letraActual,
   (valor) => guardarPreferencia('pi3.letra', valor));
+barraDeUno(buscar('#barra-letra'), buscar('#opciones-letra'));
 
 const hayVoz = puedeHablar();
 const casilla = buscar('#voz-boton');

@@ -73,15 +73,15 @@
 
   <section class="bloque" aria-labelledby="titulo-aspecto">
     <h2 id="titulo-aspecto">Aspecto</h2>
-    <fieldset>
-      <legend>Modo</legend>
-      <div class="opciones" id="opciones-tema"></div>
-    </fieldset>
-    <fieldset style="margin-top:12px">
-      <legend>Tamaño de la letra</legend>
-      <div class="opciones" id="opciones-letra"></div>
-      <p class="vista-previa" id="vista-previa" data-leer>Así se verá: <b>Rosa Quispe</b> · 4 de 12 marcadas · S/ 12.00</p>
-    </fieldset>
+    <details class="barra-desplegable" id="barra-tema">
+      <summary><span class="barra-titulo">Modo</span><strong id="tema-elegido"></strong></summary>
+      <div class="opciones" id="opciones-tema" role="radiogroup" aria-label="Modo"></div>
+    </details>
+    <details class="barra-desplegable" id="barra-letra" style="margin-top:12px">
+      <summary><span class="barra-titulo">Tamaño de la letra</span><strong id="letra-elegida"></strong></summary>
+      <div class="opciones" id="opciones-letra" role="radiogroup" aria-label="Tamaño de la letra"></div>
+    </details>
+    <p class="vista-previa" id="vista-previa" data-leer>Así se verá: <b>Rosa Quispe</b> · 4 de 12 marcadas · S/ 12.00</p>
   </section>
 
   <section class="bloque" aria-labelledby="titulo-voz">
