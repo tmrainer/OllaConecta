@@ -503,8 +503,17 @@ export function montarFiltrosPersonas(lista, ctx) {
     aplicarBusqueda(lista, ctx);
   }, 150));
 
-  // Fichas en vez de una lista desplegable: se ven todas las opciones de una
-  // vez y se elige con un toque.
+  const botonFiltros = buscar('#mostrar-filtros-afiliados');
+  const filtros = buscar('#filtroAfiliado');
+  botonFiltros.addEventListener('click', () => {
+    const abiertos = filtros.hidden;
+    filtros.hidden = !abiertos;
+    botonFiltros.setAttribute('aria-expanded', String(abiertos));
+    botonFiltros.classList.toggle('activo', abiertos);
+    botonFiltros.textContent = abiertos ? 'Ocultar filtros' : 'Filtros';
+  });
+
+  // Ocultar las opciones conserva el filtro elegido.
   for (const b of document.querySelectorAll('#filtroAfiliado .ficha-filtro')) {
     b.addEventListener('click', () => elegirFiltro(lista, ctx, b.dataset.valor));
   }

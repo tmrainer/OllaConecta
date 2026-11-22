@@ -2,7 +2,7 @@
 // preferencias (claves «pi3.*», ver js/interfaz/preferencias.js) no van en las copias.
 
 /** Versión que se muestra en «Acerca de». Subirla junto con versionName del APK. */
-const VERSION_APP = '1.7.0';
+const VERSION_APP = '2.1.2';
 import {
   buscar, crearElemento, montarCabecera, icono,
   pintarAvisosAlmacenamiento, decir, puedeHablar, avisoAbajo

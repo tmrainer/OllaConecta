@@ -148,7 +148,7 @@ val GUIA_ASISTENCIA = Guia("Asistencia", listOf(
 val GUIA_PADRON = Guia("Padrón", listOf(
     PasoGuia("Lo que falta", "Si a alguien le falta un dato o hay que corregirlo, sale aquí. Toca «Ver el detalle» y la app abre a esa persona.", "aviso", "padron.revisar", soloSiEsta = true),
     PasoGuia("Las personas de la olla", "Aquí están todas. Toca a una para ver sus datos, corregirlos o darla de baja.", "personas", "padron.lista", soloSiEsta = true),
-    PasoGuia("Busca y filtra", "Escribe un nombre o un DNI. Las fichas de abajo muestran solo las activas, a quienes les faltan datos y más.", "buscar", "padron.buscar", "padron.filtros", soloSiEsta = true),
+    PasoGuia("Busca y filtra", "Escribe un nombre o un DNI. Toca «Filtros» para ver las opciones y mostrar solo las activas, a quienes les faltan datos y más.", "buscar", "padron.buscar", "padron.filtros", soloSiEsta = true),
     PasoGuia("Inscribe a alguien", "Toca «Inscribir», abajo. Puedes leer su DNI con la cámara o escribir los datos.", "personaMas", "padron.inscribir"),
     PasoGuia("Llévala a la Municipalidad", "Quien inscribes queda pendiente. Cuando la registren, toca «Ya la registraron en la Municipalidad».", "aviso"),
     PasoGuia("La hoja de la Municipalidad", "Cuando te den la hoja en Excel, toca «Cargar la hoja (Excel)». Antes de guardar verás qué cambia.", "archivo", "padron.hoja")

@@ -73,6 +73,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -212,6 +213,7 @@ fun PantallaPadron(ctx: Contexto) {
 
     var busqueda by remember { mutableStateOf("") }
     var filtro by remember { mutableStateOf("activos") }
+    var filtrosAbiertos by remember { mutableStateOf(false) }
     var fechaRef by remember { mutableStateOf(hoyIso()) }
     var abierta by remember { mutableStateOf<String?>(null) }
     val listaEstado = rememberLazyListState()
@@ -282,9 +284,20 @@ fun PantallaPadron(ctx: Contexto) {
                         if (filtro == "pendientes" && pendientes == 0) filtro = "activos"
                         val sinFoto = padron.afiliados.count(::faltaFotoDni)
                         if (filtro == "sin_foto" && sinFoto == 0) filtro = "activos"
-                        Box(Modifier.objetivoGuia("padron.filtros")) { Opciones(FILTROS.filter { (it.first != "pendientes" || pendientes > 0) && (it.first != "sin_foto" || sinFoto > 0) }.map { (v, t) ->
-                            v to when { v == "incompletas" && incompletas > 0 -> "$t ($incompletas)"; v == "pendientes" -> "$t ($pendientes)"; v == "sin_foto" -> "$t ($sinFoto)"; else -> t }
-                        }, { it == filtro }, { filtro = it }) }
+                        Column(Modifier.objetivoGuia("padron.filtros")) {
+                            Boton(
+                                if (filtrosAbiertos) "Ocultar filtros" else "Filtros",
+                                { filtrosAbiertos = !filtrosAbiertos },
+                                Modifier.semantics { stateDescription = if (filtrosAbiertos) "Desplegados" else "Contraídos" },
+                                activo = filtrosAbiertos
+                            )
+                            if (filtrosAbiertos) {
+                                Spacer(Modifier.height(Medidas.e2))
+                                Opciones(FILTROS.filter { (it.first != "pendientes" || pendientes > 0) && (it.first != "sin_foto" || sinFoto > 0) }.map { (v, t) ->
+                                    v to when { v == "incompletas" && incompletas > 0 -> "$t ($incompletas)"; v == "pendientes" -> "$t ($pendientes)"; v == "sin_foto" -> "$t ($sinFoto)"; else -> t }
+                                }, { it == filtro }, { filtro = it })
+                            }
+                        }
                         val conteo = resumenEtario(padron, fechaRef)
                         Chips(Modifier.padding(top = Medidas.e3)) {
                             Chip("Activas", "${afiliadosActivos(padron, fechaRef).size}")

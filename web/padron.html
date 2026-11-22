@@ -112,7 +112,8 @@
         <input id="fechaRef" type="date">
       </div>
     </div>
-    <div class="fichas" id="filtroAfiliado" role="group" aria-label="Mostrar" style="margin-top:10px">
+    <button type="button" class="boton secundario" id="mostrar-filtros-afiliados" aria-expanded="false" aria-controls="filtroAfiliado" style="margin-top:10px">Filtros</button>
+    <div class="fichas" id="filtroAfiliado" role="group" aria-label="Mostrar" style="margin-top:10px" hidden>
       <button type="button" class="ficha-filtro" data-valor="activos">Activas</button>
       <button type="button" class="ficha-filtro" data-valor="incompletas">Les faltan datos</button>
       <button type="button" class="ficha-filtro" data-valor="ayuda_social">Ayuda social</button>
