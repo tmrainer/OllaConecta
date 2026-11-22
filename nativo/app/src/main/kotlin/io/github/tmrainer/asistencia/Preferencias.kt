@@ -43,7 +43,6 @@ class Preferencias(context: Context) {
     private val _bienvenidaVista = MutableStateFlow(prefs.getBoolean("bienvenidaVista", false))
     private val _vozBoton = MutableStateFlow(prefs.getBoolean("voz.boton", false))
     private val _vozLenta = MutableStateFlow(prefs.getBoolean("voz.lenta", false))
-    private val _exportarGuardar = MutableStateFlow(prefs.getBoolean("exportar.guardar", false))
 
     val tema: StateFlow<Tema> = _tema.asStateFlow()
     val letra: StateFlow<Letra> = _letra.asStateFlow()
@@ -54,14 +53,11 @@ class Preferencias(context: Context) {
     val vozBoton: StateFlow<Boolean> = _vozBoton.asStateFlow()
     /** Voz más lenta (pi3.voz.velocidad = 'lenta'). */
     val vozLenta: StateFlow<Boolean> = _vozLenta.asStateFlow()
-    /** Al exportar: guardar el archivo en el teléfono (true) o mandarlo por el menú «Compartir» (false). */
-    val exportarGuardar: StateFlow<Boolean> = _exportarGuardar.asStateFlow()
 
     fun cambiarTema(t: Tema) { _tema.value = t; prefs.edit().putString("tema", t.clave).apply() }
     fun cambiarLetra(l: Letra) { _letra.value = l; prefs.edit().putString("letra", l.clave).apply() }
     fun cambiarVozBoton(si: Boolean) { _vozBoton.value = si; prefs.edit().putBoolean("voz.boton", si).apply() }
     fun cambiarVozLenta(si: Boolean) { _vozLenta.value = si; prefs.edit().putBoolean("voz.lenta", si).apply() }
-    fun cambiarExportarGuardar(si: Boolean) { _exportarGuardar.value = si; prefs.edit().putBoolean("exportar.guardar", si).apply() }
 
     fun guardarPerfil(p: Perfil) {
         _perfil.value = p
@@ -89,7 +85,7 @@ class Preferencias(context: Context) {
         prefs.edit().clear().apply()
         _tema.value = Tema.AUTO; _letra.value = Letra.NORMAL
         _perfil.value = Perfil(); _perfilOmitido.value = false; _bienvenidaVista.value = false
-        _vozBoton.value = false; _vozLenta.value = false; _exportarGuardar.value = false
+        _vozBoton.value = false; _vozLenta.value = false
     }
 
     /** Las guías generales ya vistas (la del B-1): después, «Ayuda» va directo a la del paso. */

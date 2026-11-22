@@ -12,6 +12,9 @@ import android.content.ClipData
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.LabeledIntent
+import android.graphics.drawable.Icon
+import android.service.chooser.ChooserAction
 import android.net.Uri
 import android.os.Build
 import androidx.core.content.FileProvider
@@ -53,7 +56,10 @@ private fun avisoDeEleccion(context: Context, alElegir: AlElegir?): PendingInten
     return PendingIntent.getBroadcast(context, 7, i, banderas)
 }
 
-/** El menú «Compartir» del teléfono con el archivo. */
+/**
+ * El menú «Compartir» del teléfono con el archivo. Primero, «Guardar en el teléfono»
+ * ([GuardarArchivo]); después, las apps que lo reciben (WhatsApp, correo, Drive…).
+ */
 fun compartirArchivo(context: Context, nombre: String, mime: String, bytes: ByteArray, titulo: String, alElegir: AlElegir? = null) {
     val uri = archivoEnCache(context, nombre, bytes)
     val enviar = Intent(Intent.ACTION_SEND).setType(mime)
@@ -61,7 +67,20 @@ fun compartirArchivo(context: Context, nombre: String, mime: String, bytes: Byte
         .putExtra(Intent.EXTRA_TITLE, titulo)
         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     enviar.clipData = ClipData.newRawUri(nombre, uri)
+    val guardar = Intent(context, GuardarArchivo::class.java).setAction(Intent.ACTION_SEND).setType(mime)
+        .putExtra(Intent.EXTRA_STREAM, uri)
+        .putExtra(GuardarArchivo.EXTRA_NOMBRE, nombre)
     val menu = Intent.createChooser(enviar, titulo, avisoDeEleccion(context, alElegir)?.intentSender)
+    if (Build.VERSION.SDK_INT >= 34) {
+        // Android 14+: un botón con su nombre entero en la fila de acciones del menú.
+        val abrir = PendingIntent.getActivity(context, 8, guardar, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        menu.putExtra(Intent.EXTRA_CHOOSER_CUSTOM_ACTIONS, arrayOf(
+            ChooserAction.Builder(Icon.createWithResource(context, R.drawable.ic_guardar), "Guardar en el teléfono", abrir).build()
+        ))
+    } else {
+        // Antes: la primera casilla del menú, con el nombre de la app arriba.
+        menu.putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(LabeledIntent(guardar, context.packageName, "Guardar en el teléfono", R.drawable.ic_guardar)))
+    }
     context.startActivity(menu.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
 }
 

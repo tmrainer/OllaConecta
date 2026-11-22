@@ -73,6 +73,14 @@
                 android:resource="@xml/archivos" />
         </provider>
 
+        <!-- «Guardar en el teléfono» dentro del menú Compartir (GuardarArchivo.kt). Sin exportar:
+             el menú la abre en nombre de la app. -->
+        <activity
+            android:name=".GuardarArchivo"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <receiver android:name=".ReceptorEleccion" android:exported="false" />
         <receiver android:name=".ReceptorRecordatorio" android:exported="false" />
 

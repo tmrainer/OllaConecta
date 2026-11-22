@@ -198,7 +198,7 @@ private val PASOS_B1 = listOf(
     listOf(
         PasoGuia("Qué falta", "Si falta algo, sale aquí con el paso donde está. Toca «Completar» o «Corregir» y la app te lleva.", "aviso", "b1.estado"),
         PasoGuia("Mira la hoja", "Toca «Ver cómo queda en la hoja» para verlo como en el papel antes de mandarlo.", "boleta", "b1.hoja"),
-        PasoGuia("Mándalo", "«Exportar en PDF» lo arma para mandarlo por WhatsApp o imprimirlo. Si te lo piden antes de fin de mes, sale con la semana o la quincena en que va.", "archivo", "b1.exportar"),
+        PasoGuia("Mándalo", "Toca «PDF» y elige en el menú: WhatsApp, correo o «Guardar en el teléfono». Si te lo piden antes de fin de mes, sale con la semana o la quincena en que va.", "archivo", "b1.exportar"),
         PasoGuia("Cerrar el mes", "Al terminar el mes, toca «Cerrar…»: el B-1 queda con el nombre del mes, lo mandas en ese momento y empieza el siguiente.", "calendario", "b1.meses", "b1.mesSiguiente")
     )
 )
@@ -238,7 +238,7 @@ val GUIA_HOJA = Guia("Vista previa del B-1", listOf(
 val GUIA_REPORTES = Guia("Reportes", listOf(
     PasoGuia("Reporte del día", "Elige el día. Sale qué se cocinó, las raciones y quiénes recibieron, con una línea para firmar.", "archivo", "reportes.dia"),
     PasoGuia("Reporte del mes", "Elige el mes. Sale la asistencia de cada persona, las raciones y las compras del B-1.", "calendario", "reportes.mes"),
-    PasoGuia("PDF o Excel", "«Exportar en PDF» es para imprimir o mandar por WhatsApp. «Exportar en Excel», para quien lo pida en Excel.", "archivo", "reportes.exportar"),
+    PasoGuia("PDF o Excel", "«PDF» es para imprimir o mandar por WhatsApp; «Excel», para quien lo pida en Excel. En el menú que se abre también está «Guardar en el teléfono».", "archivo", "reportes.exportar"),
     PasoGuia("Gasto propio", "Lo que compraron con su propio dinero no va en el B-1. Anótalo con «Anotar un gasto propio»: sale en el reporte del mes.", "mas", "reportes.propio")
 ))
 

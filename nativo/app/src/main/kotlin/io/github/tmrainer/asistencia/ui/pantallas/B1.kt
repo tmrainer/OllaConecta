@@ -774,7 +774,6 @@ private fun PasoRevisar(
     Boton("Ver cómo queda en la hoja", verHoja, Modifier.objetivoGuia("b1.hoja"), icono = "boleta")
     Spacer(Modifier.height(Medidas.e5))
     TituloSeccion("Exportar el B-1")
-    Pista("En PDF o Excel, para guardar o mandar por WhatsApp.", Modifier.padding(bottom = Medidas.e3))
     // Antes de cerrar el mes sale con la semana o la quincena en que va («Noviembre-2026-S4»);
     // cerrado (o ya pasado el mes), con el mes y el año. La fecha de rendición es la del día en que se arma.
     val hoy = LocalDate.now()
