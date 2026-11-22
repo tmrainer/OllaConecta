@@ -11,8 +11,6 @@ package io.github.tmrainer.asistencia.ui.componentes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
@@ -67,22 +65,3 @@ fun FilaCampos(modifier: Modifier = Modifier, minAncho: Dp = 150.dp, contenido: 
     }
 }
 
-/**
- * Los meses en una fila que se desliza de lado (decisión del 22-11-2026): del más viejo al
- * más nuevo, con el elegido a la vista. [meses]: («2026-11», «Noviembre 2026»).
- */
-@Composable
-fun SelectorMeses(meses: List<Pair<String, String>>, elegido: String, alElegir: (String) -> Unit, modifier: Modifier = Modifier) {
-    val estado = androidx.compose.foundation.lazy.rememberLazyListState()
-    val i = meses.indexOfFirst { it.first == elegido }
-    androidx.compose.runtime.LaunchedEffect(i, meses.size) { if (i >= 0) estado.animateScrollToItem(maxOf(0, i - 1)) }
-    androidx.compose.foundation.lazy.LazyRow(
-        modifier.semantics { contentDescription = "Mes" }, state = estado,
-        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(Medidas.e2)
-    ) {
-        items(meses.size, key = { meses[it].first }) { k ->
-            val (clave, texto) = meses[k]
-            Ficha(texto, clave == elegido, { alElegir(clave) })
-        }
-    }
-}

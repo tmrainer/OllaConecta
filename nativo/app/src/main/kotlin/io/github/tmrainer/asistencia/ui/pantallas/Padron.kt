@@ -12,6 +12,7 @@ import io.github.tmrainer.asistencia.ui.ListaParaGuia
 import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.camara.LecturaDni
 import io.github.tmrainer.asistencia.ui.camara.CamaraDni
+import io.github.tmrainer.asistencia.ui.componentes.SelectorDesplegable
 import io.github.tmrainer.asistencia.ui.componentes.Superficie
 import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
 import io.github.tmrainer.asistencia.nucleo.padron.retirarPorLaHoja
@@ -107,7 +108,6 @@ import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
 import io.github.tmrainer.asistencia.ui.componentes.Avatar
-import io.github.tmrainer.asistencia.ui.componentes.BarraDesplegable
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.BotonFlotante
@@ -215,7 +215,6 @@ fun PantallaPadron(ctx: Contexto) {
 
     var busqueda by remember { mutableStateOf("") }
     var filtro by remember { mutableStateOf("activos") }
-    var filtrosAbiertos by remember { mutableStateOf(false) }
     var fechaRef by remember { mutableStateOf(hoyIso()) }
     var abierta by remember { mutableStateOf<String?>(null) }
     val listaEstado = rememberLazyListState()
@@ -290,10 +289,7 @@ fun PantallaPadron(ctx: Contexto) {
                             v to when { v == "incompletas" && incompletas > 0 -> "$t ($incompletas)"; v == "pendientes" -> "$t ($pendientes)"; v == "sin_foto" -> "$t ($sinFoto)"; else -> t }
                         }
                         // Cerrada muestra lo elegido; al elegir se vuelve a cerrar.
-                        BarraDesplegable("Mostrar", opcionesFiltro.firstOrNull { it.first == filtro }?.second.orEmpty(), filtrosAbiertos,
-                            { filtrosAbiertos = !filtrosAbiertos }, Modifier.objetivoGuia("padron.filtros"), icono = "filtro") {
-                            Opciones(opcionesFiltro, { it == filtro }, { filtro = it; filtrosAbiertos = false })
-                        }
+                        SelectorDesplegable("Mostrar", opcionesFiltro, filtro, { filtro = it }, Modifier.objetivoGuia("padron.filtros"), icono = "filtro")
                         val conteo = resumenEtario(padron, fechaRef)
                         Chips(Modifier.padding(top = Medidas.e3)) {
                             Chip("Activas", "${afiliadosActivos(padron, fechaRef).size}")
@@ -545,10 +541,7 @@ private fun EditorPersona(ctx: Contexto, padron: io.github.tmrainer.asistencia.n
             ElegirSocia(padron, a.titularId, a.id) { id -> cambiar { conSocia(it, id) } }
             Spacer(Modifier.height(Medidas.e3))
             Leyenda("Parentesco con la socia", obligatorio = true)
-            var parentescoAbierto by remember { mutableStateOf(false) }
-            BarraDesplegable("", a.parentesco.ifEmpty { "Elige el parentesco" }, parentescoAbierto, { parentescoAbierto = !parentescoAbierto }) {
-                Opciones(PARENTESCOS.map { it to it }, { it == a.parentesco }, { v -> cambiar { it.copy(parentesco = v) }; parentescoAbierto = false })
-            }
+            SelectorDesplegable("", PARENTESCOS.map { it to it }, a.parentesco.ifEmpty { null }, { v -> cambiar { it.copy(parentesco = v) } }, vacio = "Elige el parentesco")
             Spacer(Modifier.height(Medidas.e3))
             Campo("Ocupación", a.ocupacion, { v -> cambiar { it.copy(ocupacion = v) } }, pista = "Ej.: estudiante. Opcional.")
         }
@@ -892,10 +885,7 @@ fun PantallaInscribir(ctx: Contexto) {
                 }
                 Spacer(Modifier.height(Medidas.e3))
                 Leyenda("Parentesco con la socia", obligatorio = true)
-                var parentescoAbierto by remember { mutableStateOf(false) }
-                BarraDesplegable("", parentesco.ifEmpty { "Elige el parentesco" }, parentescoAbierto, { parentescoAbierto = !parentescoAbierto }) {
-                    Opciones(PARENTESCOS.map { it to it }, { it == parentesco }, { parentesco = it; parentescoAbierto = false })
-                }
+                SelectorDesplegable("", PARENTESCOS.map { it to it }, parentesco.ifEmpty { null }, { parentesco = it }, vacio = "Elige el parentesco")
             }
             Spacer(Modifier.height(Medidas.e4))
             Campo("Dirección", direccion, { direccion = it }, capitalizar = true,

@@ -9,6 +9,7 @@ import io.github.tmrainer.asistencia.nucleo.documentos.hojasDelB1
 import io.github.tmrainer.asistencia.nucleo.documentos.excelDelB1
 import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelB1
 import io.github.tmrainer.asistencia.ui.objetivoGuia
+import io.github.tmrainer.asistencia.ui.componentes.SelectorDesplegable
 import io.github.tmrainer.asistencia.ui.componentes.Documento
 import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
 import io.github.tmrainer.asistencia.AlElegir
@@ -94,9 +95,7 @@ import io.github.tmrainer.asistencia.ui.componentes.CampoSoles
 import io.github.tmrainer.asistencia.ui.componentes.Chip
 import io.github.tmrainer.asistencia.ui.componentes.Chips
 import io.github.tmrainer.asistencia.ui.componentes.EstadoGuardado
-import io.github.tmrainer.asistencia.ui.componentes.Ficha
 import io.github.tmrainer.asistencia.ui.componentes.FilaCampos
-import io.github.tmrainer.asistencia.ui.componentes.SelectorMeses
 import io.github.tmrainer.asistencia.ui.componentes.FranjaEstado
 import io.github.tmrainer.asistencia.ui.componentes.Icono
 import io.github.tmrainer.asistencia.ui.componentes.Leyenda
@@ -532,13 +531,12 @@ private fun PasoPeriodo(r: Rendicion, hs: List<Hallazgo>, cambiar: ((Rendicion) 
     val opciones = (-3..1).map { hoy.plusMonths(it.toLong()) }.map { periodoDelMes(it.year, it.monthValue) }
     val delMes = opciones.firstOrNull { it.inicio == r.periodo.inicio && it.fin == r.periodo.fin }
         ?: codigoB1(r.periodo, hoy, cerrado = true)?.takeIf { !it.contains("-Q") && !it.contains("-S") }?.let { r.periodo }
-    Leyenda("Mes")
-    // En una fila que se desliza de lado, del más viejo al más nuevo (como en Entregas).
-    SelectorMeses(opciones.map { it.inicio.take(7) to it.etiqueta }, if (delMes != null) r.periodo.inicio.take(7) else "", { clave ->
+    // Del más nuevo al más viejo, como en Entregas.
+    SelectorDesplegable("Mes", opciones.reversed().map { it.inicio.take(7) to it.etiqueta }, if (delMes != null) r.periodo.inicio.take(7) else null, { clave ->
         val m = opciones.first { it.inicio.take(7) == clave }
         // Una fecha de rendición vieja ya no vale para otro mes: la pone la app al armarlo.
         cambiar { it.copy(periodo = m, fechaRendicion = "") }
-    }, Modifier.objetivoGuia("b1.mes"))
+    }, Modifier.objetivoGuia("b1.mes"), icono = "calendario", vacio = "Elige el mes")
     (hs.errorDe("periodo.inicio") ?: hs.errorDe("periodo.etiqueta"))?.let { Text(it, style = tipos.chico, color = c.error, modifier = Modifier.padding(top = Medidas.e2)) }
     hs.avisoDe("periodo.inicio")?.let { Text(it, style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = Medidas.e2)) }
     if (delMes == null && r.periodo.inicio.isNotEmpty()) Pista("Este B-1 tiene fechas de antes. Elige un mes para cambiarlas.", Modifier.padding(top = Medidas.e2))
@@ -648,18 +646,9 @@ private fun PasoCompras(
                         Spacer(Modifier.height(10.dp))
                         // El estado va afuera de la fila: FilaCampos solo acomoda.
                         var cantidad by remember(f.id) { mutableStateOf(f.cantidad?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() } ?: "") }
-                        var unidadAbierta by remember { mutableStateOf(false) }
                         FilaCampos {
                             Campo("Cantidad", cantidad, { v -> cantidad = v; editar { conTotalCalculado(it, it.copy(cantidad = aNumero(v))) } }, decimal = true)
-                            Column {
-                                Leyenda("Unidad de medida")
-                                Box {
-                                    Ficha(f.unidadMedida.ifEmpty { "—" }, f.unidadMedida.isNotEmpty(), { unidadAbierta = true }, Modifier.fillMaxWidth(), minAlto = 48.dp, comoBoton = true)
-                                    androidx.compose.material3.DropdownMenu(expanded = unidadAbierta, onDismissRequest = { unidadAbierta = false }, containerColor = c.superficie) {
-                                        for (u in listOf("—") + UNIDADES) androidx.compose.material3.DropdownMenuItem(text = { Text(u, style = tipos.texto, color = c.tinta) }, onClick = { unidadAbierta = false; editar { it.copy(unidadMedida = if (u == "—") "" else u) } })
-                                    }
-                                }
-                            }
+                            SelectorDesplegable("Unidad de medida", listOf("" to "—") + UNIDADES.map { it to it }, f.unidadMedida.takeIf { it != "varios" }, { u -> editar { it.copy(unidadMedida = u) } })
                         }
                         Spacer(Modifier.height(10.dp))
                         CampoSoles("Precio unitario (S/)", f.precioUnitarioCent, { v -> editar { conTotalCalculado(it, it.copy(precioUnitarioCent = v)) } }, pista = "El precio de uno, como dice la boleta.")

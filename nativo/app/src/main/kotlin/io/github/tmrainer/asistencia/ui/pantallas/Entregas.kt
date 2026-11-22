@@ -39,7 +39,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
 import io.github.tmrainer.asistencia.nucleo.validaciones.Hallazgo
 import io.github.tmrainer.asistencia.ui.ListaParaGuia
-import io.github.tmrainer.asistencia.ui.componentes.SelectorMeses
+import io.github.tmrainer.asistencia.ui.componentes.SelectorDesplegable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -184,7 +184,7 @@ fun PantallaEntregas(ctx: Contexto) {
             item(key = "mes") {
                 Column {
                     TituloSeccion("Lo que se entrega")
-                    SelectorMeses(meses.sorted().map { it to etiquetaMes(it) }, mes, { mes = it }, Modifier.objetivoGuia("entregas.mes"))
+                    SelectorDesplegable("Mes", meses.map { it to etiquetaMes(it) }, mes, { mes = it }, Modifier.objetivoGuia("entregas.mes"), icono = "calendario")
                     Spacer(Modifier.height(Medidas.e4))
                     Leyenda("Formato B-1")
                     val hs = hsB1

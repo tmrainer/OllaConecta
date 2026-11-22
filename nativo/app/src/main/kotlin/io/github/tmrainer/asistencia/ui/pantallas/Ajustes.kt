@@ -18,9 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,7 +39,7 @@ import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
-import io.github.tmrainer.asistencia.ui.componentes.BarraDesplegable
+import io.github.tmrainer.asistencia.ui.componentes.SelectorDesplegable
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.Campo
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
@@ -110,16 +107,10 @@ fun PantallaAjustes(ctx: Contexto) {
 
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Aspecto")
-            var modoAbierto by remember { mutableStateOf(false) }
-            BarraDesplegable("Modo", tema.etiqueta, modoAbierto, { modoAbierto = !modoAbierto }) {
-                Opciones(Tema.values().map { it to it.etiqueta }, { it == tema }, { prefs.cambiarTema(it); modoAbierto = false })
-            }
+            SelectorDesplegable("Modo", Tema.values().map { it to it.etiqueta }, tema, { prefs.cambiarTema(it) })
             Spacer(Modifier.height(Medidas.e3))
             Column(Modifier.objetivoGuia("ajustes.letra")) {
-                var letraAbierta by remember { mutableStateOf(false) }
-                BarraDesplegable("Tamaño de la letra", letra.etiqueta, letraAbierta, { letraAbierta = !letraAbierta }) {
-                    Opciones(Letra.values().map { it to it.etiqueta }, { it == letra }, { prefs.cambiarLetra(it); letraAbierta = false })
-                }
+                SelectorDesplegable("Tamaño de la letra", Letra.values().map { it to it.etiqueta }, letra, { prefs.cambiarLetra(it) })
                 ParaLeer("Así se verá: Rosa Quispe · 4 de 12 marcadas · S/ 12.00")
                 Text(
                     buildAnnotatedString { append("Así se verá: "); withStyle(tipos.textoNegrita.toSpanStyle()) { append("Rosa Quispe") }; append(" · 4 de 12 marcadas · S/ 12.00") },

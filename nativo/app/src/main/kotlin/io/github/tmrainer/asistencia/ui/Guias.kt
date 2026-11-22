@@ -184,7 +184,7 @@ private val PASOS_B1 = listOf(
         PasoGuia("Los datos del centro", "Este y los que siguen: el nombre, el código de PCA, el distrito, la presidenta, su DNI y el celular. Vienen de los datos de tu olla (Ajustes); revísalos.", "lapiz", "b1.nombreCentro")
     ),
     listOf(
-        PasoGuia("El mes", "En «Mes», desliza y toca el mes del B-1. Va del primer al último día; la fecha de rendición la pone la app.", "calendario", "b1.mes"),
+        PasoGuia("El mes", "Toca «Mes» y elige el mes del B-1 en la lista. Va del primer al último día; la fecha de rendición la pone la app.", "calendario", "b1.mes"),
         PasoGuia("Cómo sale", "Al cerrar el mes, el B-1 sale con el mes y el año, como Noviembre-2026. Si lo mandas antes, sale con la semana (S1, S2, S4, S5) o la quincena (Q1) en que va.", "boleta", "b1.codigo", soloSiEsta = true)
     ),
     listOf(
@@ -216,7 +216,7 @@ fun ayudaB1(prefs: Preferencias, paso: Int): Guia =
     if (prefs.guiaVista("b1")) guiaPasoB1(paso) else guiaGeneralB1(paso)
 
 val GUIA_ENTREGAS = Guia("Entregas", listOf(
-    PasoGuia("El mes", "En la fila de meses, desliza y toca el mes del que quieres ver lo que se entrega.", "calendario", "entregas.mes"),
+    PasoGuia("El mes", "Toca «Mes» y elige de qué mes ver lo que se entrega.", "calendario", "entregas.mes"),
     PasoGuia("El B-1 del mes", "Aquí ves si el B-1 de ese mes está listo. Toca el botón para ir a completarlo o verlo.", "boleta", "entregas.b1"),
     PasoGuia("Reporte del mes", "La asistencia de cada persona, las raciones y las compras del B-1, en PDF o Excel.", "archivo", "entregas.reporte"),
     PasoGuia("Gasto propio", "Lo que compraron con su propio dinero no va en el B-1. Anótalo con «Anotar un gasto propio»: sale en el reporte del mes.", "mas", "entregas.propio"),
