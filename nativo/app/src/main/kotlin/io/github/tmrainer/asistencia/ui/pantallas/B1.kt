@@ -96,6 +96,7 @@ import io.github.tmrainer.asistencia.ui.componentes.Chip
 import io.github.tmrainer.asistencia.ui.componentes.Chips
 import io.github.tmrainer.asistencia.ui.componentes.EstadoGuardado
 import io.github.tmrainer.asistencia.ui.componentes.Ficha
+import io.github.tmrainer.asistencia.ui.componentes.FilaCampos
 import io.github.tmrainer.asistencia.ui.componentes.FranjaEstado
 import io.github.tmrainer.asistencia.ui.componentes.Icono
 import io.github.tmrainer.asistencia.ui.componentes.Leyenda
@@ -582,12 +583,12 @@ private fun PasoIngresos(
             }
         }
     }
-    Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-        CampoSoles("Monto del subsidio (S/)", r.montoSubsidioCent, { v -> propuestos.value = propuestos.value - "montoSubsidio"; cambiar { it.copy(montoSubsidioCent = v) } }, Modifier.weight(1f).objetivoGuia("b1.monto"),
+    FilaCampos {
+        CampoSoles("Monto del subsidio (S/)", r.montoSubsidioCent, { v -> propuestos.value = propuestos.value - "montoSubsidio"; cambiar { it.copy(montoSubsidioCent = v) } }, Modifier.objetivoGuia("b1.monto"),
             pista = if ("montoSubsidio" in propuestos.value) "Dato propuesto — revísalo" else "Lo que te dio la Municipalidad para este periodo.", error = hs.errorDe("montoSubsidio"), obligatorio = true)
         // Se recibe antes de la primera compra y de la rendición.
         val primeraCompra = r.egresos.map { it.fechaCompra }.filter(::esIso).minOrNull() ?: ""
-        CampoFecha("Fecha de la asignación", r.fechaAsignacion, { v -> cambiar { it.copy(fechaAsignacion = v) } }, Modifier.weight(1f).objetivoGuia("b1.fechaAsignacion"), pista = "El día que recibiste ese dinero.", error = hs.errorDe("fechaAsignacion"), aviso = hs.avisoDe("fechaAsignacion"), obligatorio = true,
+        CampoFecha("Fecha de la asignación", r.fechaAsignacion, { v -> cambiar { it.copy(fechaAsignacion = v) } }, Modifier.objetivoGuia("b1.fechaAsignacion"), pista = "El día que recibiste ese dinero.", error = hs.errorDe("fechaAsignacion"), aviso = hs.avisoDe("fechaAsignacion"), obligatorio = true,
             hasta = listOf(r.fechaRendicion, primeraCompra).filter(::esIso).minOrNull() ?: "")
     }
 }
@@ -651,12 +652,13 @@ private fun PasoCompras(
                         Pista("Para cuando la boleta junta varias cosas o no dice cuánto ni a cuánto. En la hoja sale «varios» en cantidad, unidad y precio: escribe solo el monto total.", Modifier.padding(top = Medidas.e2))
                     } else {
                         Spacer(Modifier.height(10.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                            var cantidad by remember(f.id) { mutableStateOf(f.cantidad?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() } ?: "") }
-                            Campo("Cantidad", cantidad, { v -> cantidad = v; editar { conTotalCalculado(it, it.copy(cantidad = aNumero(v))) } }, Modifier.weight(1f), decimal = true)
-                            Column(Modifier.weight(1f)) {
+                        // El estado va afuera de la fila: FilaCampos solo acomoda.
+                        var cantidad by remember(f.id) { mutableStateOf(f.cantidad?.let { if (it == it.toLong().toDouble()) it.toLong().toString() else it.toString() } ?: "") }
+                        var unidadAbierta by remember { mutableStateOf(false) }
+                        FilaCampos {
+                            Campo("Cantidad", cantidad, { v -> cantidad = v; editar { conTotalCalculado(it, it.copy(cantidad = aNumero(v))) } }, decimal = true)
+                            Column {
                                 Leyenda("Unidad de medida")
-                                var unidadAbierta by remember { mutableStateOf(false) }
                                 Box {
                                     Ficha(f.unidadMedida.ifEmpty { "—" }, f.unidadMedida.isNotEmpty(), { unidadAbierta = true }, Modifier.fillMaxWidth(), minAlto = 48.dp, comoBoton = true)
                                     androidx.compose.material3.DropdownMenu(expanded = unidadAbierta, onDismissRequest = { unidadAbierta = false }, containerColor = c.superficie) {
@@ -680,9 +682,9 @@ private fun PasoCompras(
                     Pista("Si compraste en el mercado sin boleta, déjalo vacío.", Modifier.padding(bottom = Medidas.e2))
                     Campo("RUC del vendedor", f.rucProveedor, { v -> editar { it.copy(rucProveedor = v) } }, pista = "11 cifras; está arriba en la boleta.", soloDigitos = true, maxLargo = 11)
                     Spacer(Modifier.height(10.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                        Campo("Serie", f.boletaSerie, { v -> editar { it.copy(boletaSerie = v) } }, Modifier.weight(1f), pista = "Ej.: B001")
-                        Campo("Número", f.boletaCorrelativo, { v -> editar { it.copy(boletaCorrelativo = v) } }, Modifier.weight(1f), pista = "Ej.: 000143")
+                    FilaCampos {
+                        Campo("Serie", f.boletaSerie, { v -> editar { it.copy(boletaSerie = v) } }, pista = "Ej.: B001")
+                        Campo("Número", f.boletaCorrelativo, { v -> editar { it.copy(boletaCorrelativo = v) } }, pista = "Ej.: 000143")
                     }
                 }
             }

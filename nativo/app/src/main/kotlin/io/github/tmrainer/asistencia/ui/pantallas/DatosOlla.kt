@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import io.github.tmrainer.asistencia.nucleo.modelo.Config
 import io.github.tmrainer.asistencia.nucleo.modelo.DatosOlla
 import io.github.tmrainer.asistencia.nucleo.modelo.Dirigente
+import io.github.tmrainer.asistencia.ui.componentes.FilaCampos
 import io.github.tmrainer.asistencia.ui.componentes.Campo
 import io.github.tmrainer.asistencia.ui.componentes.CampoSoles
 import io.github.tmrainer.asistencia.ui.componentes.Leyenda
@@ -47,10 +48,10 @@ private fun CamposDirigente(cargo: String, d: Dirigente, conCelular: Boolean, ca
     Campo("Nombres y apellidos", d.nombre, { v -> cambiar { it.copy(nombre = v) } }, capitalizar = true, pista = "Como en su DNI.",
         error = if (intento && obligatorio && d.nombre.isBlank()) "Escribe el nombre de la presidenta." else null)
     Spacer(Modifier.height(10.dp))
-    Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-        Campo("DNI", d.dni, { v -> cambiar { it.copy(dni = v) } }, Modifier.weight(1f), soloDigitos = true, maxLargo = 8,
+    FilaCampos {
+        Campo("DNI", d.dni, { v -> cambiar { it.copy(dni = v) } }, soloDigitos = true, maxLargo = 8,
             error = if (intento && obligatorio && d.dni.length != 8) "8 números." else null)
-        if (conCelular) Campo("Celular", d.celular, { v -> cambiar { it.copy(celular = v) } }, Modifier.weight(1f), soloDigitos = true, maxLargo = 9, pista = "9 cifras; empieza con 9.")
+        if (conCelular) Campo("Celular", d.celular, { v -> cambiar { it.copy(celular = v) } }, soloDigitos = true, maxLargo = 9, pista = "9 cifras; empieza con 9.")
     }
 }
 

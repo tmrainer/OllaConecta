@@ -117,6 +117,8 @@ import io.github.tmrainer.asistencia.ui.componentes.Chip
 import io.github.tmrainer.asistencia.ui.componentes.Chips
 import io.github.tmrainer.asistencia.ui.componentes.EstadoGuardado
 import io.github.tmrainer.asistencia.ui.componentes.Ficha
+import io.github.tmrainer.asistencia.ui.componentes.FilaCampos
+import io.github.tmrainer.asistencia.ui.componentes.ventana
 import io.github.tmrainer.asistencia.ui.componentes.Icono
 import io.github.tmrainer.asistencia.ui.componentes.Leyenda
 import io.github.tmrainer.asistencia.ui.componentes.LocalAvisos
@@ -347,9 +349,9 @@ fun PantallaPadron(ctx: Contexto) {
                     Spacer(Modifier.height(Medidas.e5))
                     TituloSeccion("Lista del padrón", apoyo = true)
                     Pista("Las personas activas con su foto y los días que vinieron entre estas fechas. Más abajo, las dos versiones del padrón: el libro de socias y el formato municipal.", Modifier.padding(bottom = Medidas.e3))
-                    Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                        CampoFecha("Días asistidos, desde", repInicio, { if (it.isNotEmpty()) repInicio = it }, Modifier.weight(1f))
-                        CampoFecha("Hasta", repFin, { if (it.isNotEmpty()) repFin = it }, Modifier.weight(1f))
+                    FilaCampos {
+                        CampoFecha("Días asistidos, desde", repInicio, { if (it.isNotEmpty()) repInicio = it })
+                        CampoFecha("Hasta", repFin, { if (it.isNotEmpty()) repFin = it })
                     }
                     Spacer(Modifier.height(Medidas.e3))
                     val centro = estado.config.value.ultimoCentro?.nombreCentro?.trim().orEmpty()
@@ -445,6 +447,14 @@ private fun FilaPersona(
     )
     val g = grupoEtario(a, fechaRef)
     val edad = if (esIso(a.fechaNacimiento)) edadEnFecha(a.fechaNacimiento, fechaRef) else null
+    // Lo que le falta a la persona, uno solo (el más importante).
+    val pendiente = when {
+        errores > 0 -> "faltan datos"
+        faltaFotoDni(a) -> "falta la foto"
+        a.activo && a.registroMunicipal == "pendiente" -> "falta la Municipalidad"
+        else -> null
+    }
+    val angosta = ventana().angosta
     Column(Modifier.fillMaxWidth().clip(forma).background(c.superficie)) {
         Row(
             Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = alAbrir).defaultMinSize(minHeight = 64.dp).padding(Medidas.e4, 10.dp),
@@ -466,10 +476,10 @@ private fun FilaPersona(
                     if (!a.activo) add("Dada de baja")
                 }
                 Text(meta.joinToString(" · "), style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 2.dp))
+                // Con poco lugar, lo que falta va debajo: al costado partía el nombre en tres líneas.
+                if (angosta && pendiente != null) Pastilla(pendiente, TonoPastilla.FALTA, modifier = Modifier.padding(top = Medidas.e2))
             }
-            if (errores > 0) { Spacer(Modifier.width(Medidas.e2)); Pastilla("faltan datos", TonoPastilla.FALTA) }
-            else if (faltaFotoDni(a)) { Spacer(Modifier.width(Medidas.e2)); Pastilla("falta la foto", TonoPastilla.FALTA) }
-            else if (a.activo && a.registroMunicipal == "pendiente") { Spacer(Modifier.width(Medidas.e2)); Pastilla("falta la Municipalidad", TonoPastilla.FALTA) }
+            if (!angosta && pendiente != null) { Spacer(Modifier.width(Medidas.e2)); Pastilla(pendiente, TonoPastilla.FALTA) }
             Spacer(Modifier.width(Medidas.e2))
             Icono("flecha", 18.dp, if (abierta) c.acentoTexto else c.tintaSuave, Modifier.rotate(if (abierta) 90f else 0f))
         }
@@ -590,21 +600,21 @@ private fun EditorPersona(ctx: Contexto, padron: io.github.tmrainer.asistencia.n
         if (masDelLibro) {
             Spacer(Modifier.height(Medidas.e3))
             Pista("Como en el libro. Ningún formato los pide; se guardan por si hacen falta.", Modifier.padding(bottom = Medidas.e2))
-            Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                Campo("Distrito", a.distrito, { v -> cambiar { it.copy(distrito = v) } }, Modifier.weight(1f), capitalizar = true)
-                Campo("Provincia", a.provincia, { v -> cambiar { it.copy(provincia = v) } }, Modifier.weight(1f), capitalizar = true)
+            FilaCampos {
+                Campo("Distrito", a.distrito, { v -> cambiar { it.copy(distrito = v) } }, capitalizar = true)
+                Campo("Provincia", a.provincia, { v -> cambiar { it.copy(provincia = v) } }, capitalizar = true)
             }
             Spacer(Modifier.height(Medidas.e3))
             Campo("Departamento", a.departamento, { v -> cambiar { it.copy(departamento = v) } }, capitalizar = true)
             Spacer(Modifier.height(Medidas.e3))
-            Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                Campo("Profesión", a.profesion, { v -> cambiar { it.copy(profesion = v) } }, Modifier.weight(1f), capitalizar = true)
-                Campo("Actividad", a.actividad, { v -> cambiar { it.copy(actividad = v) } }, Modifier.weight(1f), capitalizar = true, placeholder = "Ej.: ama de casa")
+            FilaCampos {
+                Campo("Profesión", a.profesion, { v -> cambiar { it.copy(profesion = v) } }, capitalizar = true)
+                Campo("Actividad", a.actividad, { v -> cambiar { it.copy(actividad = v) } }, capitalizar = true, placeholder = "Ej.: ama de casa")
             }
             Spacer(Modifier.height(Medidas.e3))
-            Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                Campo("Grado de instrucción", a.gradoInstruccion, { v -> cambiar { it.copy(gradoInstruccion = v) } }, Modifier.weight(1f), capitalizar = true, placeholder = "Ej.: secundaria incompleta")
-                Campo("Estado civil", a.estadoCivil, { v -> cambiar { it.copy(estadoCivil = v) } }, Modifier.weight(1f), capitalizar = true, placeholder = "Ej.: soltera")
+            FilaCampos {
+                Campo("Grado de instrucción", a.gradoInstruccion, { v -> cambiar { it.copy(gradoInstruccion = v) } }, capitalizar = true, placeholder = "Ej.: secundaria incompleta")
+                Campo("Estado civil", a.estadoCivil, { v -> cambiar { it.copy(estadoCivil = v) } }, capitalizar = true, placeholder = "Ej.: soltera")
             }
             Spacer(Modifier.height(Medidas.e3))
             Campo("Carnet N.º", a.carnet, { v -> cambiar { it.copy(carnet = v) } })

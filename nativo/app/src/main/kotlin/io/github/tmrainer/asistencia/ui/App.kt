@@ -75,6 +75,7 @@ import io.github.tmrainer.asistencia.nucleo.estado.Estado
 import io.github.tmrainer.asistencia.ui.componentes.AvisoAbajo
 import io.github.tmrainer.asistencia.ui.componentes.Avisador
 import io.github.tmrainer.asistencia.ui.componentes.Icono
+import io.github.tmrainer.asistencia.ui.componentes.ventana
 import io.github.tmrainer.asistencia.ui.componentes.IconoRelleno
 import io.github.tmrainer.asistencia.ui.componentes.IconosBarras
 import io.github.tmrainer.asistencia.ui.componentes.Lectura
@@ -288,7 +289,10 @@ fun Cabecera(ctx: Contexto, titulo: String, subtitulo: String? = null, conVolver
                 // «Escuchar» con un toque, si se pidió en Ajustes (también está en Ayuda).
                 if (conVoz) BotonIconoCabecera("voz", "Escuchar") { ctx.leerPantalla() }
                 // La ayuda en el lugar, cuando se pide: cómo se usa ESTA pantalla (Guias.kt).
-                BotonCabecera("ayuda", "Ayuda", Modifier.objetivoGuia("ayuda")) { ctx.abrirGuia(guiaSegun?.invoke() ?: guia) }
+                // Con poco lugar (pantalla angosta o letra grande), solo el ícono: el título no se aprieta.
+                val abrirAyuda = { ctx.abrirGuia(guiaSegun?.invoke() ?: guia) }
+                if (ventana().angosta) BotonIconoCabecera("ayuda", "Ayuda", Modifier.objetivoGuia("ayuda"), abrirAyuda)
+                else BotonCabecera("ayuda", "Ayuda", Modifier.objetivoGuia("ayuda"), abrirAyuda)
                 if (conAjustes) BotonIconoCabecera("ajustes", "Ajustes", Modifier.objetivoGuia("ajustes")) { ctx.ir(Ruta.AJUSTES) }
             }
         }

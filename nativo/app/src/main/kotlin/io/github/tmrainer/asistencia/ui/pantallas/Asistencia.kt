@@ -13,6 +13,8 @@ import io.github.tmrainer.asistencia.nucleo.documentos.pdfDeAsistencia
 import androidx.compose.foundation.lazy.rememberLazyListState
 import io.github.tmrainer.asistencia.ui.ListaParaGuia
 import io.github.tmrainer.asistencia.ui.objetivoGuia
+import io.github.tmrainer.asistencia.ui.componentes.FilaCampos
+import io.github.tmrainer.asistencia.ui.componentes.ventana
 import io.github.tmrainer.asistencia.ui.componentes.horaAhora
 import io.github.tmrainer.asistencia.ui.componentes.Documento
 import io.github.tmrainer.asistencia.ui.componentes.BloqueEnvio
@@ -254,14 +256,18 @@ fun PantallaAsistencia(ctx: Contexto) {
                 stickyHeader {
                     Column(Modifier.fillMaxWidth().background(c.fondo).padding(bottom = Medidas.e2)) {
                         BarraHoy(atHoy, activos.size)
-                        Row(Modifier.padding(top = Medidas.e2).objetivoGuia("asistencia.buscar"), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Medidas.e2)) {
-                            if (activos.size > 12) {
-                                Campo("Buscar", busqueda, { busqueda = it }, Modifier.weight(1f), placeholder = "Buscar…")
-                            }
-                            val textoFaltan = when {
+                        val textoFaltan = when {
                                 sinMarcar == 0 -> if (soloSinMarcar) "Ya vinieron todos: ver la lista" else "Ya vinieron todos"
                                 soloSinMarcar -> if (sinMarcar == 1) "Viendo a quien falta" else "Viendo los $sinMarcar que faltan"
                                 else -> if (sinMarcar == 1) "Ver a quien falta" else "Ver los $sinMarcar que faltan"
+                            }
+                        // Con poco lugar, el buscador a todo el ancho y el botón debajo: lado a lado se apretaban.
+                        if (ventana().angosta) Column(Modifier.padding(top = Medidas.e2).objetivoGuia("asistencia.buscar"), verticalArrangement = Arrangement.spacedBy(Medidas.e2)) {
+                            if (activos.size > 12) Campo("Buscar", busqueda, { busqueda = it }, placeholder = "Buscar…")
+                            Boton(textoFaltan, { soloSinMarcar = !soloSinMarcar }, diminuto = true, activo = soloSinMarcar, habilitado = !(sinMarcar == 0 && !soloSinMarcar))
+                        } else Row(Modifier.padding(top = Medidas.e2).objetivoGuia("asistencia.buscar"), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Medidas.e2)) {
+                            if (activos.size > 12) {
+                                Campo("Buscar", busqueda, { busqueda = it }, Modifier.weight(1f), placeholder = "Buscar…")
                             }
                             Boton(textoFaltan, { soloSinMarcar = !soloSinMarcar }, diminuto = true, activo = soloSinMarcar, habilitado = !(sinMarcar == 0 && !soloSinMarcar))
                         }
@@ -383,9 +389,9 @@ fun PantallaAsistencia(ctx: Contexto) {
             item {
                 Spacer(Modifier.height(Medidas.e5))
                 TituloSeccion("Resumen", apoyo = true)
-                Row(horizontalArrangement = Arrangement.spacedBy(Medidas.e3)) {
-                    CampoFecha("Desde", inicio, { if (it.isNotEmpty()) inicio = it }, Modifier.weight(1f))
-                    CampoFecha("Hasta", fin, { if (it.isNotEmpty()) fin = it }, Modifier.weight(1f))
+                FilaCampos {
+                    CampoFecha("Desde", inicio, { if (it.isNotEmpty()) inicio = it })
+                    CampoFecha("Hasta", fin, { if (it.isNotEmpty()) fin = it })
                 }
                 val r = remember(padron, inicio, fin) { resumenEconomicoRaciones(padron, inicio, fin) }
                 Chips(Modifier.padding(top = Medidas.e3).objetivoGuia("asistencia.cifras")) {
