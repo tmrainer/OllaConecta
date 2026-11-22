@@ -42,6 +42,7 @@ import io.github.tmrainer.asistencia.ui.GUIA_REPORTES
 import io.github.tmrainer.asistencia.ui.objetivoGuia
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.Contexto
+import io.github.tmrainer.asistencia.ui.componentes.BarraDesplegable
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
 import io.github.tmrainer.asistencia.ui.componentes.Campo
@@ -76,6 +77,7 @@ fun PantallaReportes(ctx: Contexto) {
             .filter { Regex("^\\d{4}-\\d{2}$").matches(it) }.distinct().sortedDescending().take(6)
     }
     var mes by remember { mutableStateOf(hoy.take(7)) }
+    var mesesAbiertos by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxWidth()) {
         Cabecera(ctx, "Reportes", "Para presentar, en PDF o Excel", guia = GUIA_REPORTES)
@@ -104,7 +106,9 @@ fun PantallaReportes(ctx: Contexto) {
             Column(Modifier.objetivoGuia("reportes.mes")) {
                 TituloSeccion("Reporte del mes")
                 Pista("Asistencia por persona, raciones del mes e insumos del B-1. El gasto propio va aparte.", Modifier.padding(bottom = Medidas.e3))
-                Opciones(meses.map { it to etiquetaMes(it) }, { it == mes }, { mes = it })
+                BarraDesplegable("Mes", etiquetaMes(mes), mesesAbiertos, { mesesAbiertos = !mesesAbiertos }, icono = "calendario") {
+                    Opciones(meses.map { it to etiquetaMes(it) }, { it == mes }, { mes = it; mesesAbiertos = false })
+                }
                 val delMes = remember(padron, rendiciones, mes) { reporteDelMes(padron, rendiciones, mes) }
                 val textoMes = "${delMes.etiqueta}: ${cuantos(delMes.dias.size, "día")} con atención, ${cuantos(delMes.servidas, "ración servida", "raciones servidas")}, " +
                     "${cuantos(delMes.personas.count { it.dias > 0 }, "persona")} que vinieron y ${cuantos(delMes.insumos.size, "compra")} del B-1."

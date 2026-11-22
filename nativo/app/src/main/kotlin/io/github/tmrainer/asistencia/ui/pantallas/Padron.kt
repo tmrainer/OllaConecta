@@ -535,7 +535,10 @@ private fun EditorPersona(ctx: Contexto, padron: io.github.tmrainer.asistencia.n
             ElegirSocia(padron, a.titularId, a.id) { id -> cambiar { conSocia(it, id) } }
             Spacer(Modifier.height(Medidas.e3))
             Leyenda("Parentesco con la socia", obligatorio = true)
-            Opciones(PARENTESCOS.map { it to it }, { it == a.parentesco }, { v -> cambiar { it.copy(parentesco = v) } })
+            var parentescoAbierto by remember { mutableStateOf(false) }
+            BarraDesplegable("", a.parentesco.ifEmpty { "Elige el parentesco" }, parentescoAbierto, { parentescoAbierto = !parentescoAbierto }) {
+                Opciones(PARENTESCOS.map { it to it }, { it == a.parentesco }, { v -> cambiar { it.copy(parentesco = v) }; parentescoAbierto = false })
+            }
             Spacer(Modifier.height(Medidas.e3))
             Campo("Ocupación", a.ocupacion, { v -> cambiar { it.copy(ocupacion = v) } }, pista = "Ej.: estudiante. Opcional.")
         }
@@ -879,7 +882,10 @@ fun PantallaInscribir(ctx: Contexto) {
                 }
                 Spacer(Modifier.height(Medidas.e3))
                 Leyenda("Parentesco con la socia", obligatorio = true)
-                Opciones(PARENTESCOS.map { it to it }, { it == parentesco }, { parentesco = it })
+                var parentescoAbierto by remember { mutableStateOf(false) }
+                BarraDesplegable("", parentesco.ifEmpty { "Elige el parentesco" }, parentescoAbierto, { parentescoAbierto = !parentescoAbierto }) {
+                    Opciones(PARENTESCOS.map { it to it }, { it == parentesco }, { parentesco = it; parentescoAbierto = false })
+                }
             }
             Spacer(Modifier.height(Medidas.e4))
             Campo("Dirección", direccion, { direccion = it }, capitalizar = true,

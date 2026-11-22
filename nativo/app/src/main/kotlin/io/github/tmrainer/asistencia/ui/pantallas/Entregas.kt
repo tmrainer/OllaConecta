@@ -74,6 +74,7 @@ import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.GUIA_ENTREGAS
 import io.github.tmrainer.asistencia.ui.Contexto
 import io.github.tmrainer.asistencia.ui.Ruta
+import io.github.tmrainer.asistencia.ui.componentes.BarraDesplegable
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
 import io.github.tmrainer.asistencia.ui.componentes.CampoFecha
 import io.github.tmrainer.asistencia.ui.componentes.EstadoGuardado
@@ -101,6 +102,14 @@ private val TONO_ESTADO = mapOf(
     "observada" to (TonoPastilla.ADVERTENCIA to "aviso"), "conforme" to (TonoPastilla.OK to "ok")
 )
 private val OPCIONES_AVISO = listOf(1 to "1 día antes", 3 to "3 días antes", 7 to "7 días antes", 15 to "15 días antes")
+
+/** Los días marcados, en palabras: «1, 3 y 7 días antes». */
+private fun diasAntes(dias: List<Int>): String {
+    val xs = dias.sorted().map { it.toString() }
+    if (xs.isEmpty()) return "Sin aviso"
+    val lista = if (xs.size > 1) "${xs.dropLast(1).joinToString(", ")} y ${xs.last()}" else xs[0]
+    return if (xs == listOf("1")) "1 día antes" else "$lista días antes"
+}
 
 /**
  * El color de una entrega según cuánto falta, igual en el Inicio, el reloj y la lista:
@@ -245,14 +254,19 @@ fun PantallaEntregas(ctx: Contexto) {
             TituloSeccion("Cada cuánto entregas")
             // La guía ilumina el rótulo con sus opciones: el rótulo solo quedaba medio iluminado.
             Column(Modifier.objetivoGuia("entregas.cada")) {
-                Leyenda("Cada cuánto")
-                Opciones(PERIODICIDADES.map { it.clave to "${it.etiqueta} (${it.detalle})" }, { it == calendario.periodicidad }, { v -> estado.cambiarCalendario { it.copy(periodicidad = v) } })
+                val periodicidades = PERIODICIDADES.map { it.clave to "${it.etiqueta} (${it.detalle})" }
+                var cadaAbierto by remember { mutableStateOf(false) }
+                BarraDesplegable("Cada cuánto", periodicidades.firstOrNull { it.first == calendario.periodicidad }?.second.orEmpty(), cadaAbierto, { cadaAbierto = !cadaAbierto }, icono = "calendario") {
+                    Opciones(periodicidades, { it == calendario.periodicidad }, { v -> estado.cambiarCalendario { it.copy(periodicidad = v) }; cadaAbierto = false })
+                }
             }
             Spacer(Modifier.height(Medidas.e3))
             CampoFecha("Una fecha de entrega que conoces", calendario.fechaLimiteBase, { v -> estado.cambiarCalendario { it.copy(fechaLimiteBase = v) } }, Modifier.objetivoGuia("entregas.fecha"), pista = "La próxima o una pasada, da igual.")
             Spacer(Modifier.height(Medidas.e3))
             Column(Modifier.objetivoGuia("entregas.avisar")) {
-                Leyenda("Avisarme")
+                var avisarAbierto by remember { mutableStateOf(false) }
+                // Se marcan varios: la barra queda abierta hasta que se toca otra vez.
+                BarraDesplegable("Avisarme", diasAntes(calendario.diasDeAviso), avisarAbierto, { avisarAbierto = !avisarAbierto }, icono = "reloj") {
                 Opciones(OPCIONES_AVISO, { it in calendario.diasDeAviso }, { dias ->
                     val otros = calendario.diasDeAviso.filter { it != dias }
                     val marcado = dias in calendario.diasDeAviso
@@ -262,6 +276,7 @@ fun PantallaEntregas(ctx: Contexto) {
                         estado.cambiarCalendario { it.copy(diasDeAviso = (if (marcado) otros else otros + dias).sortedDescending()) }
                     }
                 })
+                }
             }
             if (msgAviso.isNotEmpty()) Text(msgAviso, style = tipos.chico, color = c.aviso, modifier = Modifier.padding(top = 4.dp))
             EstadoGuardado(guardado, "Se guarda solo, mientras escribes.")

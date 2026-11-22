@@ -504,7 +504,8 @@ fun Chips(modifier: Modifier = Modifier, contenido: @Composable () -> Unit) {
 /**
  * Una barra que se estira: cerrada es una sola fila con [titulo] y lo elegido
  * ([resumen]); al tocarla se abre hacia abajo y muestra el [contenido] (las
- * opciones). Para que muchas fichas no llenen la pantalla.
+ * opciones). Para que muchas fichas no llenen la pantalla. Con [titulo] vacío,
+ * el rótulo va afuera (p. ej. una Leyenda obligatoria).
  */
 @Composable
 fun BarraDesplegable(
@@ -537,7 +538,7 @@ fun BarraDesplegable(
         ) {
             if (icono != null) { Icono(icono, 20.dp, c.acentoTexto); Spacer(Modifier.width(Medidas.e3)) }
             Column(Modifier.weight(1f)) {
-                Text(titulo, style = tipos.chico, color = c.tintaSuave)
+                if (titulo.isNotEmpty()) Text(titulo, style = tipos.chico, color = c.tintaSuave)
                 Text(resumen, style = tipos.textoFuerte, color = c.titulo)
             }
             Icono("flecha", 20.dp, c.tintaSuave, Modifier.rotate(giro))
