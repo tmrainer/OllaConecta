@@ -59,25 +59,28 @@ fun totales(rendicion: Rendicion): Totales {
     return Totales(total = total, conSubsidio = min(subsidio, total), aporte = max(0L, total - subsidio))
 }
 
-val ORIGENES_FONDO = listOf("subsidio", "ayuda_social", "aporte_propio")
+/**
+ * El dinero del B-1 sale de dos lados: el subsidio o lo propio de la olla. «Ayuda social» es
+ * un tipo de menú (de quien come), no un fondo; las compras que la web marcaba «Ayuda social /
+ * donación» cuentan como dinero propio de la olla.
+ */
+val ORIGENES_FONDO = listOf("subsidio", "aporte_propio")
 
-data class GastoPorOrigen(val subsidio: Long, val ayudaSocial: Long, val aportePropio: Long) {
-    val suma: Long get() = subsidio + ayudaSocial + aportePropio
+data class GastoPorOrigen(val subsidio: Long, val aportePropio: Long) {
+    val suma: Long get() = subsidio + aportePropio
 }
 
 fun gastoPorOrigen(rendicion: Rendicion): GastoPorOrigen {
     var subsidio = 0L
-    var ayuda = 0L
     var propio = 0L
     for (fila in rendicion.egresos) {
         val monto = fila.montoTotalCent ?: continue
-        when (if (fila.origenFondo in ORIGENES_FONDO) fila.origenFondo else "subsidio") {
-            "ayuda_social" -> ayuda += monto
-            "aporte_propio" -> propio += monto
+        when (fila.origenFondo) {
+            "aporte_propio", "ayuda_social" -> propio += monto
             else -> subsidio += monto
         }
     }
-    return GastoPorOrigen(subsidio, ayuda, propio)
+    return GastoPorOrigen(subsidio, propio)
 }
 
 data class Descuadre(val esperado: Long, val declarado: Long, val diferencia: Long)

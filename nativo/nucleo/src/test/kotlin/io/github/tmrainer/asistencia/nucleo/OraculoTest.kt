@@ -152,7 +152,10 @@ private fun calcularTodo(r: Respaldo, crudo: JsonElement, hoy: String, hoyValida
             buildJsonObject {
                 put("id", rd.id)
                 put("totales", buildJsonObject { put("total", t.total); put("conSubsidio", t.conSubsidio); put("aporte", t.aporte) })
-                put("gastoPorOrigen", buildJsonObject { put("subsidio", po.subsidio); put("ayuda_social", po.ayudaSocial); put("aporte_propio", po.aportePropio) })
+                // La app junta «ayuda social» (de antes) con lo propio; la web los separa. Se
+                // separa aquí para comparar.
+                val ayuda = rd.egresos.filter { it.origenFondo == "ayuda_social" }.sumOf { it.montoTotalCent ?: 0L }
+                put("gastoPorOrigen", buildJsonObject { put("subsidio", po.subsidio); put("ayuda_social", ayuda); put("aporte_propio", po.aportePropio - ayuda) })
                 put("costoPorRacionCent", if (padron != null) costoPorRacionCent(rd, padron) else null)
                 put("descuadres", lista(rd.egresos) { e ->
                     val d = descuadreFila(e)

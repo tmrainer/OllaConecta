@@ -27,7 +27,8 @@ import io.github.tmrainer.asistencia.nucleo.modelo.pad2
 import kotlin.math.min
 
 private const val NO_ANOTADO = "(no se anotó)"
-private val ORIGEN = mapOf("subsidio" to "Subsidio", "ayuda_social" to "Ayuda social", "aporte_propio" to "Aporte propio")
+// «ayuda_social» es de datos de antes (la web lo ofrecía como «Ayuda social / donación»): es dinero propio.
+private val ORIGEN = mapOf("subsidio" to "Subsidio", "ayuda_social" to "Aporte propio", "aporte_propio" to "Aporte propio")
 
 /** Quien recibió ración ese día. */
 data class AsistenteDelDia(val n: Int, val nombre: String, val documento: String, val menu: String)

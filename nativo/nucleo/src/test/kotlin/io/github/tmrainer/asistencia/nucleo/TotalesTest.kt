@@ -85,11 +85,20 @@ class TotalesTest {
     @Test
     fun `La suma por origen de fondo iguala el total`() {
         val base = rendicionDelEjemplar()
+        val r = base.copy(egresos = listOf(base.egresos[0], base.egresos[1].copy(origenFondo = "aporte_propio")))
+        val po = gastoPorOrigen(r)
+        igual(po.subsidio, 6800L)
+        igual(po.aportePropio, 14185L)
+        igual(po.suma, totalRendicionGastos(r))
+    }
+
+    @Test
+    fun `Una compra de antes marcada ayuda social cuenta como dinero propio`() {
+        val base = rendicionDelEjemplar()
         val r = base.copy(egresos = listOf(base.egresos[0], base.egresos[1].copy(origenFondo = "ayuda_social")))
         val po = gastoPorOrigen(r)
         igual(po.subsidio, 6800L)
-        igual(po.ayudaSocial, 14185L)
-        igual(po.aportePropio, 0L)
+        igual(po.aportePropio, 14185L)
         igual(po.suma, totalRendicionGastos(r))
     }
 

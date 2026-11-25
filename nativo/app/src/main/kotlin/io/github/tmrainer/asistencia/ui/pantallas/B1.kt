@@ -702,9 +702,8 @@ private fun PasoCompras(
             // se muestra cuando hay otro origen además del subsidio. Si todo es subsidio, el chip
             // repetía la fila de arriba con el rótulo «Subsidio», que en «Revisar» es lo recibido.
             val po = gastoPorOrigen(r)
-            if (po.ayudaSocial != 0L || po.aportePropio != 0L) Chips(Modifier.padding(top = Medidas.e2)) {
+            if (po.aportePropio != 0L) Chips(Modifier.padding(top = Medidas.e2)) {
                 if (po.subsidio != 0L) Chip("Con el subsidio", "S/ ${formatearSoles(po.subsidio)}")
-                if (po.ayudaSocial != 0L) Chip("Con ayuda social", "S/ ${formatearSoles(po.ayudaSocial)}")
                 if (po.aportePropio != 0L) Chip("Aporte propio", "S/ ${formatearSoles(po.aportePropio)}")
             }
             for (m in hs.filter { it.campo == "totales" }) Text(m.mensaje, style = tipos.chico, color = if (m.severidad == Severidad.ERROR) c.error else c.aviso, modifier = Modifier.padding(top = Medidas.e2))

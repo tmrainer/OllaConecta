@@ -37,7 +37,7 @@ data class Egreso(
     val precioUnitarioCent: Long? = null,
     val precioUnitarioVarios: Boolean = false,
     val montoTotalCent: Long? = null,     // SIEMPRE obligatorio
-    val origenFondo: String = "subsidio"  // "subsidio" | "ayuda_social" | "aporte_propio"
+    val origenFondo: String = "subsidio"  // "subsidio" | "aporte_propio" («ayuda_social», de antes, cuenta como propio)
 )
 
 /** Cuándo se exportó un B-1. Va en la copia. */
