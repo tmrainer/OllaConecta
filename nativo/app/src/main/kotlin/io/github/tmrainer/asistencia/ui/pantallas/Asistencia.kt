@@ -7,26 +7,18 @@
 package io.github.tmrainer.asistencia.ui.pantallas
 
 import io.github.tmrainer.asistencia.nucleo.envio.correoDeAsistencia
-import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
-import io.github.tmrainer.asistencia.nucleo.documentos.excelDeAsistencia
-import io.github.tmrainer.asistencia.nucleo.documentos.pdfDeAsistencia
 import androidx.compose.foundation.lazy.rememberLazyListState
 import io.github.tmrainer.asistencia.ui.ListaParaGuia
 import io.github.tmrainer.asistencia.ui.objetivoGuia
-import io.github.tmrainer.asistencia.ui.componentes.FilaCampos
 import io.github.tmrainer.asistencia.ui.componentes.ventana
 import io.github.tmrainer.asistencia.ui.componentes.horaAhora
-import io.github.tmrainer.asistencia.ui.componentes.Documento
 import io.github.tmrainer.asistencia.ui.componentes.BloqueEnvio
-import io.github.tmrainer.asistencia.ui.componentes.BotonesExportar
 import io.github.tmrainer.asistencia.ui.camara.CamaraDni
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -57,7 +49,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
@@ -65,7 +56,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.github.tmrainer.asistencia.nucleo.calculos.Origen
 import io.github.tmrainer.asistencia.nucleo.calculos.afiliadosActivos
 import io.github.tmrainer.asistencia.nucleo.calculos.asistenciasConTodos
 import io.github.tmrainer.asistencia.nucleo.calculos.desgloseDelDia
@@ -73,15 +63,12 @@ import io.github.tmrainer.asistencia.nucleo.calculos.etiquetaGrupoEtario
 import io.github.tmrainer.asistencia.nucleo.calculos.grupoEtario
 import io.github.tmrainer.asistencia.nucleo.calculos.menuPorDefecto
 import io.github.tmrainer.asistencia.nucleo.calculos.recaudacionDelDiaCent
-import io.github.tmrainer.asistencia.nucleo.calculos.resumenEconomicoRaciones
 import io.github.tmrainer.asistencia.nucleo.calculos.sinInscribirDelDia
 import io.github.tmrainer.asistencia.nucleo.modelo.Afiliado
 import io.github.tmrainer.asistencia.nucleo.modelo.Asistencia
 import io.github.tmrainer.asistencia.nucleo.modelo.Atencion
 import io.github.tmrainer.asistencia.nucleo.modelo.ORDEN_NOMBRES
-import io.github.tmrainer.asistencia.nucleo.modelo.Padron
 import io.github.tmrainer.asistencia.nucleo.modelo.SinInscribir
-import io.github.tmrainer.asistencia.nucleo.modelo.aDdMmAa
 import io.github.tmrainer.asistencia.nucleo.modelo.cuantos
 import io.github.tmrainer.asistencia.nucleo.modelo.fechaLarga
 import io.github.tmrainer.asistencia.nucleo.modelo.formatearSoles
@@ -95,6 +82,8 @@ import io.github.tmrainer.asistencia.nucleo.validaciones.validarPreciosMenu
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.GUIA_ASISTENCIA
 import io.github.tmrainer.asistencia.ui.Contexto
+import io.github.tmrainer.asistencia.nucleo.estado.Estado
+import android.content.Context
 import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.Acciones
@@ -102,20 +91,14 @@ import io.github.tmrainer.asistencia.ui.componentes.Avatar
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
 import io.github.tmrainer.asistencia.ui.componentes.Boton
 import io.github.tmrainer.asistencia.ui.componentes.Campo
-import io.github.tmrainer.asistencia.ui.componentes.CampoFecha
 import io.github.tmrainer.asistencia.ui.componentes.CampoSoles
-import io.github.tmrainer.asistencia.ui.componentes.Chip
-import io.github.tmrainer.asistencia.ui.componentes.Chips
-import io.github.tmrainer.asistencia.ui.componentes.Enlace
 import io.github.tmrainer.asistencia.ui.componentes.EstadoGuardado
 import io.github.tmrainer.asistencia.ui.componentes.EstadoVacio
 import io.github.tmrainer.asistencia.ui.componentes.Icono
-import io.github.tmrainer.asistencia.ui.componentes.LocalAvisos
 import io.github.tmrainer.asistencia.ui.componentes.PanelHallazgos
 import io.github.tmrainer.asistencia.ui.componentes.Pista
 import io.github.tmrainer.asistencia.ui.componentes.Separador
 import io.github.tmrainer.asistencia.ui.componentes.Superficie
-import io.github.tmrainer.asistencia.ui.componentes.TipoBoton
 import io.github.tmrainer.asistencia.ui.componentes.TituloSeccion
 import io.github.tmrainer.asistencia.ui.componentes.vibrar
 import io.github.tmrainer.asistencia.ui.tema.Medidas
@@ -126,10 +109,41 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 /** Lo que se busca de una persona: nombre sin tildes ni mayúsculas, y su DNI. */
-private fun claveBusqueda(p: Afiliado) = "${normalizarNombre(nombreCompleto(p))} ${p.numeroDocumento}"
+internal fun claveBusqueda(p: Afiliado) = "${normalizarNombre(nombreCompleto(p))} ${p.numeroDocumento}"
+
+/** Cambia un día; si todavía no estaba guardado (el de hoy), lo agrega. */
+internal fun cambiarDia(estado: Estado, base: Atencion, cambio: (Atencion) -> Atencion) {
+    estado.cambiarPadron { p ->
+        val i = p.atenciones.indexOfFirst { it.id == base.id }
+        if (i >= 0) p.copy(atenciones = p.atenciones.toMutableList().also { it[i] = cambio(it[i]) })
+        else p.copy(atenciones = p.atenciones + cambio(base))
+    }
+}
+
+/** Marca o quita a [persona] en el día [at], con vibración y «Deshacer». */
+internal fun alternarAsistencia(ctx: Contexto, contexto: Context, at: Atencion, persona: Afiliado) {
+    val antes = at
+    val vino = at.asistencias.none { it.afiliadoId == persona.id }
+    cambiarDia(ctx.estado, at) { a ->
+        if (vino) a.copy(legado = null, asistencias = a.asistencias + Asistencia(persona.id, menuPorDefecto(persona)))
+        else a.copy(asistencias = a.asistencias.filter { it.afiliadoId != persona.id })
+    }
+    vibrar(contexto)
+    ctx.avisos.mostrar("${if (vino) "Marcaste a" else "Quitaste a"} ${persona.nombres.ifEmpty { nombreCompleto(persona) }}") {
+        cambiarDia(ctx.estado, antes) { a -> a.copy(asistencias = antes.asistencias, legado = antes.legado) }
+    }
+}
+
+/** Marca (o quita) a todas las [personas] en el día [at], con «Deshacer». */
+internal fun marcarATodos(ctx: Contexto, at: Atencion, personas: List<Afiliado>, marcar: Boolean) {
+    val antes = at
+    cambiarDia(ctx.estado, at) { a -> if (marcar) a.copy(legado = null, asistencias = asistenciasConTodos(a, personas)) else a.copy(asistencias = emptyList()) }
+    ctx.avisos.mostrar(if (marcar) "Marcaste a todos" else "Quitaste a todos") {
+        cambiarDia(ctx.estado, antes) { a -> a.copy(asistencias = antes.asistencias, legado = antes.legado) }
+    }
+}
 
 // Curvas: ease-out y la enfatizada de Material.
-private val SALIDA = CubicBezierEasing(0f, 0f, .58f, 1f)
 private val ENFATIZADA = CubicBezierEasing(.2f, 0f, 0f, 1f)
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -141,7 +155,6 @@ fun PantallaAsistencia(ctx: Contexto) {
     val guardado by estado.guardado.collectAsStateWithLifecycle()
     val c = colores
     val contexto = LocalContext.current
-    val avisos = LocalAvisos.current
     val hoy = hoyIso()
 
     // El día de hoy: el guardado, o uno nuevo que todavía no se guarda.
@@ -150,14 +163,7 @@ fun PantallaAsistencia(ctx: Contexto) {
         precioMenuNormalCent = config.precioMenuNormalCent, precioMenuAyudaSocialCent = config.precioMenuAyudaSocialCent
     )
 
-    /** Cambia un día; si todavía no estaba guardado (el de hoy), lo agrega. */
-    fun cambiarDia(base: Atencion, cambio: (Atencion) -> Atencion) {
-        estado.cambiarPadron { p ->
-            val i = p.atenciones.indexOfFirst { it.id == base.id }
-            if (i >= 0) p.copy(atenciones = p.atenciones.toMutableList().also { it[i] = cambio(it[i]) })
-            else p.copy(atenciones = p.atenciones + cambio(base))
-        }
-    }
+    fun cambiarDia(base: Atencion, cambio: (Atencion) -> Atencion) = cambiarDia(estado, base, cambio)
 
     // Revisar todos los días es lo más caro de un toque: 600 ms después del último.
     var hallazgos by remember { mutableStateOf(emptyList<Hallazgo>()) }
@@ -172,6 +178,8 @@ fun PantallaAsistencia(ctx: Contexto) {
         afiliadosActivos(padron, hoy).sortedWith { a, b -> ORDEN_NOMBRES.compare(nombreCompleto(a), nombreCompleto(b)) }
     }
     val claves = remember(activos) { activos.associate { it.id to claveBusqueda(it) } }
+    // El grupo de edad de cada uno, una vez (no en cada fila al deslizar).
+    val grupos = remember(activos, hoy) { activos.associate { it.id to grupoEtario(it, hoy) } }
     var busqueda by remember { mutableStateOf("") }
     var soloSinMarcar by remember { mutableStateOf(false) }
     val marcados = remember(atHoy.asistencias) { atHoy.asistencias.map { it.afiliadoId }.toSet() }
@@ -182,26 +190,8 @@ fun PantallaAsistencia(ctx: Contexto) {
     }
     val sinMarcar = activos.count { it.id !in marcados }
 
-    fun alternar(at: Atencion, persona: Afiliado) {
-        val antes = at
-        val vino = persona.id !in at.asistencias.map { it.afiliadoId }
-        cambiarDia(at) { a ->
-            if (vino) a.copy(legado = null, asistencias = a.asistencias + Asistencia(persona.id, menuPorDefecto(persona)))
-            else a.copy(asistencias = a.asistencias.filter { it.afiliadoId != persona.id })
-        }
-        vibrar(contexto)
-        avisos.mostrar("${if (vino) "Marcaste a" else "Quitaste a"} ${persona.nombres.ifEmpty { nombreCompleto(persona) }}") {
-            cambiarDia(antes) { a -> a.copy(asistencias = antes.asistencias, legado = antes.legado) }
-        }
-    }
-
-    fun marcarTodos(at: Atencion, personas: List<Afiliado>, marcar: Boolean) {
-        val antes = at
-        cambiarDia(at) { a -> if (marcar) a.copy(legado = null, asistencias = asistenciasConTodos(a, personas)) else a.copy(asistencias = emptyList()) }
-        avisos.mostrar(if (marcar) "Marcaste a todos" else "Quitaste a todos") {
-            cambiarDia(antes) { a -> a.copy(asistencias = antes.asistencias, legado = antes.legado) }
-        }
-    }
+    fun alternar(at: Atencion, persona: Afiliado) = alternarAsistencia(ctx, contexto, at, persona)
+    fun marcarTodos(at: Atencion, personas: List<Afiliado>, marcar: Boolean) = marcarATodos(ctx, at, personas, marcar)
 
     // Pasar lista mostrando el DNI: la zona de texto del reverso (el número lleva
     // dígito de control). Marca a quien está en el padrón; no agrega ni guarda
@@ -223,11 +213,6 @@ fun PantallaAsistencia(ctx: Contexto) {
         alternar(at, persona)
         return "✓ Marcaste a $nombre"
     }
-
-    var diaAbierto by remember { mutableStateOf<String?>(null) }
-    val periodoDefecto = remember { estado.periodoPorDefecto() }
-    var inicio by remember { mutableStateOf(periodoDefecto.inicio) }
-    var fin by remember { mutableStateOf(periodoDefecto.fin) }
 
     Column(Modifier.fillMaxWidth()) {
         Cabecera(ctx, "Asistencia", fechaLarga(hoy), guia = GUIA_ASISTENCIA)
@@ -286,7 +271,7 @@ fun PantallaAsistencia(ctx: Contexto) {
                             persona = persona,
                             presente = persona.id in marcados,
                             menu = menus[persona.id] ?: menuPorDefecto(persona),
-                            grupo = grupoEtario(persona, hoy),
+                            grupo = grupos[persona.id],
                             primera = persona.id == visibles.first().id,
                             ultima = persona.id == visibles.last().id,
                             alTocar = { alternar(atHoy, persona) }
@@ -334,38 +319,13 @@ fun PantallaAsistencia(ctx: Contexto) {
 
             item { Spacer(Modifier.height(Medidas.e4)); PanelHallazgos(hallazgos) }
 
+            // Los días que pasaron, el reporte del día y el resumen tienen su pantalla: aquí,
+            // con cientos de días, deslizar daba tirones.
             item {
-                TituloSeccion("Otros días", apoyo = true)
-                Pista("Para corregir o completar días pasados.", Modifier.padding(bottom = Medidas.e3))
-                Boton("+ Registrar otro día", modifier = Modifier.objetivoGuia("asistencia.otros"), onClick = {
-                    // Sin fecha: la pone la persona; la ficha se abre.
-                    val at = nuevaAtencion(estado.preciosActuales()).copy(fecha = "")
-                    estado.cambiarPadron { it.copy(atenciones = it.atenciones + at) }
-                    diaAbierto = at.id
-                })
-                Spacer(Modifier.height(Medidas.e3))
-            }
-            val otros = padron.atenciones.filter { it.fecha != hoy }.sortedByDescending { it.fecha }
-            if (otros.isEmpty()) {
-                item { Text("Todavía no hay días anteriores.", style = tipos.pista, color = c.tintaSuave, modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(Medidas.rM)).background(c.superficie2).padding(Medidas.e4, Medidas.e6), textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
-            }
-            items(otros, key = { "dia-" + it.id }) { at ->
-                FichaDia(
-                    at = at, padron = padron, abierta = diaAbierto == at.id,
-                    primera = at.id == otros.first().id, ultima = at.id == otros.last().id,
-                    alAbrir = { diaAbierto = if (diaAbierto == at.id) null else at.id },
-                    cambiar = { cambio -> cambiarDia(at, cambio) },
-                    alternar = { p -> alternar(at, p) },
-                    marcarTodos = { personas, marcar -> marcarTodos(at, personas, marcar) },
-                    quitarDia = {
-                        val pos = padron.atenciones.indexOfFirst { it.id == at.id }
-                        estado.cambiarPadron { p -> p.copy(atenciones = p.atenciones.filter { it.id != at.id }) }
-                        diaAbierto = null
-                        avisos.mostrar("Quitaste el día ${if (at.fecha.isNotEmpty()) aDdMmAa(at.fecha) else ""}".trim()) {
-                            estado.cambiarPadron { p -> p.copy(atenciones = p.atenciones.toMutableList().also { it.add(maxOf(0, minOf(pos, it.size)), at) }) }
-                        }
-                    }
-                )
+                Spacer(Modifier.height(Medidas.e5))
+                TituloSeccion("Días anteriores", apoyo = true)
+                Pista("Para corregir un día que pasó, sacar el reporte del día o ver el resumen.", Modifier.padding(bottom = Medidas.e3))
+                Boton("Días anteriores y reportes", { ctx.ir(Ruta.DIAS) }, Modifier.objetivoGuia("asistencia.otros"), icono = "reloj")
             }
 
             item {
@@ -379,46 +339,8 @@ fun PantallaAsistencia(ctx: Contexto) {
                 }
             }
 
-            // El reporte del día vive aquí, con los días (el del mes está en Entregas, con el B-1).
             item {
-                Spacer(Modifier.height(Medidas.e5))
-                TituloSeccion("Reporte del día", apoyo = true)
-                ReporteDelDia(ctx, Modifier.objetivoGuia("asistencia.reporte"))
-            }
-
-            item {
-                Spacer(Modifier.height(Medidas.e5))
-                TituloSeccion("Resumen", apoyo = true)
-                FilaCampos {
-                    CampoFecha("Desde", inicio, { if (it.isNotEmpty()) inicio = it })
-                    CampoFecha("Hasta", fin, { if (it.isNotEmpty()) fin = it })
-                }
-                val r = remember(padron, inicio, fin) { resumenEconomicoRaciones(padron, inicio, fin) }
-                Chips(Modifier.padding(top = Medidas.e3).objetivoGuia("asistencia.cifras")) {
-                    Chip("Raciones", "${r.racionesTotales}")
-                    Chip("Normales", "${r.racionesNormales}")
-                    Chip("Ayuda social", "${r.racionesAyudaSocial}")
-                    if (r.recaudacionCent != null) {
-                        Chip("Recaudado", "S/ ${formatearSoles(r.recaudacionCent)}")
-                        Chip("Promedio por ración", "S/ ${formatearSoles(r.precioPromedioRacionCent)}")
-                    }
-                }
-                // Solo se explica lo que no se ve en las cifras: cuando falta algo.
-                val partes = ArrayList<String>()
-                if (r.racionesTotales == 0) partes.add("Nadie marcado en estas fechas.")
-                else if (r.recaudacionCent == null) partes.add("Falta el precio del menú para calcular lo recaudado.")
-                else if (r.racionesConPrecio < r.racionesTotales) {
-                    val sin = r.racionesTotales - r.racionesConPrecio
-                    partes.add("${if (sin == 1) "1 ración no tiene" else "$sin raciones no tienen"} precio y no cuenta${if (sin == 1) "" else "n"} en el promedio.")
-                }
-                if (r.diasDeLegado > 0) partes.add("${if (r.diasDeLegado == 1) "1 día trae" else "${r.diasDeLegado} días traen"} raciones anotadas a mano en la versión anterior.")
-                if (partes.isNotEmpty()) Text(partes.joinToString(" "), style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
-                val centro = estado.config.value.ultimoCentro?.nombreCentro?.trim().orEmpty()
-                BotonesExportar(
-                    pdf = { Documento(pdfDeAsistencia(estado.padron.value, inicio, fin, centro, selloAhora()), "Asistencia $inicio a $fin", "Asistencia (copia de referencia)") },
-                    excel = { Documento(excelDeAsistencia(estado.padron.value, inicio, fin, centro), "Asistencia $inicio a $fin", "Asistencia") },
-                    modifier = Modifier.padding(top = Medidas.e3)
-                )
+                Spacer(Modifier.height(Medidas.e4))
                 EstadoGuardado(guardado, "Se guarda solo, mientras tocas.")
             }
         }
@@ -489,20 +411,15 @@ fun FilaToque(
                     Text((if (grupo != null) etiquetaGrupoEtario(grupo) else "Sin grupo") + if (menu == "ayuda_social") " · Ayuda social" else "", style = tipos.chico, color = c.tintaSuave)
                 }
                 Spacer(Modifier.width(Medidas.e3))
-                // El círculo se llena y el ✓ crece en 150 ms.
-                val fondoMarca by animateColorAsState(if (presente) c.acento else Color.Transparent, tween(150, easing = SALIDA), label = "fondo")
-                val bordeMarca by animateColorAsState(if (presente) c.acento else c.contorno, tween(150, easing = SALIDA), label = "borde")
+                // El círculo se llena y el ✓ crece en 150 ms. Una sola animación por fila (antes eran
+                // tres): al deslizar rápido se arman muchas filas y cada una pesaba.
+                val marca by animateFloatAsState(if (presente) 1f else 0f, tween(150, easing = ENFATIZADA), label = "marca")
                 Box(
-                    Modifier.size(32.dp).clip(CircleShape).background(fondoMarca)
-                        .border(2.dp, bordeMarca, CircleShape),
+                    Modifier.size(32.dp).clip(CircleShape).background(lerp(Color.Transparent, c.acento, marca))
+                        .border(2.dp, lerp(c.contorno, c.acento, marca), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Con el nombre completo: dentro de una fila tomaría el de RowScope.
-                    androidx.compose.animation.AnimatedVisibility(
-                        presente,
-                        enter = scaleIn(tween(150, easing = ENFATIZADA), initialScale = .25f) + fadeIn(tween(150, easing = SALIDA)),
-                        exit = scaleOut(tween(150, easing = ENFATIZADA), targetScale = .25f) + fadeOut(tween(150, easing = SALIDA))
-                    ) { Icono("ok", 18.dp, Color.White) }
+                    if (marca > 0f) Icono("ok", 18.dp, Color.White, Modifier.graphicsLayer { val e = .25f + .75f * marca; scaleX = e; scaleY = e; alpha = marca })
                 }
             }
         }
@@ -544,99 +461,13 @@ private fun BotonPaso(texto: String, descripcion: String, onClick: () -> Unit) {
     ) { Text(texto, style = tipos.titulo, color = c.acentoTexto) }
 }
 
-/** Un día anterior: plegado en una línea; abierto, su ficha completa. */
-@Composable
-private fun FichaDia(
-    at: Atencion, padron: Padron, abierta: Boolean, primera: Boolean, ultima: Boolean,
-    alAbrir: () -> Unit, cambiar: ((Atencion) -> Atencion) -> Unit,
-    alternar: (Afiliado) -> Unit,
-    marcarTodos: (List<Afiliado>, Boolean) -> Unit, quitarDia: () -> Unit
-) {
-    val c = colores
-    val d = desgloseDelDia(at)
-    val rec = recaudacionDelDiaCent(at)
-    val forma = RoundedCornerShape(
-        topStart = if (primera) Medidas.rM else 0.dp, topEnd = if (primera) Medidas.rM else 0.dp,
-        bottomStart = if (ultima) Medidas.rM else 0.dp, bottomEnd = if (ultima) Medidas.rM else 0.dp
-    )
-    Column(Modifier.fillMaxWidth().clip(forma).background(c.superficie)) {
-        Row(
-            Modifier.fillMaxWidth().background(if (abierta) c.superficie2 else c.superficie).clickable(role = Role.Button, onClick = alAbrir)
-                .defaultMinSize(minHeight = 56.dp).padding(Medidas.e4, Medidas.e3),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Medidas.e3)
-        ) {
-            Text(if (at.fecha.isNotEmpty()) aDdMmAa(at.fecha) else "Sin fecha", style = tipos.textoNegrita, color = c.titulo)
-            val resumen = buildList {
-                add("${d.total} raciones")
-                if (d.ayudaSocial > 0) add("${d.ayudaSocial} de ayuda social")
-                if (rec != null) add("S/ ${formatearSoles(rec)}")
-            }
-            Text(resumen.joinToString(" · "), style = tipos.chico, color = c.tintaSuave, modifier = Modifier.weight(1f))
-            Icono("flecha", 18.dp, if (abierta) c.acentoTexto else c.tintaSuave, Modifier.rotate(if (abierta) 90f else 0f))
-        }
-        if (abierta) {
-            Column(Modifier.padding(Medidas.e4, Medidas.e3, Medidas.e4, Medidas.e4)) {
-                CampoFecha("Fecha", at.fecha, { f -> cambiar { it.copy(fecha = f) } })
-                Spacer(Modifier.height(Medidas.e3))
-                RegistroDelDia(at, cambiar)
-                Spacer(Modifier.height(Medidas.e3))
-                Campo("Nota", at.nota, { n -> cambiar { it.copy(nota = n) } })
-                Chips(Modifier.padding(top = Medidas.e3)) {
-                    Chip("Raciones", "${d.total}"); Chip("Normal", "${d.normal}"); Chip("Ayuda social", "${d.ayudaSocial}")
-                    Chip("Recaudado", if (rec == null) "—" else "S/ ${formatearSoles(rec)}")
-                }
-                if (d.origen == Origen.LEGADO) {
-                    Text("Estas ${d.total} raciones vienen de la versión anterior. Si marcas la lista, se cuentan de la lista.",
-                        style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
-                }
-                val activos = remember(padron.afiliados, at.fecha) {
-                    afiliadosActivos(padron, at.fecha.ifEmpty { hoyIso() }).sortedWith { a, b -> ORDEN_NOMBRES.compare(nombreCompleto(a), nombreCompleto(b)) }
-                }
-                Acciones(Modifier.padding(top = 10.dp)) {
-                    Boton("Marcar a todos", { marcarTodos(activos, true) }, diminuto = true)
-                    Boton("Quitar a todos", { marcarTodos(activos, false) }, diminuto = true)
-                    Boton("Quitar el día", quitarDia, diminuto = true, tipo = TipoBoton.PELIGRO)
-                }
-                var filtro by remember { mutableStateOf("") }
-                Campo("Buscar persona", filtro, { filtro = it }, Modifier.padding(top = 10.dp), placeholder = "Buscar…")
-                val aguja = normalizarNombre(filtro)
-                val lista = activos.filter { aguja.isEmpty() || claveBusqueda(it).contains(aguja) }
-                val marcados = at.asistencias.map { it.afiliadoId }.toSet()
-                val menus = at.asistencias.associate { it.afiliadoId to it.tipoMenu }
-                Spacer(Modifier.height(Medidas.e3))
-                if (lista.isEmpty()) {
-                    Pista(if (aguja.isNotEmpty()) "Nadie coincide con esa búsqueda." else "No hay personas activas en el padrón para esa fecha.")
-                } else {
-                    Superficie {
-                        lista.forEachIndexed { i, p ->
-                            FilaToque(p, p.id in marcados, menus[p.id] ?: menuPorDefecto(p), grupoEtario(p, at.fecha.ifEmpty { hoyIso() }),
-                                i == 0, i == lista.size - 1, { alternar(p) })
-                        }
-                    }
-                }
-                ContadorSinInscribir(at) { nuevo -> cambiar { it.copy(sinInscribir = nuevo) } }
-                var precioAbierto by remember { mutableStateOf(false) }
-                Enlace(if (precioAbierto) "Ocultar el precio del menú de este día" else "Precio del menú de este día", { precioAbierto = !precioAbierto }, Modifier.padding(top = 10.dp))
-                if (precioAbierto) {
-                    Pista(if (at.precioTomadoDeConfig) "Copiado del precio de arriba. Cámbialo solo si ese día fue distinto." else "Precio propio de este día.", Modifier.padding(bottom = Medidas.e2))
-                    CampoSoles("Menú normal (S/)", at.precioMenuNormalCent, { v -> cambiar { it.copy(precioMenuNormalCent = v, precioTomadoDeConfig = false) } })
-                    Spacer(Modifier.height(Medidas.e3))
-                    CampoSoles("Menú de ayuda social (S/)", at.precioMenuAyudaSocialCent, { v -> cambiar { it.copy(precioMenuAyudaSocialCent = v, precioTomadoDeConfig = false) } })
-                }
-            }
-        }
-        if (!ultima) Separador()
-    }
-}
-
-
 /**
  * El registro del día: qué se cocinó y cuántas raciones se prepararon. Los
  * escribe la encargada; las servidas se cuentan de la lista y se muestran al
  * lado, sin corregir ninguna de las dos.
  */
 @Composable
-private fun RegistroDelDia(at: Atencion, cambiar: ((Atencion) -> Atencion) -> Unit) {
+internal fun RegistroDelDia(at: Atencion, cambiar: ((Atencion) -> Atencion) -> Unit) {
     val c = colores
     val servidas = desgloseDelDia(at).total
     Campo("Qué se cocinó", at.menuDelDia, { v -> cambiar { it.copy(menuDelDia = v) } }, placeholder = "Por ejemplo: arroz con pollo y ensalada", unaLinea = false)

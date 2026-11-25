@@ -143,10 +143,21 @@ val GUIA_ASISTENCIA = Guia("Asistencia", listOf(
     PasoGuia("Quien no está en el padrón", "Si comió alguien que no está inscrito, súmalo con «+» en «Comieron sin estar en el padrón».", "personaMas", "asistencia.sinPadron", siEsta = "asistencia.lista"),
     PasoGuia("Qué se cocinó", "Escribe qué se cocinó hoy y cuántas raciones prepararon. Sale en el reporte del día.", "lapiz", "asistencia.cocino", siEsta = "asistencia.lista"),
     PasoGuia("Enviar a UNACEM", "Al terminar, toca «Enviar a UNACEM»: la asistencia de hoy sale en Excel desde tu correo.", "archivo", "asistencia.unacem", siEsta = "asistencia.lista"),
-    PasoGuia("Otros días", "Para un día que pasó, toca «+ Registrar otro día» o abre ese día en «Otros días».", "reloj", "asistencia.otros"),
-    PasoGuia("Precio del menú", "Si cambia el precio, cámbialo en «Precio del menú». Vale desde hoy.", "lapiz", "asistencia.precio"),
-    PasoGuia("Reporte del día", "Elige el día y toca «PDF» o «Excel»: sale qué se cocinó, las raciones y quiénes recibieron, con línea para firmar.", "archivo", "asistencia.reporte"),
-    PasoGuia("El resumen", "Abajo ves las raciones y lo recaudado de las fechas que elijas.", "archivo", "asistencia.cifras")
+    PasoGuia("Días anteriores", "Para corregir un día que pasó, sacar el reporte del día o ver el resumen, toca «Días anteriores y reportes».", "reloj", "asistencia.otros"),
+    PasoGuia("Precio del menú", "Si cambia el precio, cámbialo en «Precio del menú». Vale desde hoy.", "lapiz", "asistencia.precio")
+))
+
+val GUIA_DIAS = Guia("Días anteriores", listOf(
+    PasoGuia("Si falta un día", "Toca «+ Registrar otro día» y pon su fecha.", "mas", "dias.nuevo"),
+    PasoGuia("Los días que pasaron", "Cada día en una línea, con sus raciones y lo recaudado. Tócalo para abrirlo y corregirlo.", "reloj", "dias.lista", soloSiEsta = true),
+    PasoGuia("Reporte del día", "Elige el día y toca «PDF» o «Excel»: sale qué se cocinó, las raciones y quiénes recibieron, con línea para firmar.", "archivo", "dias.reporte"),
+    PasoGuia("El resumen", "Abajo ves las raciones y lo recaudado de las fechas que elijas.", "archivo", "dias.cifras")
+))
+
+val GUIA_DIA = Guia("Día anterior", listOf(
+    PasoGuia("La fecha y lo que se cocinó", "Corrige la fecha, qué se cocinó y cuántas raciones prepararon.", "lapiz", "dia.datos", soloSiEsta = true),
+    PasoGuia("Quién vino", "Toca el círculo de cada persona que vino ese día. Si te equivocas, tócalo otra vez.", "lista", "dia.lista", soloSiEsta = true),
+    PasoGuia("Quitar el día", "Si el día no debía estar, toca «Quitar este día». Puedes deshacerlo enseguida.", "aviso", "dia.quitar", soloSiEsta = true)
 ))
 
 val GUIA_PADRON = Guia("Padrón", listOf(

@@ -84,6 +84,8 @@ import io.github.tmrainer.asistencia.ui.componentes.LocalLectura
 import io.github.tmrainer.asistencia.ui.componentes.TituloParaLeer
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaAjustes
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaAsistencia
+import io.github.tmrainer.asistencia.ui.pantallas.PantallaDia
+import io.github.tmrainer.asistencia.ui.pantallas.PantallaDias
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaB1
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaDatos
 import io.github.tmrainer.asistencia.ui.pantallas.PantallaEntregas
@@ -101,6 +103,8 @@ import io.github.tmrainer.asistencia.ui.tema.tipos
 enum class Ruta(val ruta: String, val texto: String, val icono: String) {
     INICIO("inicio", "Inicio", "casa"),
     ASISTENCIA("asistencia", "Asistencia", "lista"),
+    DIAS("dias", "Días anteriores", "reloj"),
+    DIA("dia", "Día anterior", "reloj"),
     PADRON("padron", "Padrón", "personas"),
     INSCRIBIR("inscribir", "Inscribir", "personaMas"),
     IMPORTAR("importar", "Hoja de la Municipalidad", "archivo"),
@@ -199,6 +203,8 @@ fun App(estado: Estado, preferencias: Preferencias, voz: Voz, avisoInicial: Stri
                         ) {
                             pantalla(ctx, Ruta.INICIO.ruta) { PantallaInicio(ctx) }
                             pantalla(ctx, Ruta.ASISTENCIA.ruta) { PantallaAsistencia(ctx) }
+                            pantalla(ctx, Ruta.DIAS.ruta) { PantallaDias(ctx) }
+                            pantalla(ctx, "${Ruta.DIA.ruta}?a={a}") { PantallaDia(ctx, it.arguments?.getString("a")) }
                             pantalla(ctx, Ruta.PADRON.ruta) { PantallaPadron(ctx) }
                             pantalla(ctx, Ruta.INSCRIBIR.ruta) { PantallaInscribir(ctx) }
                             pantalla(ctx, Ruta.IMPORTAR.ruta) { PantallaImportar(ctx) }

@@ -25,6 +25,7 @@ import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelDia
 import io.github.tmrainer.asistencia.nucleo.documentos.pdfDelMes
 import io.github.tmrainer.asistencia.nucleo.documentos.reporteDelDia
 import io.github.tmrainer.asistencia.nucleo.documentos.ReporteMes
+import io.github.tmrainer.asistencia.nucleo.documentos.ReporteDia
 import io.github.tmrainer.asistencia.nucleo.documentos.reporteDelMes
 import io.github.tmrainer.asistencia.nucleo.documentos.selloAhora
 import io.github.tmrainer.asistencia.nucleo.modelo.GastoPropio
@@ -68,8 +69,11 @@ internal fun ReporteDelDia(ctx: Contexto, modifier: Modifier = Modifier) {
     Column(modifier) {
         Pista("Menú, raciones y quiénes recibieron. Con línea para firmar.", Modifier.padding(bottom = Medidas.e3))
         CampoFecha("Día", fecha, { if (it.isNotEmpty()) fecha = it })
-        val dia = remember(padron, fecha) { reporteDelDia(padron, fecha) }
-        val textoDia = if (dia.servidas == 0 && dia.menuDelDia.isEmpty()) "Ese día no tiene nada anotado."
+        // Fuera del hilo de la pantalla: al volver a esta parte deslizando, se rearmaba aquí.
+        val delDia by produceState<ReporteDia?>(null, padron, fecha) { value = withContext(Dispatchers.Default) { reporteDelDia(padron, fecha) } }
+        val dia = delDia
+        val textoDia = if (dia == null) "Contando ${aDdMmAa(fecha)}…"
+        else if (dia.servidas == 0 && dia.menuDelDia.isEmpty()) "Ese día no tiene nada anotado."
         else "${aDdMmAa(fecha)}: ${cuantos(dia.servidas, "ración servida", "raciones servidas")}" +
             (if (dia.preparadas != null) " de ${dia.preparadas} preparadas" else "") + (if (dia.menuDelDia.isNotEmpty()) ". Se cocinó: ${dia.menuDelDia}." else ".")
         ParaLeer(textoDia)
