@@ -275,6 +275,7 @@ fun PantallaPadron(ctx: Contexto) {
                         busqueda = ""; filtro = "todas"; abierta = campo.removePrefix("afiliado.")
                     }
                     TituloSeccion("Personas afiliadas")
+                    if (ventana().baja) Boton("Inscribir a una persona", { ctx.ir(Ruta.INSCRIBIR) }, Modifier.padding(bottom = Medidas.e3).objetivoGuia("padron.inscribir"), icono = "personaMas", tipo = TipoBoton.PRINCIPAL)
                     if (padron.afiliados.isNotEmpty()) {
                         Campo("Buscar", busqueda, { busqueda = it }, Modifier.objetivoGuia("padron.buscar"), placeholder = "Nombre o DNI")
                         Spacer(Modifier.height(Medidas.e3))
@@ -425,7 +426,8 @@ fun PantallaPadron(ctx: Contexto) {
                 }
             }
         }
-        BotonFlotante("Inscribir", { ctx.ir(Ruta.INSCRIBIR) }, Modifier.align(Alignment.BottomEnd).padding(end = Medidas.e4, bottom = Medidas.e4).objetivoGuia("padron.inscribir"))
+        // En una pantalla baja no flota (tapaba «Mostrar» y los campos): va arriba, junto a la lista.
+        if (!ventana().baja) BotonFlotante("Inscribir", { ctx.ir(Ruta.INSCRIBIR) }, Modifier.align(Alignment.BottomEnd).padding(end = Medidas.e4, bottom = Medidas.e4).objetivoGuia("padron.inscribir"))
     }
 }
 

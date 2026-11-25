@@ -184,16 +184,6 @@ fun Enlace(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
 @Composable
 fun BotonFlotante(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val c = colores
-    // En una pantalla baja tapa menos: solo el «+», redondo; la palabra la dice TalkBack.
-    if (ventana().baja) {
-        Box(
-            modifier.shadow(10.dp, CircleShape).clip(CircleShape).background(c.acento)
-                .clickable(interactionSource = null, indication = AnilloFoco(ripple(color = Color.White)), role = Role.Button, onClick = onClick)
-                .size(56.dp).semantics { contentDescription = texto },
-            contentAlignment = Alignment.Center
-        ) { Icono("mas", 26.dp, Color.White) }
-        return
-    }
     Row(
         modifier = modifier
             .shadow(10.dp, RoundedCornerShape(Medidas.rL))

@@ -83,6 +83,7 @@ import java.time.LocalDate
 import io.github.tmrainer.asistencia.ui.Cabecera
 import io.github.tmrainer.asistencia.ui.ayudaB1
 import io.github.tmrainer.asistencia.ui.Contexto
+import io.github.tmrainer.asistencia.ui.PaginaParaGuia
 import io.github.tmrainer.asistencia.ui.Ruta
 import io.github.tmrainer.asistencia.ui.componentes.ParaLeer
 import io.github.tmrainer.asistencia.ui.componentes.AvisoSistema
@@ -96,6 +97,7 @@ import io.github.tmrainer.asistencia.ui.componentes.Chip
 import io.github.tmrainer.asistencia.ui.componentes.Chips
 import io.github.tmrainer.asistencia.ui.componentes.EstadoGuardado
 import io.github.tmrainer.asistencia.ui.componentes.FilaCampos
+import io.github.tmrainer.asistencia.ui.componentes.ventana
 import io.github.tmrainer.asistencia.ui.componentes.FranjaEstado
 import io.github.tmrainer.asistencia.ui.componentes.Icono
 import io.github.tmrainer.asistencia.ui.componentes.Leyenda
@@ -227,6 +229,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
         } else if (avisoPasos.isNotEmpty() && hallazgos.none { it.severidad == Severidad.ERROR && pasoDe(it.campo) == pasoActual }) avisoPasos = ""
     }
     val desplazamiento = rememberScrollState()
+    PaginaParaGuia(desplazamiento)
     var egresoAbierto by remember { mutableStateOf<String?>(null) }
     var confirmarMes by remember { mutableStateOf(false) }
 
@@ -376,7 +379,7 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                     1 -> PasoCentro(rendicion, hallazgos, config, perfil, propuestos, ::cambiar)
                     2 -> PasoPeriodo(rendicion, hallazgos, ::cambiar)
                     3 -> PasoIngresos(rendicion, hallazgos, config, propuestos, ::cambiar)
-                    4 -> PasoCompras(rendicion, hallazgos, egresoAbierto, { egresoAbierto = it }, ::cambiar, ::cambiarEgreso)
+                    4 -> PasoCompras(rendicion, hallazgos, egresoAbierto, { egresoAbierto = it }, ::cambiar, ::cambiarEgreso, agregar = ::agregarCompra)
                     else -> PasoRevisar(
                         rendicion, rendiciones, indice, hallazgos, ::irACampo, abrir = { verId = it }, empezarMes = { confirmarMes = true },
                         listoParaExportar = ::listoParaExportar, verHoja = { ctx.ir(Ruta.HOJA, rendicion.id) }
@@ -409,7 +412,8 @@ fun PantallaB1(ctx: Contexto, argumento: String?) {
                 }
             }
         }
-        if (pasoActual == 4) BotonFlotante("Compra", ::agregarCompra, Modifier.align(Alignment.BottomEnd).padding(end = Medidas.e4, bottom = altoBarra + Medidas.e3).objetivoGuia("b1.compra"))
+        // En una pantalla baja no flota (tapaba «Ver la hoja»): va al final de la lista de compras.
+        if (pasoActual == 4 && !ventana().baja) BotonFlotante("Compra", ::agregarCompra, Modifier.align(Alignment.BottomEnd).padding(end = Medidas.e4, bottom = altoBarra + Medidas.e3).objetivoGuia("b1.compra"))
     }
 
     if (confirmarMes) {
@@ -588,7 +592,7 @@ private fun PasoIngresos(
 @Composable
 private fun PasoCompras(
     r: Rendicion, hs: List<Hallazgo>, abierto: String?, alAbrir: (String?) -> Unit,
-    cambiar: ((Rendicion) -> Rendicion) -> Unit, cambiarEgreso: (String, (Egreso) -> Egreso) -> Unit
+    cambiar: ((Rendicion) -> Rendicion) -> Unit, cambiarEgreso: (String, (Egreso) -> Egreso) -> Unit, agregar: () -> Unit
 ) {
     val c = colores
     val avisos = LocalAvisos.current
@@ -674,7 +678,9 @@ private fun PasoCompras(
             if (i < r.egresos.size - 1) Separador()
         }
     }
-    // Agregar es el botón flotante «Compra»: una sola acción principal por pantalla.
+    // Agregar es el botón flotante «Compra»: una sola acción principal por pantalla. En una
+    // pantalla baja, donde el flotante tapaba lo de abajo, es este botón al final de la lista.
+    if (ventana().baja) Boton("Anotar otra compra", agregar, Modifier.padding(top = Medidas.e3).objetivoGuia("b1.compra"), icono = "mas", tipo = TipoBoton.PRINCIPAL)
     Text("${cuantos(r.egresos.size, "compra")}. La hoja del formato tiene 17 filas.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
 
     // Los totales se suman solos; de solo lectura.

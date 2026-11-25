@@ -21,6 +21,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -85,6 +86,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
@@ -94,6 +96,7 @@ import kotlinx.coroutines.launch
 import io.github.tmrainer.asistencia.Preferencias
 import io.github.tmrainer.asistencia.ui.componentes.Icono
 import io.github.tmrainer.asistencia.ui.componentes.IconosBarras
+import io.github.tmrainer.asistencia.ui.componentes.ventana
 import io.github.tmrainer.asistencia.ui.tema.Medidas
 import io.github.tmrainer.asistencia.ui.tema.AnilloFoco
 import io.github.tmrainer.asistencia.ui.tema.colores
@@ -150,7 +153,7 @@ val GUIA_PADRON = Guia("Padrón", listOf(
     PasoGuia("Lo que falta", "Si a alguien le falta un dato o hay que corregirlo, sale aquí. Toca «Ver el detalle» y la app abre a esa persona.", "aviso", "padron.revisar", soloSiEsta = true),
     PasoGuia("Las personas de la olla", "Aquí están todas. Toca a una para ver sus datos, corregirlos o darla de baja.", "personas", "padron.lista", soloSiEsta = true),
     PasoGuia("Busca y filtra", "Escribe un nombre o un DNI. En «Mostrar» elige a quiénes ver: solo las activas, a quienes les faltan datos y más.", "buscar", "padron.buscar", "padron.filtros", soloSiEsta = true),
-    PasoGuia("Inscribe a alguien", "Toca «Inscribir», abajo. Puedes leer su DNI con la cámara o escribir los datos.", "personaMas", "padron.inscribir"),
+    PasoGuia("Inscribe a alguien", "Toca «Inscribir». Puedes leer su DNI con la cámara o escribir los datos.", "personaMas", "padron.inscribir"),
     PasoGuia("Llévala a la Municipalidad", "Quien inscribes queda pendiente. Cuando la registren, toca «Ya la registraron en la Municipalidad».", "aviso"),
     PasoGuia("La hoja de la Municipalidad", "Cuando te den la hoja en Excel, toca «Cargar la hoja (Excel)». Antes de guardar verás qué cambia.", "archivo", "padron.hoja")
 ))
@@ -192,7 +195,7 @@ private val PASOS_B1 = listOf(
         PasoGuia("La fecha", "El día que recibiste ese dinero.", "reloj", "b1.fechaAsignacion")
     ),
     listOf(
-        PasoGuia("Una por boleta", "Toca «Compra» para anotar cada boleta. Cópiala tal cual: la fecha, qué compraste, la cantidad y el monto.", "mas", "b1.compra"),
+        PasoGuia("Una por boleta", "Toca «Compra» (o «Anotar otra compra», al final de la lista) para anotar cada boleta. Cópiala tal cual: la fecha, qué compraste, la cantidad y el monto.", "mas", "b1.compra"),
         PasoGuia("Tus compras", "Cada compra queda en la lista. Tócala para abrirla y corregirla. En ámbar, lo que hay que revisar.", "lista", "b1.compras"),
         PasoGuia("La suma", "Los totales se suman solos de tus compras: no hay que hacer cuentas. Lo que compraron con su propio dinero no va aquí: se anota en Entregas, como gasto propio.", "ok", "b1.totales")
     ),
@@ -256,13 +259,15 @@ val GUIA_AJUSTES = Guia("Ajustes", listOf(
 /**
  * Dónde está cada parte que una guía puede iluminar. Cada parte se anota con
  * Modifier.objetivoGuia; [lista] es la lista larga de la pantalla (LazyColumn),
- * donde lo de más abajo todavía no existe hasta que se baja.
+ * donde lo de más abajo todavía no existe hasta que se baja; [pagina], una pantalla
+ * que se desliza entera (Column): la guía la mueve para que su texto quepa.
  */
 @OptIn(ExperimentalFoundationApi::class)
 class Objetivos {
     internal val lugares = HashMap<String, LayoutCoordinates>()
     internal val pedidos = HashMap<String, BringIntoViewRequester>()
     internal var lista: ScrollableState? = null
+    internal var pagina: ScrollableState? = null
 
     /** ¿[id] está en la pantalla (compuesto, aunque no se vea)? */
     fun hay(id: String) = id in pedidos
@@ -294,6 +299,16 @@ fun ListaParaGuia(estado: ScrollableState) {
     }
 }
 
+/** La pantalla que se desliza entera: la guía la mueve para que su texto quepa junto a lo iluminado. */
+@Composable
+fun PaginaParaGuia(estado: ScrollableState) {
+    val objetivos = LocalObjetivos.current
+    DisposableEffect(estado) {
+        objetivos.pagina = estado
+        onDispose { if (objetivos.pagina === estado) objetivos.pagina = null }
+    }
+}
+
 /** Lo que ocupan en la pantalla [ids] juntos; null si ninguno se ve. */
 private fun lugarDe(objetivos: Objetivos, ids: List<String>): Rect? =
     ids.mapNotNull { id -> objetivos.lugares[id]?.takeIf { it.isAttached }?.boundsInRoot()?.takeIf { it.width > 0f && it.height > 0f } }
@@ -308,6 +323,9 @@ private fun lugarDe(objetivos: Objetivos, ids: List<String>): Rect? =
 private suspend fun traerALaVista(objetivos: Objetivos, ids: List<String>, salto: Float, holgura: Float) {
     val id = ids.firstOrNull() ?: return
     objetivos.lista?.let { lista ->
+        // Si no se ve, puede haber quedado arriba (el paso de antes bajó la lista): se busca
+        // desde el principio, hacia abajo.
+        if (lugarDe(objetivos, listOf(id)) == null) while (lista.canScrollBackward) { lista.scrollBy(-100_000f); withFrameNanos { } }
         while (id !in objetivos.pedidos && lista.canScrollForward) { lista.scrollBy(salto); withFrameNanos { } }
         while (id !in objetivos.pedidos && lista.canScrollBackward) { lista.scrollBy(-salto); withFrameNanos { } }
         // La lista arma lo que viene antes de mostrarlo: ya existe, pero sin lugar en la
@@ -337,6 +355,7 @@ private val CLARO_SUAVE = Color.White.copy(alpha = .84f)
  * «Escuchar» lee el paso; «Atrás» / «Siguiente»; «Listo» al final; «Cerrar»
  * o el botón de volver del teléfono la cierran cuando sea.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GuiaFoco(ctx: Contexto, guia: Guia, alCerrar: () -> Unit) {
     // Todo queda oscurecido, también detrás de las barras del teléfono.
@@ -346,11 +365,25 @@ fun GuiaFoco(ctx: Contexto, guia: Guia, alCerrar: () -> Unit) {
     // Los pasos que hablan de algo que no está en la pantalla se saltan. En una lista larga,
     // lo de arriba existe solo si se ve: antes de elegir, la lista vuelve al principio.
     var elegidos by remember(guia) { mutableStateOf<List<PasoGuia>?>(null) }
+    val saltoBusqueda = with(LocalDensity.current) { 400.dp.toPx() }
     LaunchedEffect(guia) {
-        objetivos.lista?.let { lista -> while (lista.canScrollBackward) { lista.scrollBy(-100_000f); withFrameNanos { } } }
+        suspend fun alPrincipio() { objetivos.lista?.let { lista -> while (lista.canScrollBackward) { lista.scrollBy(-100_000f); withFrameNanos { } } } }
+        alPrincipio()
         withFrameNanos { }; withFrameNanos { }
+        // Lo que está más abajo en la lista (la primera persona, bajo los filtros) todavía no
+        // existe: se baja a buscarlo, un tramo corto, y se vuelve arriba. Todo queda oscuro
+        // mientras tanto: no se ve moverse.
+        val vistos = objetivos.pedidos.keys.toHashSet()
+        val buscados = guia.pasos.flatMap { q -> listOfNotNull(q.siEsta) + if (q.soloSiEsta) q.objetivos else emptyList() }.toSet()
+        objetivos.lista?.let { lista ->
+            var vueltas = 0
+            while (!vistos.containsAll(buscados) && lista.canScrollForward && vueltas++ < 10) {
+                lista.scrollBy(saltoBusqueda); withFrameNanos { }; vistos += objetivos.pedidos.keys
+            }
+            if (vueltas > 0) { alPrincipio(); withFrameNanos { } }
+        }
         elegidos = guia.pasos.filter { q ->
-            (q.siEsta == null || objetivos.hay(q.siEsta)) && (!q.soloSiEsta || q.objetivos.any(objetivos::hay))
+            (q.siEsta == null || q.siEsta in vistos) && (!q.soloSiEsta || q.objetivos.any { it in vistos })
         }.ifEmpty { guia.pasos }
     }
     val pasos = elegidos ?: run {
@@ -373,8 +406,10 @@ fun GuiaFoco(ctx: Contexto, guia: Guia, alCerrar: () -> Unit) {
         val densidad = LocalDensity.current
         // Lo que se ilumina, seguido cuadro a cuadro: se mueve si la pantalla se desplaza.
         var lugar by remember { mutableStateOf<Rect?>(null) }
+        // El paso cuyo objetivo ya se trajo a la vista: recién entonces se acomoda para el texto.
+        var traido by remember { mutableStateOf<PasoGuia?>(null) }
         LaunchedEffect(guia, paso) {
-            if (p.objetivos.isNotEmpty()) launch { traerALaVista(objetivos, p.objetivos, alto * .8f, with(densidad) { 88.dp.toPx() }) }
+            if (p.objetivos.isNotEmpty()) launch { traerALaVista(objetivos, p.objetivos, alto * .8f, with(densidad) { 88.dp.toPx() }); traido = p }
             while (true) { withFrameNanos { }; lugar = lugarDe(objetivos, p.objetivos) }
         }
         // De un paso al siguiente, el hueco viaja de una parte a la otra.
@@ -389,6 +424,29 @@ fun GuiaFoco(ctx: Contexto, guia: Guia, alCerrar: () -> Unit) {
         var altoTexto by remember { mutableStateOf(0) }
         val barras = maxOf(WindowInsets.statusBars.getTop(densidad), WindowInsets.navigationBars.getBottom(densidad))
         val lugarTexto = with(densidad) { maxOf(240.dp.toPx(), altoTexto + barras + Medidas.e5.toPx() + 12.dp.toPx()) }
+        // Traer a la vista mueve lo justo; en una pantalla baja, con letra grande, el texto puede
+        // no caber ni arriba ni abajo y taparía lo iluminado. Se desliza un poco más, hacia el
+        // lado que pide menos, hasta que quepa; si la página no da para tanto (ya está en su
+        // principio o en su final), hacia el otro. Se repite cuando el texto nuevo mide distinto.
+        LaunchedEffect(traido, lugarTexto) {
+            if (traido !== p) return@LaunchedEffect
+            val desplazable = objetivos.lista ?: objetivos.pagina ?: return@LaunchedEffect
+            var primero = true
+            repeat(2) {
+                withFrameNanos { }
+                val l = lugarDe(objetivos, p.objetivos)?.inflate(margen) ?: return@LaunchedEffect
+                val subir = l.bottom - (alto - lugarTexto)   // > 0: falta lugar debajo
+                val bajar = lugarTexto - l.top              // > 0: falta lugar encima
+                if (subir <= 0f || bajar <= 0f) return@LaunchedEffect
+                val movido = desplazable.animateScrollBy(if ((subir <= bajar) == primero) subir else -bajar)
+                primero = false
+                // Si al moverlo se ve menos de él (quedó detrás de la cabecera o de los botones
+                // de abajo), ese lado no sirve: se deshace y se prueba el otro.
+                withFrameNanos { }
+                val ahora = lugarDe(objetivos, p.objetivos)
+                if (ahora == null || ahora.height < l.height - 2 * margen - 1f) desplazable.animateScrollBy(-movido)
+            }
+        }
         // Dentro de la pantalla: el borde que brilla se ve entero (el menú de abajo va pegado al borde).
         val borde = with(densidad) { 4.dp.toPx() }
         val r = lugar?.inflate(margen)?.intersect(Rect(borde, borde, ancho - borde, alto - borde))?.let { r ->
@@ -466,14 +524,19 @@ fun GuiaFoco(ctx: Contexto, guia: Guia, alCerrar: () -> Unit) {
                         Spacer(Modifier.height(Medidas.e4))
                     }
                     // De qué es la guía y cómo salir; luego qué hacer; luego por dónde va; abajo, avanzar.
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    // En una pantalla baja el texto ocupa menos, para que quepa lo iluminado: sin la
+                    // línea «Cómo se usa» (la cabecera ya dice dónde se está) y con «Escuchar» y
+                    // «Cerrar» solo con su ícono, en la fila del título (TalkBack dice su nombre).
+                    val baja = ventana().baja
+                    if (!baja) Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Cómo se usa: ${guiaMostrada.nombre}", style = tipos.chicoFuerte, color = tono, modifier = Modifier.weight(1f))
                         BotonFoco("Cerrar", alCerrar, chico = true)
                     }
-                    Row(Modifier.padding(top = Medidas.e1), verticalAlignment = Alignment.CenterVertically) {
+                    Row(Modifier.padding(top = if (baja) 0.dp else Medidas.e1), verticalAlignment = Alignment.CenterVertically) {
                         Text(q.titulo, style = tipos.titulo.copy(fontSize = tipos.titulo.fontSize * 1.2f), color = CLARO,
                             modifier = Modifier.weight(1f).semantics { heading() })
-                        BotonFoco("Escuchar", { ctx.decir("${q.titulo}. ${q.texto}") }, icono = "voz", chico = true)
+                        BotonFoco("Escuchar", { ctx.decir("${q.titulo}. ${q.texto}") }, icono = "voz", chico = true, soloIcono = baja)
+                        if (baja) BotonFoco("Cerrar", alCerrar, icono = "cerrar", chico = true, soloIcono = true)
                     }
                     Text(q.texto, style = tipos.texto, color = CLARO_SUAVE,
                         modifier = Modifier.padding(top = Medidas.e2).semantics { liveRegion = LiveRegionMode.Polite })
@@ -504,9 +567,12 @@ fun GuiaFoco(ctx: Contexto, guia: Guia, alCerrar: () -> Unit) {
 /** Lo que muestra el texto de la guía en un momento: de qué guía, sus pasos y cuál. */
 private data class Mostrado(val guia: Guia, val pasos: List<PasoGuia>, val paso: Int)
 
-/** Un botón sobre lo oscuro: blanco relleno el principal; borde blanco los demás. */
+/**
+ * Un botón sobre lo oscuro: blanco relleno el principal; borde blanco los demás.
+ * [soloIcono]: sin la palabra (la dice TalkBack), para que ocupe menos.
+ */
 @Composable
-private fun BotonFoco(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier, principal: Boolean = false, icono: String? = null, chico: Boolean = false) {
+private fun BotonFoco(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier, principal: Boolean = false, icono: String? = null, chico: Boolean = false, soloIcono: Boolean = false) {
     val c = colores
     val forma = RoundedCornerShape(999.dp)
     val color = if (principal) c.marca else CLARO
@@ -515,9 +581,10 @@ private fun BotonFoco(texto: String, onClick: () -> Unit, modifier: Modifier = M
             .then(if (principal) Modifier.background(CLARO) else if (chico) Modifier else Modifier.border(1.5.dp, Color.White.copy(alpha = .7f), forma))
             // La capa al tocar, del color del texto: blanca sobre lo oscuro, verde sobre el blanco.
             .clickable(interactionSource = null, indication = AnilloFoco(ripple(color = color), color), role = Role.Button, onClick = onClick)
-            .padding(horizontal = if (chico) Medidas.e3 else Medidas.e5),
+            .then(if (soloIcono) Modifier.defaultMinSize(minWidth = 48.dp).semantics { contentDescription = texto } else Modifier.padding(horizontal = if (chico) Medidas.e3 else Medidas.e5)),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
     ) {
+        if (soloIcono && icono != null) { Icono(icono, 24.dp, color); return@Row }
         if (icono != null) { Icono(icono, 20.dp, color); Spacer(Modifier.width(6.dp)) }
         Text(texto, style = if (chico) tipos.chicoFuerte else tipos.textoFuerte, color = color)
     }

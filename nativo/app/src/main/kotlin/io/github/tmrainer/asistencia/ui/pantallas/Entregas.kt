@@ -55,6 +55,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -274,12 +275,14 @@ private fun RelojEntrega(a: io.github.tmrainer.asistencia.nucleo.alertas.AlertaE
     val largo = when (periodicidad) { "semanal" -> 7; "quincenal" -> 15; else -> 30 }
     val lleno = if (dias < 0) 1f else (1f - dias.toFloat() / largo).coerceIn(0f, 1f)
     val colorReloj = when (tonoEntrega(a.nivel)) { TonoPastilla.ERROR -> c.error; TonoPastilla.ADVERTENCIA -> c.aviso; else -> c.acentoTexto }
+    // El círculo crece con la letra: con letra grande, «días de atraso» se salía del aro.
+    val tam = 168.dp * LocalDensity.current.fontScale.coerceIn(1f, 1.8f)
     Column(
         Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(Medidas.rL)).clip(RoundedCornerShape(Medidas.rL)).background(c.superficie).padding(Medidas.e4, Medidas.e5),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(Modifier.size(168.dp), contentAlignment = Alignment.Center) {
-            Canvas(Modifier.size(168.dp)) {
+        Box(Modifier.size(tam), contentAlignment = Alignment.Center) {
+            Canvas(Modifier.size(tam)) {
                 val grosor = 14.dp.toPx()
                 drawArc(c.superficie2, -90f, 360f, false, style = Stroke(grosor), size = Size(size.width - grosor, size.height - grosor), topLeft = androidx.compose.ui.geometry.Offset(grosor / 2, grosor / 2))
                 drawArc(colorReloj, -90f, 360f * lleno, false, style = Stroke(grosor, cap = StrokeCap.Butt), size = Size(size.width - grosor, size.height - grosor), topLeft = androidx.compose.ui.geometry.Offset(grosor / 2, grosor / 2))

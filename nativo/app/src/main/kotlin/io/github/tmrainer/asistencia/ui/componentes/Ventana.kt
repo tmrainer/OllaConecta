@@ -3,7 +3,7 @@
 // que eligió la persona. Una tablet con «pantalla ampliada» y letra grande tiene menos
 // lugar para texto que un celular chico con letra normal.
 //   · angosta: el botón «Ayuda» de la cabecera queda solo con su ícono, como «Ajustes».
-//   · baja: el botón flotante («Compra», «Inscribir») queda solo con su «+», para tapar menos.
+//   · baja: «Compra» e «Inscribir» no flotan (tapaban lo de abajo): van como botón en la página.
 //   · FilaCampos: dos campos van lado a lado solo si caben y quedan parejos; si no, uno
 //     debajo del otro (nunca desalineados).
 package io.github.tmrainer.asistencia.ui.componentes

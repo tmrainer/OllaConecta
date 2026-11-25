@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 private val TRAZOS = mapOf(
     "ok" to "M20 6 9 17l-5-5",
     "error" to "M18 6 6 18M6 6l12 12",
+    "cerrar" to "M18 6 6 18M6 6l12 12",
     "aviso" to "M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z",
     "reloj" to "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2",
     "flecha" to "m9 18 6-6-6-6",
