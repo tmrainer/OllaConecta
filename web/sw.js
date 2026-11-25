@@ -36,8 +36,6 @@ const ARCHIVOS = [
   './fuentes/atkinson-hyperlegible-next-400.woff2',
   './fuentes/atkinson-hyperlegible-next-600.woff2',
   './fuentes/atkinson-hyperlegible-next-700.woff2',
-  './img/utec-color.webp',
-  './img/utec-blanco.webp',
   './img/ollaconecta-icono.webp',
 
   // Núcleo: datos y reglas de la aplicación

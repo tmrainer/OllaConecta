@@ -3,7 +3,6 @@
 // datos de la olla (Config: sí van en la copia), que se piden al empezar.
 package io.github.tmrainer.asistencia.ui.pantallas
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
@@ -31,7 +29,6 @@ import androidx.compose.ui.platform.LocalContext
 import io.github.tmrainer.asistencia.Letra
 import io.github.tmrainer.asistencia.OllaConectaApp
 import io.github.tmrainer.asistencia.nucleo.envio.pareceCorreo
-import io.github.tmrainer.asistencia.R
 import io.github.tmrainer.asistencia.ROLES
 import io.github.tmrainer.asistencia.Tema
 import io.github.tmrainer.asistencia.ui.GUIA_AJUSTES
@@ -157,9 +154,8 @@ fun PantallaAjustes(ctx: Contexto) {
             Spacer(Modifier.height(Medidas.e5))
             TituloSeccion("Acerca de")
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Image(painterResource(if (c.esOscuro) R.drawable.utec_blanco else R.drawable.utec_color), contentDescription = "UTEC, Universidad de Ingeniería y Tecnología", Modifier.width(130.dp).padding(vertical = Medidas.e3))
-                ParaLeer("Proyecto de estudiantes de UTEC con ollas comunes y comedores de Villa María del Triunfo y Pachacámac.")
-                Text("Proyecto de estudiantes de UTEC con ollas comunes y comedores de Villa María del Triunfo y Pachacámac.", style = tipos.texto, color = c.tinta, textAlign = TextAlign.Center)
+                ParaLeer("Hecha junto a las ollas comunes y comedores de Villa María del Triunfo y Pachacámac.")
+                Text("Hecha junto a las ollas comunes y comedores de Villa María del Triunfo y Pachacámac.", style = tipos.texto, color = c.tinta, textAlign = TextAlign.Center, modifier = Modifier.padding(top = Medidas.e3))
                 Text("Versión $VERSION_APP", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = Medidas.e2))
             }
         }

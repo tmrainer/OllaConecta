@@ -987,16 +987,6 @@ button.enlace-ajustes { width: 100%; border: 0; font: inherit; text-align: start
 #ultima-copia { margin: var(--e2) 0 var(--e3); }
 #ultima-copia.pendiente { color: var(--aviso); font-weight: 600; }
 
-/* Acerca de: el logo de UTEC en su versión de color o blanca según el modo. */
-.acerca-logo { display: flex; justify-content: center; padding: var(--e4) 0 var(--e3); }
-.acerca-logo img { width: 130px; height: auto; }
-.logo-oscuro { display: none; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-tema="claro"]) .logo-claro { display: none; }
-  :root:not([data-tema="claro"]) .logo-oscuro { display: block; }
-}
-:root[data-tema="oscuro"] .logo-claro { display: none; }
-:root[data-tema="oscuro"] .logo-oscuro { display: block; }
 .acerca p { text-align: center; text-wrap: balance; }
 
 /* Cámara para leer el DNI */

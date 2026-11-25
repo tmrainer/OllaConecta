@@ -8,8 +8,8 @@
         <item name="android:statusBarColor">#1b2e1e</item>
         <item name="android:navigationBarColor">@color/fondo_app</item>
     </style>
-    <!-- Pantalla de inicio (core-splashscreen): fondo verde de la marca, la
-         figura del ícono en un círculo blanco y, abajo, el logo de UTEC. -->
+    <!-- Pantalla de inicio (core-splashscreen): fondo verde de la marca y la
+         figura del ícono en un círculo blanco. -->
     <style name="Theme.OllaConecta.Inicio" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#1b2e1e</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
