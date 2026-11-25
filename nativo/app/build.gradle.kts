@@ -19,8 +19,8 @@ android {
         targetSdk = 36
         // Por encima del APK 1.7 (versionCode 11), para instalarse ENCIMA y
         // traer sus datos (MigracionDel17). Del 12 al 19 quedan para arreglos del 1.x.
-        versionCode = 23
-        versionName = "2.1.2"
+        versionCode = 24
+        versionName = "2.2.0"
         vectorDrawables.useSupportLibrary = true
     }
 
