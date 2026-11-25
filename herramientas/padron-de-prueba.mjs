@@ -1,19 +1,20 @@
-// Una copia de respaldo FICTICIA para probar el padrón: socias con su familia (pareja,
-// hijos, madres o padres), los datos del libro de socias y del formato municipal, la
-// directiva de la olla y asistencia de noviembre. Todos los DNI empiezan con 7000: no
-// son de nadie. Sale siempre igual (el azar tiene semilla fija).
+// Una copia de respaldo FICTICIA y completa para probar la app: socias con su familia
+// (pareja, hijos, madres o padres), los datos del libro de socias y del formato municipal,
+// la directiva de la olla, asistencia de setiembre a noviembre, el B-1 (un mes y una
+// quincena) y las entregas. Todos los DNI empiezan con 7000: no son de nadie. Sale siempre
+// igual (el azar tiene semilla fija).
 //
 //   node herramientas/padron-de-prueba.mjs [archivo.json]
 //
-// Se carga en la app con «Tus datos → Recuperar una copia». Reemplaza el padrón, la
-// asistencia y los datos de la olla de ese teléfono: úsala en la app de prueba
-// («OllaConecta prueba»), no en la de una olla de verdad.
+// Sin archivo, escribe nativo/app/src/main/assets/datos-de-prueba.json: la app la trae
+// adentro y la carga con «Tus datos → Cargar datos de prueba». También se carga con
+// «Recuperar una copia». Reemplaza todo lo de ese teléfono: no en la app de una olla de verdad.
 //
 // A propósito, para ver los avisos del padrón: un familiar sin parentesco, una socia
 // de baja con una hija activa y una persona sin condición, pendiente de la Municipalidad.
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
-const archivo = process.argv[2] ?? 'padron-de-prueba.json';
+const archivo = process.argv[2] ?? new URL('../nativo/app/src/main/assets/datos-de-prueba.json', import.meta.url).pathname;
 const HOY = new Date(Date.UTC(2026, 10, 22));
 
 // Azar con semilla (mulberry32): los mismos datos cada vez.
@@ -101,10 +102,10 @@ const deBaja = persona('Torres', 'Ramos', 'Hilda', 'F', nacimiento(40, 50), { co
 persona('Ramos', 'Torres', 'Brenda', 'F', nacimiento(8, 12), { condicion: 'familiar', titularId: deBaja.id, parentesco: 'hijo/a' });
 persona('Salazar', 'Rivas', 'Néstor', 'M', nacimiento(35, 45), { registroMunicipal: 'pendiente', registroMunicipalEn: '' });
 
-// Asistencia de noviembre: días de semana hasta ayer; cada activo viene 3 de cada 4 días.
+// Asistencia de setiembre a noviembre: días de semana hasta ayer; cada activo viene 3 de cada 4 días.
 const activos = afiliados.filter((a) => a.activo);
 const atenciones = [];
-for (let d = new Date(Date.UTC(2026, 10, 2)); d < HOY; d.setUTCDate(d.getUTCDate() + 1)) {
+for (let d = new Date(Date.UTC(2026, 8, 1)); d < HOY; d.setUTCDate(d.getUTCDate() + 1)) {
   const dia = d.getUTCDay();
   if (dia === 0 || dia === 6) continue;
   const vinieron = activos.filter(() => azar() < 0.75);
@@ -125,9 +126,15 @@ const olla = {
   fiscal: { nombre: 'Carmen Condori Torres', dni: '70009003', celular: '900000004' },
   montoSubsidioCent: 150000,
 };
+// El B-1 (Setiembre y una quincena de agosto, con sus compras) y las entregas: los del
+// respaldo ficticio de las pruebas, con los datos de esta olla.
+const ficticio = JSON.parse(readFileSync(new URL('../nativo/nucleo/src/test/resources/respaldo-ficticio.json', import.meta.url), 'utf8'));
+const rendiciones = ficticio.rendiciones.map((r) => ({ ...r, nombreCentro: olla.nombre, codigoPca: olla.codigoPca }));
 const respaldo = {
   exportadoEn: '2026-11-22T17:00:00.000Z', aplicacion: 'rendicion-b1',
+  rendiciones,
   padron: { version: 1, afiliados, atenciones },
+  calendario: ficticio.calendario,
   config: { version: 1, calibracion: { offsetXmm: 0, offsetYmm: 0 }, olla, precioMenuNormalCent: 300, precioMenuAyudaSocialCent: 100 },
 };
 writeFileSync(archivo, JSON.stringify(respaldo, null, 1));
@@ -135,4 +142,5 @@ writeFileSync(archivo, JSON.stringify(respaldo, null, 1));
 const familiares = afiliados.filter((a) => a.condicion === 'familiar');
 const cuenta = (p) => familiares.filter((a) => p.includes(a.parentesco)).length;
 console.log(`${archivo}: ${afiliados.length} personas, ${afiliados.filter((a) => a.condicion === 'socia').length} socias y ${familiares.length} familiares ` +
-  `(${cuenta(['hijo/a'])} hijos, ${cuenta(['esposo/a', 'conviviente'])} parejas, ${cuenta(['madre/padre'])} madres o padres); ${atenciones.length} días de asistencia.`);
+  `(${cuenta(['hijo/a'])} hijos, ${cuenta(['esposo/a', 'conviviente'])} parejas, ${cuenta(['madre/padre'])} madres o padres); ${atenciones.length} días de asistencia; ` +
+  `${rendiciones.length} B-1 y ${ficticio.calendario.entregas.length} entregas.`);

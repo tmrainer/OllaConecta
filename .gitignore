@@ -10,6 +10,8 @@
 # Respaldo FICTICIO de las pruebas del núcleo Kotlin (datos inventados). Un
 # respaldo real nunca va en esa carpeta.
 !nativo/nucleo/src/test/resources/*.json
+# Datos de prueba que trae la app (herramientas/padron-de-prueba.mjs; DNI 7000…, de nadie).
+!nativo/app/src/main/assets/datos-de-prueba.json
 # PDF que arma la web con esos datos inventados (nativo/herramientas/oraculo-documentos.mjs).
 !nativo/nucleo/src/test/resources/documentos/*.pdf
 # Íconos y pantalla de inicio de la app nativa: sin datos personales.

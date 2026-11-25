@@ -205,6 +205,20 @@ fun PantallaDatos(ctx: Contexto) {
             ))
             Lugar("archivo", "En las copias que guardas tú", listOf("Solo cuando tocas «Guardar una copia». Queda donde la guardes."))
 
+            // Una olla ficticia completa, dentro de la app, para conocerla o mostrarla sin datos de nadie.
+            Spacer(Modifier.height(Medidas.e5))
+            TituloSeccion("Datos de prueba")
+            Pista("Una olla ficticia completa para conocer la app: 48 personas con sus familias, tres meses de asistencia, el B-1 y las entregas. Reemplaza lo de este teléfono: no los cargues en la app de una olla de verdad.", Modifier.padding(bottom = Medidas.e3))
+            Boton("Cargar datos de prueba", {
+                alcance.launch {
+                    val lectura = withContext(Dispatchers.IO) {
+                        try { leerRespaldo(contexto.assets.open("datos-de-prueba.json").use { it.readBytes().toString(Charsets.UTF_8) }) }
+                        catch (e: Exception) { LecturaRespaldo.Fallo("No se pudieron leer los datos de prueba.") }
+                    }
+                    recibirLectura(lectura)
+                }
+            }, Modifier.objetivoGuia("datos.prueba"), icono = "archivo")
+
             Spacer(Modifier.height(Medidas.e5))
             Text("Borrar todo", style = tipos.seccion, color = c.error, modifier = Modifier.padding(bottom = Medidas.e3))
             Pista("Deja la app como recién instalada: borra el padrón, la asistencia, el B-1, las entregas, tu perfil y los ajustes. No se puede deshacer.", Modifier.padding(bottom = Medidas.e3))
