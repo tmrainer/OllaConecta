@@ -55,7 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.tmrainer.asistencia.nucleo.alertas.Nivel
 import io.github.tmrainer.asistencia.nucleo.alertas.alertaProximaEntrega
-import io.github.tmrainer.asistencia.nucleo.calculos.gastoPorOrigen
 import io.github.tmrainer.asistencia.nucleo.calculos.totales
 import io.github.tmrainer.asistencia.nucleo.calculos.conTotalCalculado
 import io.github.tmrainer.asistencia.nucleo.calculos.totalDeLaFila
@@ -698,14 +697,6 @@ private fun PasoCompras(
             Separador()
             FilaTotal("Total de rendición de gastos", t.conSubsidio?.let { "S/ ${formatearSoles(it)}" }, destacado = true)
             Text("Se suman solos de tus compras. El aporte sale solo cuando las compras pasan el subsidio.", style = tipos.chico, color = c.tintaSuave, modifier = Modifier.padding(top = 10.dp))
-            // De dónde salió el dinero de cada compra solo llega importado (ninguna pantalla lo pide):
-            // se muestra cuando hay otro origen además del subsidio. Si todo es subsidio, el chip
-            // repetía la fila de arriba con el rótulo «Subsidio», que en «Revisar» es lo recibido.
-            val po = gastoPorOrigen(r)
-            if (po.aportePropio != 0L) Chips(Modifier.padding(top = Medidas.e2)) {
-                if (po.subsidio != 0L) Chip("Con el subsidio", "S/ ${formatearSoles(po.subsidio)}")
-                if (po.aportePropio != 0L) Chip("Aporte propio", "S/ ${formatearSoles(po.aportePropio)}")
-            }
             for (m in hs.filter { it.campo == "totales" }) Text(m.mensaje, style = tipos.chico, color = if (m.severidad == Severidad.ERROR) c.error else c.aviso, modifier = Modifier.padding(top = Medidas.e2))
         }
     }

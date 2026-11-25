@@ -83,6 +83,30 @@ fun gastoPorOrigen(rendicion: Rendicion): GastoPorOrigen {
     return GastoPorOrigen(subsidio, propio)
 }
 
+/** De dónde sale el dinero de una compra, según el orden en que se gasta. */
+enum class OrigenCompra { SUBSIDIO, AMBOS, APORTE_PROPIO }
+
+/**
+ * El subsidio se gasta primero y completo: las compras, por fecha, lo van usando, y lo que
+ * pasa del subsidio es aporte propio de la olla (la compra que cruza el límite es de los dos).
+ * Va en el orden de [Rendicion.egresos]. Sin el monto del subsidio, todo cuenta como subsidio.
+ */
+fun origenesEnCascada(rendicion: Rendicion): List<OrigenCompra> {
+    val subsidio = rendicion.montoSubsidioCent ?: return rendicion.egresos.map { OrigenCompra.SUBSIDIO }
+    val res = Array(rendicion.egresos.size) { OrigenCompra.SUBSIDIO }
+    var usado = 0L
+    for (i in rendicion.egresos.indices.sortedBy { rendicion.egresos[it].fechaCompra }) {
+        val monto = rendicion.egresos[i].montoTotalCent ?: 0L
+        res[i] = when {
+            usado + monto <= subsidio -> OrigenCompra.SUBSIDIO
+            usado >= subsidio -> OrigenCompra.APORTE_PROPIO
+            else -> OrigenCompra.AMBOS
+        }
+        usado += monto
+    }
+    return res.toList()
+}
+
 data class Descuadre(val esperado: Long, val declarado: Long, val diferencia: Long)
 
 /** Cantidad × precio unitario de la fila, en céntimos (redondeo de descuadreFila); null si falta uno o es «varios». */

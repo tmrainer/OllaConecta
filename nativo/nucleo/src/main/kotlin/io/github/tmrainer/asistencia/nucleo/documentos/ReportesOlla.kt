@@ -4,7 +4,9 @@
 // no se anotó sale como «no se anotó», nunca se completa.
 package io.github.tmrainer.asistencia.nucleo.documentos
 
+import io.github.tmrainer.asistencia.nucleo.calculos.OrigenCompra
 import io.github.tmrainer.asistencia.nucleo.calculos.afiliadosActivos
+import io.github.tmrainer.asistencia.nucleo.calculos.origenesEnCascada
 import io.github.tmrainer.asistencia.nucleo.calculos.asistenciaPorAfiliado
 import io.github.tmrainer.asistencia.nucleo.calculos.asistenciasDelDia
 import io.github.tmrainer.asistencia.nucleo.calculos.atencionesDelPeriodo
@@ -27,8 +29,8 @@ import io.github.tmrainer.asistencia.nucleo.modelo.pad2
 import kotlin.math.min
 
 private const val NO_ANOTADO = "(no se anotó)"
-// «ayuda_social» es de datos de antes (la web lo ofrecía como «Ayuda social / donación»): es dinero propio.
-private val ORIGEN = mapOf("subsidio" to "Subsidio", "ayuda_social" to "Aporte propio", "aporte_propio" to "Aporte propio")
+// El origen de cada compra sale del orden en que se gasta: primero el subsidio, después lo propio.
+private val ORIGEN = mapOf(OrigenCompra.SUBSIDIO to "Subsidio", OrigenCompra.AMBOS to "Subsidio y aporte propio", OrigenCompra.APORTE_PROPIO to "Aporte propio")
 
 /** Quien recibió ración ese día. */
 data class AsistenteDelDia(val n: Int, val nombre: String, val documento: String, val menu: String)
@@ -135,13 +137,13 @@ fun reporteDelMes(padron: Padron, rendiciones: List<Rendicion>, mes: String): Re
         PersonaDelMes(i + 1, nombreCompleto(a), a.numeroDocumento, x?.dias ?: 0, x?.normal ?: 0, x?.ayudaSocial ?: 0, a.id in activas)
     }
     fun enElMes(iso: String) = esIso(iso) && iso >= inicio && iso <= fin
-    val insumos = rendiciones.flatMap { it.egresos }.filter { enElMes(it.fechaCompra) }.sortedBy { it.fechaCompra }.map { e ->
+    val insumos = rendiciones.flatMap { rd -> rd.egresos.zip(origenesEnCascada(rd)) }.filter { enElMes(it.first.fechaCompra) }.sortedBy { it.first.fechaCompra }.map { (e, origen) ->
         val cantidad = when {
             e.cantidadVarios -> "varios"
             e.cantidad != null -> listOf(numeroJs(e.cantidad), e.unidadMedida).filter { it.isNotEmpty() }.joinToString(" ")
             else -> e.unidadMedida
         }
-        InsumoDelMes(e.fechaCompra, e.descripcion.trim(), cantidad, e.montoTotalCent, ORIGEN[e.origenFondo] ?: "Subsidio")
+        InsumoDelMes(e.fechaCompra, e.descripcion.trim(), cantidad, e.montoTotalCent, ORIGEN.getValue(origen))
     }
     val gastos = rendiciones.flatMap { it.gastosPropios }.filter { enElMes(it.fecha) }.sortedBy { it.fecha }
     val servidas = dias.sumOf { it.servidas }

@@ -5,7 +5,9 @@ import io.github.tmrainer.asistencia.nucleo.calculos.aporteCentroAtencion
 import io.github.tmrainer.asistencia.nucleo.calculos.conTotalCalculado
 import io.github.tmrainer.asistencia.nucleo.calculos.descuadreFila
 import io.github.tmrainer.asistencia.nucleo.calculos.duracionPeriodo
+import io.github.tmrainer.asistencia.nucleo.calculos.OrigenCompra
 import io.github.tmrainer.asistencia.nucleo.calculos.gastoPorOrigen
+import io.github.tmrainer.asistencia.nucleo.calculos.origenesEnCascada
 import io.github.tmrainer.asistencia.nucleo.calculos.gastosConSubsidio
 import io.github.tmrainer.asistencia.nucleo.calculos.proponerPeriodo
 import io.github.tmrainer.asistencia.nucleo.calculos.totalRendicionGastos
@@ -100,6 +102,19 @@ class TotalesTest {
         igual(po.subsidio, 6800L)
         igual(po.aportePropio, 14185L)
         igual(po.suma, totalRendicionGastos(r))
+    }
+
+    @Test
+    fun `El subsidio se gasta primero y lo que pasa es aporte propio`() {
+        val r = rendicionDelEjemplar().copy(montoSubsidioCent = 1000, egresos = listOf(
+            Egreso(fechaCompra = "2026-09-03", montoTotalCent = 300),
+            Egreso(fechaCompra = "2026-09-01", montoTotalCent = 600),
+            Egreso(fechaCompra = "2026-09-05", montoTotalCent = 200),
+            Egreso(fechaCompra = "2026-09-09", montoTotalCent = 50, origenFondo = "subsidio")
+        ))
+        // Por fecha: 600 (01) + 300 (03) = 900 caben; 200 (05) cruza los 1000; 50 (09) ya es propio.
+        igual(origenesEnCascada(r), listOf(OrigenCompra.SUBSIDIO, OrigenCompra.SUBSIDIO, OrigenCompra.AMBOS, OrigenCompra.APORTE_PROPIO))
+        igual(origenesEnCascada(r.copy(montoSubsidioCent = 5000)).toSet(), setOf(OrigenCompra.SUBSIDIO))
     }
 
     @Test
